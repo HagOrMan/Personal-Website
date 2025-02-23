@@ -38,28 +38,28 @@
   /* #endregion  /**======== Shadcn Variables =========== */
 
   /* #region  /**=========== Primary Color =========== */
-  --tw-color-primary-50: 254 244 242;
-  --tw-color-primary-100: 254 230 229;
-  --tw-color-primary-200: 252 208 207;
-  --tw-color-primary-300: 250 168 167;
-  --tw-color-primary-400: 246 118 121;
-  --tw-color-primary-500: 237 70 77;
-  --tw-color-primary-600: 218 36 53;
-  --tw-color-primary-700: 184 24 43;
-  --tw-color-primary-800: 166 25 46;
-  --tw-color-primary-900: 132 23 43;
-  --tw-color-primary-950: 73 8 18;
-  --color-primary-rgb-50: rgb(var(--tw-color-primary-50)); /* #fef4f2 */
-  --color-primary-rgb-100: rgb(var(--tw-color-primary-100)); /* #fee6e5 */
-  --color-primary-rgb-200: rgb(var(--tw-color-primary-200)); /* #fcd0cf */
-  --color-primary-rgb-300: rgb(var(--tw-color-primary-300)); /* #faa8a7 */
-  --color-primary-rgb-400: rgb(var(--tw-color-primary-400)); /* #f67679 */
-  --color-primary-rgb-500: rgb(var(--tw-color-primary-500)); /* #ed464d */
-  --color-primary-rgb-600: rgb(var(--tw-color-primary-600)); /* #da2435 */
-  --color-primary-rgb-700: rgb(var(--tw-color-primary-700)); /* #b8182b */
-  --color-primary-rgb-800: rgb(var(--tw-color-primary-800)); /* #a6192e */
-  --color-primary-rgb-900: rgb(var(--tw-color-primary-900)); /* #84172b */
-  --color-primary-rgb-950: rgb(var(--tw-color-primary-950)); /* #490812 */
+  --tw-color-primary-50: 237 252 246; /* #edfcf6 */
+  --tw-color-primary-100: 210 249 233; /* #d2f9e9 */
+  --tw-color-primary-200: 169 241 215; /* #a9f1d7 */
+  --tw-color-primary-300: 114 227 192; /* #72e3c0 */
+  --tw-color-primary-400: 57 206 165; /* #39cea5 */
+  --tw-color-primary-500: 21 180 141; /* #15b48d */
+  --tw-color-primary-600: 9 146 115; /* #099273 */
+  --tw-color-primary-700: 7 110 90; /* #076e5a */
+  --tw-color-primary-800: 9 92 76; /* #095c4c */
+  --tw-color-primary-900: 8 76 64; /* #084c40 */
+  --tw-color-primary-950: 3 43 37; /* #032b25 */
+  --color-primary-rgb-50: rgb(var(--tw-color-primary-50));
+  --color-primary-rgb-100: rgb(var(--tw-color-primary-100));
+  --color-primary-rgb-200: rgb(var(--tw-color-primary-200));
+  --color-primary-rgb-300: rgb(var(--tw-color-primary-300));
+  --color-primary-rgb-400: rgb(var(--tw-color-primary-400));
+  --color-primary-rgb-500: rgb(var(--tw-color-primary-500));
+  --color-primary-rgb-600: rgb(var(--tw-color-primary-600));
+  --color-primary-rgb-700: rgb(var(--tw-color-primary-700));
+  --color-primary-rgb-800: rgb(var(--tw-color-primary-800));
+  --color-primary-rgb-900: rgb(var(--tw-color-primary-900));
+  --color-primary-rgb-950: rgb(var(--tw-color-primary-950));
   /* #endregion  /**======== Primary Color =========== */
 }
 
