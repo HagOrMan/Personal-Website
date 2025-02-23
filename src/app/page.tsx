@@ -12,8 +12,6 @@ export default function Home() {
           <a
             className='flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#b6b6b6] sm:h-12 sm:px-5 sm:text-base'
             href='/projects'
-            target='_blank'
-            rel='noopener noreferrer'
           >
             <Image
               className='invert'
@@ -27,11 +25,12 @@ export default function Home() {
           <a
             className='bg-primaryRgb-300 hover:bg-primaryRgb-500 flex h-10 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:border-transparent sm:h-12 sm:min-w-44 sm:px-5 sm:text-base'
             href='/contact'
-            target='_blank'
-            rel='noopener noreferrer'
           >
             Contact me
           </a>
+        </div>
+        <div>
+          <h1>Deep dive into my skills and passion and experience</h1>
         </div>
       </main>
     </div>

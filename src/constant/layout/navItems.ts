@@ -19,25 +19,30 @@ export const navbarItems: NavbarItem[] = [
     link: '/projects',
     dropdownItems: [
       {
+        title: 'Hatch Booking System',
+        link: '/projects/hatch-booking-system',
+        description: 'Custom booking system used by McMaster Engineering!',
+      },
+      {
         title: 'Island Builder',
-        link: '/island-builder',
+        link: '/projects/island-builder',
         description:
           'Create islands with different biomes and connected cities!',
       },
       {
         title: 'MediSafe',
-        link: '/medisafe',
+        link: '/projects/medisafe',
         description:
           'Never take conflicting prescriptions again with Medisafe!',
       },
       {
         title: 'MonPoke',
-        link: '/monpoke',
+        link: '/projects/monpoke',
         description: 'Catch your favourite MonPokes using python and pygame',
       },
       {
         title: 'Piraten Kapern',
-        link: '/piraten-kapern',
+        link: '/projects/piraten-kapern',
         description:
           'A fun implementation of a game with the same name using Java',
       },

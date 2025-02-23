@@ -31,10 +31,14 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
               <>
                 {item.link ? ( // Optionally has the trigger also be a link to a page
                   <Link href={item.link}>
-                    <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
+                    <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground data-[state=open]:bg-primaryRgb-800/70 rounded-md'>
+                      {item.title}
+                    </NavigationMenuTrigger>
                   </Link>
                 ) : (
-                  <NavigationMenuTrigger>{item.title}</NavigationMenuTrigger>
+                  <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground rounded-md'>
+                    {item.title}
+                  </NavigationMenuTrigger>
                 )}
                 {/* Next we include all the content needed inside the dropdown */}
                 <NavigationMenuContent className='!bg-gradient-to-b from-green-200 to-teal-500 focus:shadow-md'>
@@ -55,7 +59,12 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
             ) : (
               // This occurs if there are no dropdown items and there just needs to be a button in the navbar that links somewhere
               <Link href={item.link!} legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+                <NavigationMenuLink
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    'hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground rounded-md',
+                  )}
+                >
                   {item.title}
                 </NavigationMenuLink>
               </Link>
