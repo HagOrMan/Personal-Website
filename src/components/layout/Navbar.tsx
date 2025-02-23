@@ -9,6 +9,7 @@ import {
   navigationMenuTriggerStyle,
   NavigationMenuViewport,
 } from '@/components/ui/NavigationMenu';
+import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
 
 import { NavbarItem } from '@/constant/layout/navItems';
 import { cn } from '@/lib/utils';
@@ -21,7 +22,7 @@ type NavbarProps = {
 
 export const Navbar = ({ navbarItems }: NavbarProps) => {
   return (
-    <NavigationMenu className='sticky top-0'>
+    <NavigationMenu className='sticky top-0 w-full max-w-full'>
       <NavigationMenuList>
         {navbarItems.map((item, index) => (
           <NavigationMenuItem key={index}>
@@ -72,6 +73,11 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
           </NavigationMenuItem>
         ))}
       </NavigationMenuList>
+
+      {/* Push the theme toggle to the right */}
+      <div className='right-0 ml-auto'>
+        <ThemeModeToggle />
+      </div>
 
       {/* The Indicator - visually highlights the active menu item */}
       <NavigationMenuIndicator />
