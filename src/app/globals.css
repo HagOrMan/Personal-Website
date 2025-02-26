@@ -3,19 +3,140 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* #region  /**=========== Shadcn Variables =========== */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  /* --background: #ffffff;
+  --foreground: #171717; */ /* Original template colours */
+
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+
+  --radius: 0.5rem;
+  /* #endregion  /**======== Shadcn Variables =========== */
+
+  /* #region  /**=========== Primary Color =========== */
+  --tw-color-primary-50: 237 252 246; /* #edfcf6 */
+  --tw-color-primary-100: 210 249 233; /* #d2f9e9 */
+  --tw-color-primary-200: 169 241 215; /* #a9f1d7 */
+  --tw-color-primary-300: 114 227 192; /* #72e3c0 */
+  --tw-color-primary-400: 57 206 165; /* #39cea5 */
+  --tw-color-primary-500: 21 180 141; /* #15b48d */
+  --tw-color-primary-600: 9 146 115; /* #099273 */
+  --tw-color-primary-700: 7 110 90; /* #076e5a */
+  --tw-color-primary-800: 9 92 76; /* #095c4c */
+  --tw-color-primary-900: 8 76 64; /* #084c40 */
+  --tw-color-primary-950: 3 43 37; /* #032b25 */
+  --color-primary-rgb-50: rgb(var(--tw-color-primary-50));
+  --color-primary-rgb-100: rgb(var(--tw-color-primary-100));
+  --color-primary-rgb-200: rgb(var(--tw-color-primary-200));
+  --color-primary-rgb-300: rgb(var(--tw-color-primary-300));
+  --color-primary-rgb-400: rgb(var(--tw-color-primary-400));
+  --color-primary-rgb-500: rgb(var(--tw-color-primary-500));
+  --color-primary-rgb-600: rgb(var(--tw-color-primary-600));
+  --color-primary-rgb-700: rgb(var(--tw-color-primary-700));
+  --color-primary-rgb-800: rgb(var(--tw-color-primary-800));
+  --color-primary-rgb-900: rgb(var(--tw-color-primary-900));
+  --color-primary-rgb-950: rgb(var(--tw-color-primary-950));
+  /* #endregion  /**======== Primary Color =========== */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    /* --background: #0a0a0a;
+    --foreground: #ededed; */
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
+}
+
+.cursor-newtab {
+  cursor:
+    url('/images/new-tab.png') 10 10,
+    pointer;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .animated-underline {
+    background-image:
+      linear-gradient(#33333300, #33333300),
+      linear-gradient(
+        to right,
+        var(--color-primary-rgb-400),
+        var(--color-primary-rgb-500)
+      );
+    background-size:
+      100% 2px,
+      0 2px;
+    background-position:
+      100% 100%,
+      0 100%;
+    background-repeat: no-repeat;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .animated-underline {
+      transition: 0.3s ease;
+      transition-property:
+        background-size, color, background-color, border-color;
+    }
+  }
+  .animated-underline:hover,
+  .animated-underline:focus-visible {
+    background-size:
+      0 2px,
+      100% 2px;
+  }
 }
