@@ -32,12 +32,12 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
               <>
                 {item.link ? ( // Optionally has the trigger also be a link to a page
                   <Link href={item.link}>
-                    <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground data-[state=open]:bg-primaryRgb-800/70 rounded-md'>
+                    <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground data-[state=open]:bg-primaryRgb-800/70 rounded-md'>
                       {item.title}
                     </NavigationMenuTrigger>
                   </Link>
                 ) : (
-                  <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground rounded-md'>
+                  <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground rounded-md'>
                     {item.title}
                   </NavigationMenuTrigger>
                 )}
@@ -63,7 +63,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                 <NavigationMenuLink
                   className={cn(
                     navigationMenuTriggerStyle(),
-                    'hover:bg-primaryRgb-800 hover:text-accent-foreground focus:bg-primaryRgb-800 focus:text-accent-foreground rounded-md',
+                    'hover:bg-primaryRgb-800 hover:text-accent-foreground rounded-md',
                   )}
                 >
                   {item.title}
@@ -98,7 +98,7 @@ const ListItem = React.forwardRef<
         <a
           ref={ref}
           className={cn(
-            'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
+            'hover:bg-accent hover:text-accent-foreground block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors',
             className,
           )}
           {...props}
