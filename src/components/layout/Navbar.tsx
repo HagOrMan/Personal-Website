@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import React from 'react';
 
-type NavbarProps = {
+export type NavbarProps = {
   navbarItems: NavbarItem[];
 };
 

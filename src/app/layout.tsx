@@ -5,6 +5,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { navbarItems } from '@/constant/layout/navItems';
+import Footer from '@/components/layout/Footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -39,6 +40,7 @@ export default function RootLayout({
         >
           <Navbar navbarItems={navbarItems} />
           {children}
+          <Footer navbarItems={navbarItems} />
           <Analytics />
         </ThemeProvider>
       </body>
