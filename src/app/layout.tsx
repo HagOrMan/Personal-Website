@@ -3,9 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
-import { Navbar } from '@/components/layout/Navbar';
-import { navbarItems } from '@/constant/layout/navItems';
-import Footer from '@/components/layout/Footer';
+import PageLayout from '@/components/layout/PageLayout';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,9 +36,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar navbarItems={navbarItems} />
-          {children}
-          <Footer navbarItems={navbarItems} />
+          <PageLayout>{children}</PageLayout>
           <Analytics />
         </ThemeProvider>
       </body>
