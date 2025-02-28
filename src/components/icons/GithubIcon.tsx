@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
+import { useResolvedTheme } from '@/context/ThemeContext';
 
 type GitHubIconProps = {
   className?: string;
@@ -8,7 +8,7 @@ type GitHubIconProps = {
 };
 
 const GitHubIcon = ({ className, theme: themeProp }: GitHubIconProps) => {
-  const { theme } = useTheme();
+  const { resolvedTheme: theme } = useResolvedTheme();
 
   const currentTheme = themeProp || theme;
   const svgSource =

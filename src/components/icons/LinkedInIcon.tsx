@@ -1,7 +1,7 @@
 'use client';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { useResolvedTheme } from '@/context/ThemeContext';
 
 type LinkedInIconProps = {
   className?: string;
@@ -9,7 +9,7 @@ type LinkedInIconProps = {
 };
 
 const LinkedInIcon = ({ className, theme: themeProps }: LinkedInIconProps) => {
-  const { theme } = useTheme();
+  const { resolvedTheme: theme } = useResolvedTheme();
   const currentTheme = themeProps || theme;
   const imgSource =
     currentTheme === 'dark'
