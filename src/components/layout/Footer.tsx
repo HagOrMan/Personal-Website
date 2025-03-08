@@ -14,14 +14,20 @@ export default function Footer({ navbarItems }: NavbarProps) {
             target='_blank'
             rel='noopener noreferrer'
           >
-            <GitHubIcon className='cursor-newtab h-6 w-6' />
+            <GitHubIcon
+              className='cursor-newtab h-6 w-6'
+              useThemeForImgSource
+            />
           </a>
           <a
             href='https://linkedin.com/in/kyle-hagerman-se'
             target='_blank'
             rel='noopener noreferrer'
           >
-            <LinkedInIcon className='cursor-newtab h-6 w-6' />
+            <LinkedInIcon
+              className='cursor-newtab h-6 w-6 dark:invert'
+              colour='dark'
+            />
           </a>
         </div>
 
@@ -30,7 +36,9 @@ export default function Footer({ navbarItems }: NavbarProps) {
           {navbarItems.map((item, index) => (
             <div key={index} className='text-primary-foreground'>
               {item.link ? ( // Optionally has the trigger also be a link to a page
-                <Link href={item.link}>{item.title}</Link>
+                <Link href={item.link} className='text-black dark:text-white'>
+                  {item.title}
+                </Link>
               ) : (
                 <>{item.title}</>
               )}

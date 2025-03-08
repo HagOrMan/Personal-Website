@@ -37,7 +37,7 @@
   --radius: 0.5rem;
   /* #endregion  /**======== Shadcn Variables =========== */
 
-  /* #region  /**=========== Primary Color =========== */
+  /* #region  /**=========== Primary Color Original Theme Idea =========== */
   --tw-color-primary-50: 237 252 246; /* #edfcf6 */
   --tw-color-primary-100: 210 249 233; /* #d2f9e9 */
   --tw-color-primary-200: 169 241 215; /* #a9f1d7 */
@@ -60,41 +60,116 @@
   --color-primary-rgb-800: rgb(var(--tw-color-primary-800));
   --color-primary-rgb-900: rgb(var(--tw-color-primary-900));
   --color-primary-rgb-950: rgb(var(--tw-color-primary-950));
-  /* #endregion  /**======== Primary Color =========== */
+  /* #endregion  /**======== Primary Color Original Theme Idea =========== */
+
+  /* #region  /**=========== Custom Primary Colours =========== */
+  /* Lush (Turquoise) */
+  --tw-color-lush-50: 238 255 250;
+  --tw-color-lush-100: 197 255 242;
+  --tw-color-lush-200: 139 255 232;
+  --tw-color-lush-300: 66 255 217;
+  --tw-color-lush-400: 20 237 200;
+  --tw-color-lush-500: 0 209 176;
+  --tw-color-lush-600: 0 168 146;
+  --tw-color-lush-700: 0 133 117;
+  --tw-color-lush-800: 5 106 95;
+  --tw-color-lush-900: 10 87 79;
+  --tw-color-lush-950: 0 53 50;
+
+  /* Breeze (Blue) */
+  --tw-color-breeze-50: 240 249 255;
+  --tw-color-breeze-100: 223 243 255;
+  --tw-color-breeze-200: 184 232 255;
+  --tw-color-breeze-300: 92 206 255;
+  --tw-color-breeze-400: 51 195 253;
+  --tw-color-breeze-500: 9 172 238;
+  --tw-color-breeze-600: 0 138 204;
+  --tw-color-breeze-700: 0 110 165;
+  --tw-color-breeze-800: 4 93 136;
+  --tw-color-breeze-900: 10 77 112;
+  --tw-color-breeze-950: 6 49 75;
+
+  /* Nebula (Purple) */
+  --tw-color-nebula-50: 237 237 255;
+  --tw-color-nebula-100: 222 223 255;
+  --tw-color-nebula-200: 196 196 255;
+  --tw-color-nebula-300: 162 160 255;
+  --tw-color-nebula-400: 142 128 255;
+  --tw-color-nebula-500: 120 91 249;
+  --tw-color-nebula-600: 107 61 238;
+  --tw-color-nebula-700: 93 47 211;
+  --tw-color-nebula-800: 75 41 170;
+  --tw-color-nebula-900: 63 41 134;
+  --tw-color-nebula-950: 39 24 78;
+  /* #endregion  /**======== Custom Primary Colours =========== */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    /* --background: #0a0a0a;
-    --foreground: #ededed; */
+html.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 210 40% 98%;
+  --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-  }
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 212.7 26.8% 83.9%;
+
+  /* #region  /**=========== Custom Primary Colours =========== */
+  --tw-color-lush-50: 240 253 249;
+  --tw-color-lush-100: 205 250 236;
+  --tw-color-lush-200: 156 243 218;
+  --tw-color-lush-300: 98 230 197;
+  --tw-color-lush-400: 50 207 172;
+  --tw-color-lush-500: 23 166 137;
+  --tw-color-lush-600: 17 144 121;
+  --tw-color-lush-700: 18 115 98;
+  --tw-color-lush-800: 19 92 80;
+  --tw-color-lush-900: 21 76 67;
+  --tw-color-lush-950: 5 46 41;
+
+  --tw-color-breeze-50: 242 249 253;
+  --tw-color-breeze-100: 229 240 249;
+  --tw-color-breeze-200: 196 226 243;
+  --tw-color-breeze-300: 144 201 233;
+  --tw-color-breeze-400: 63 163 214;
+  --tw-color-breeze-500: 47 147 200;
+  --tw-color-breeze-600: 32 118 169;
+  --tw-color-breeze-700: 27 95 137;
+  --tw-color-breeze-800: 26 80 114;
+  --tw-color-breeze-900: 27 68 95;
+  --tw-color-breeze-950: 18 44 63;
+
+  --tw-color-nebula-50: 236 239 255;
+  --tw-color-nebula-100: 220 226 255;
+  --tw-color-nebula-200: 191 200 255;
+  --tw-color-nebula-300: 153 164 255;
+  --tw-color-nebula-400: 112 115 255;
+  --tw-color-nebula-500: 89 79 255;
+  --tw-color-nebula-600: 75 47 252;
+  --tw-color-nebula-700: 64 35 223;
+  --tw-color-nebula-800: 53 32 179;
+  --tw-color-nebula-900: 49 36 148;
+  --tw-color-nebula-950: 29 20 82;
+  /* #endregion  /**======== Custom Primary Colours =========== */
 }
 
 .cursor-newtab {

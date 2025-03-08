@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 export default {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -42,6 +43,45 @@ export default {
           800: 'rgb(var(--tw-color-primary-800) / <alpha-value>)',
           900: 'rgb(var(--tw-color-primary-900) / <alpha-value>)',
           950: 'rgb(var(--tw-color-primary-950) / <alpha-value>)',
+        },
+        lush: {
+          50: 'rgb(var(--tw-color-lush-50) / <alpha-value>)',
+          100: 'rgb(var(--tw-color-lush-100) / <alpha-value>)',
+          200: 'rgb(var(--tw-color-lush-200) / <alpha-value>)',
+          300: 'rgb(var(--tw-color-lush-300) / <alpha-value>)',
+          400: 'rgb(var(--tw-color-lush-400) / <alpha-value>)',
+          500: 'rgb(var(--tw-color-lush-500) / <alpha-value>)',
+          600: 'rgb(var(--tw-color-lush-600) / <alpha-value>)',
+          700: 'rgb(var(--tw-color-lush-700) / <alpha-value>)',
+          800: 'rgb(var(--tw-color-lush-800) / <alpha-value>)',
+          900: 'rgb(var(--tw-color-lush-900) / <alpha-value>)',
+          950: 'rgb(var(--tw-color-lush-950) / <alpha-value>)',
+        },
+        breeze: {
+          50: 'rgb(var(--tw-color-breeze-50) / <alpha-value>)',
+          100: 'rgb(var(--tw-color-breeze-100) / <alpha-value>)',
+          200: 'rgb(var(--tw-color-breeze-200) / <alpha-value>)',
+          300: 'rgb(var(--tw-color-breeze-300) / <alpha-value>)',
+          400: 'rgb(var(--tw-color-breeze-400) / <alpha-value>)',
+          500: 'rgb(var(--tw-color-breeze-500) / <alpha-value>)',
+          600: 'rgb(var(--tw-color-breeze-600) / <alpha-value>)',
+          700: 'rgb(var(--tw-color-breeze-700) / <alpha-value>)',
+          800: 'rgb(var(--tw-color-breeze-800) / <alpha-value>)',
+          900: 'rgb(var(--tw-color-breeze-900) / <alpha-value>)',
+          950: 'rgb(var(--tw-color-breeze-950) / <alpha-value>)',
+        },
+        nebula: {
+          50: 'rgb(var(--tw-color-nebula-50) / <alpha-value>)',
+          100: 'rgb(var(--tw-color-nebula-100) / <alpha-value>)',
+          200: 'rgb(var(--tw-color-nebula-200) / <alpha-value>)',
+          300: 'rgb(var(--tw-color-nebula-300) / <alpha-value>)',
+          400: 'rgb(var(--tw-color-nebula-400) / <alpha-value>)',
+          500: 'rgb(var(--tw-color-nebula-500) / <alpha-value>)',
+          600: 'rgb(var(--tw-color-nebula-600) / <alpha-value>)',
+          700: 'rgb(var(--tw-color-nebula-700) / <alpha-value>)',
+          800: 'rgb(var(--tw-color-nebula-800) / <alpha-value>)',
+          900: 'rgb(var(--tw-color-nebula-900) / <alpha-value>)',
+          950: 'rgb(var(--tw-color-nebula-950) / <alpha-value>)',
         },
       },
       borderRadius: {

@@ -32,17 +32,17 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
               <>
                 {item.link ? ( // Optionally has the trigger also be a link to a page
                   <Link href={item.link}>
-                    <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground data-[state=open]:bg-primaryRgb-800/70 rounded-md'>
+                    <NavigationMenuTrigger className='hover:bg-lush-800 hover:text-accent-foreground data-[state=open]:bg-lush-800/70 rounded-md'>
                       {item.title}
                     </NavigationMenuTrigger>
                   </Link>
                 ) : (
-                  <NavigationMenuTrigger className='hover:bg-primaryRgb-800 hover:text-accent-foreground rounded-md'>
+                  <NavigationMenuTrigger className='hover:bg-lush-800 hover:text-accent-foreground rounded-md'>
                     {item.title}
                   </NavigationMenuTrigger>
                 )}
                 {/* Next we include all the content needed inside the dropdown */}
-                <NavigationMenuContent className='!bg-gradient-to-b from-green-200 to-teal-500 focus:shadow-md'>
+                <NavigationMenuContent className='from-lush-200 to-breeze-400 !bg-gradient-to-b focus:shadow-md'>
                   <ul className='grid w-[400px] gap-3 p-4 md:w-[500px] lg:w-[600px]'>
                     {item.dropdownItems.map((dropdownItem, index) => (
                       <div key={dropdownItem.title + index}>
@@ -63,7 +63,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                 <NavigationMenuLink
                   className={cn(
                     navigationMenuTriggerStyle(),
-                    'hover:bg-primaryRgb-800 hover:text-accent-foreground rounded-md',
+                    'hover:bg-lush-800 hover:text-accent-foreground rounded-md',
                   )}
                 >
                   {item.title}

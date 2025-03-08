@@ -10,11 +10,11 @@ export default function Home() {
 
         <div className='flex flex-col items-center gap-4 sm:flex-row'>
           <a
-            className='flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent bg-foreground px-4 text-sm text-background transition-colors hover:bg-[#b6b6b6] sm:h-12 sm:px-5 sm:text-base'
+            className='border-lush-200 text-lush-950 hover:bg-lush-400 flex h-10 items-center justify-center gap-2 rounded-full border border-solid px-4 text-sm transition-colors sm:h-12 sm:px-5 sm:text-base'
             href='/projects'
           >
             <Image
-              className='invert'
+              className='invert dark:invert-0'
               src='/svg/vercel.svg'
               alt='Vercel logomark'
               width={20}
@@ -23,7 +23,7 @@ export default function Home() {
             Check out my projects
           </a>
           <a
-            className='bg-primaryRgb-300 hover:bg-primaryRgb-500 flex h-10 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm transition-colors hover:border-transparent sm:h-12 sm:min-w-44 sm:px-5 sm:text-base'
+            className='bg-breeze-200 hover:bg-breeze-300 text-breeze-950 border-breeze-700 flex h-10 items-center justify-center rounded-full border border-solid px-4 text-sm transition-colors hover:border-transparent sm:h-12 sm:min-w-44 sm:px-5 sm:text-base'
             href='/contact'
           >
             Contact me
@@ -32,6 +32,7 @@ export default function Home() {
         <div>
           <h1>Deep dive into my skills and passion and experience</h1>
           <div className='h-[125px]'>Stuff goes here</div>
+          <div className='h-[500px]'>lots of info</div>
         </div>
       </main>
     </div>
