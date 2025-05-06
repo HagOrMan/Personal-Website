@@ -5,7 +5,7 @@ import { useResolvedTheme } from '@/context/ThemeContext';
 
 type LinkedInIconProps = {
   className?: string;
-  colour?: 'light' | 'dark' | 'main'; // main theme is the blue theme that has their standard colour blue
+  colour?: 'white' | 'black' | 'main'; // main theme is the blue theme that has their standard colour blue
   useThemeForImgSource?: boolean;
 };
 
@@ -20,9 +20,9 @@ const LinkedInIcon = ({
     ? resolvedTheme === 'light'
       ? '/png/InBug-Black.png'
       : '/png/InBug-White.png'
-    : colour === 'dark'
+    : colour === 'black'
       ? '/png/InBug-Black.png'
-      : colour === 'light'
+      : colour === 'white'
         ? '/png/InBug-White.png'
         : '/png/LI-In-Bug.png';
 

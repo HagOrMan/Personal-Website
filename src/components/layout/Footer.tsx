@@ -26,7 +26,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
           >
             <LinkedInIcon
               className='cursor-newtab h-6 w-6 dark:invert'
-              colour='dark'
+              colour='black'
             />
           </a>
         </div>

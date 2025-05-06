@@ -5,7 +5,7 @@ import { useResolvedTheme } from '@/context/ThemeContext';
 
 type GitHubIconProps = {
   className?: string;
-  colour?: 'light' | 'dark';
+  colour?: 'white' | 'black';
   useThemeForImgSource?: boolean;
 };
 
@@ -28,7 +28,7 @@ const GitHubIcon = ({
     ? resolvedTheme === 'dark' // If we want to use the theme for the image source, then dark theme gets white image while light theme gets dark image
       ? '/svg/github-mark-white.svg'
       : '/svg/github-mark.svg'
-    : colour === 'light' // If don't use theme for image source, we base it off the passed in prop deciding the colour of the image to use
+    : colour === 'white' // If don't use theme for image source, we base it off the passed in prop deciding the colour of the image to use
       ? '/svg/github-mark-white.svg'
       : '/svg/github-mark.svg';
 
