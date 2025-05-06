@@ -46,6 +46,11 @@ export const navbarItems: NavbarItem[] = [
         description:
           'A fun implementation of a game with the same name using Java',
       },
+      {
+        title: 'Infinity Chess',
+        link: '/projects/infinity-chess',
+        description: 'A Chess variant where pieces can wrap around the walls',
+      },
     ],
   },
   {
