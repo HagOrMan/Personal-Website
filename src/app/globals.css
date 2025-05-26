@@ -4,35 +4,39 @@
 
 :root {
   /* #region  /**=========== Shadcn Variables =========== */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  /* --background: #ffffff;
-  --foreground: #171717; */ /* Original template colours */
+  --background: 180 60% 97%;
+  --foreground: 210 30% 12%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card: 180 60% 97%; /* soft aqua background */
+  --card-foreground: 210 20% 20%; /* cool dark grayish-blue text */
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
+  --popover: 180 60% 98%; /* even lighter than card */
+  --popover-foreground: 210 25% 15%;
 
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
+  /* Primary Buttons / Actions */
+  --primary: 172 100% 35%; /* lush-500 (turquoise main) */
+  --primary-foreground: 180 100% 98%; /* soft, near-white for contrast */
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
+  /* Secondary Elements */
+  --secondary: 200 80% 90%; /* breeze-100 / subtle blue */
+  --secondary-foreground: 210 30% 20%; /* muted navy */
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  /* Muted Content */
+  --muted: 195 60% 94%; /* desaturated light aqua */
+  --muted-foreground: 195 20% 45%; /* slate-aqua for text */
 
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  /* Accent (for highlights, tags, etc.) */
+  --accent: 195 55% 80%; /* light, bright turquoise */
+  --accent-foreground: 210 40% 20%;
 
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  /* Destructive (red) */
+  --destructive: 358 85% 65%; /* coral-red */
+  --destructive-foreground: 0 100% 98%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  /* Borders, Inputs, Focus Rings */
+  --border: 180 40% 90%;
+  --input: 180 40% 90%;
+  --ring: 172 100% 40%; /* lush focus ring */
 
   --radius: 0.5rem;
   /* #endregion  /**======== Shadcn Variables =========== */
@@ -105,33 +109,33 @@
 }
 
 html.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
+  --background: 190 50% 5%;
+  --foreground: 195 20% 88%;
 
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
+  --card: 190 45% 7%;
+  --card-foreground: 195 20% 88%;
 
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 190 45% 9%;
+  --popover-foreground: 195 25% 90%;
 
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 175 60% 40%; /* Deep vibrant Lush-like teal */
+  --primary-foreground: 190 40% 95%; /* Light aqua */
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 200 25% 15%; /* Muted navy-blue, matches background family */
+  --secondary-foreground: 195 25% 85%; /* Soft aqua-gray for text/icons */
 
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
+  --muted: 200 20% 12%; /* Very subdued cool charcoal */
+  --muted-foreground: 195 15% 60%; /* Dimmed seafoam, for subtle elements */
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 195 55% 40%; /* Bright, refreshing teal for highlights/buttons */
+  --accent-foreground: 195 20% 90%; /* Light ocean mist */
 
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 65% 40%; /* Dark coral red */
+  --destructive-foreground: 0 80% 95%; /* Softened light coral text on red bg */
 
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  --border: 190 25% 14%; /* Dark cool border, not pure black */
+  --input: 190 25% 14%; /* Same as border for fields */
+  --ring: 195 80% 60%; /* Aqua highlight for focus rings */
 
   /* #region  /**=========== Custom Primary Colours =========== */
   --tw-color-lush-50: 240 253 249;

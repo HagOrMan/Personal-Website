@@ -21,6 +21,7 @@ export function ThemeModeToggle() {
       size='icon'
       onClick={toggleTheme}
       aria-label='Toggle theme'
+      className='active:bg-accent/85'
     >
       {theme === 'light' ? (
         <Sun className='h-[1.2rem] w-[1.2rem]' />

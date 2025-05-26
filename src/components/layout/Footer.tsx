@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function Footer({ navbarItems }: NavbarProps) {
   return (
-    <footer className='sticky w-full bg-background py-6 text-center text-white shadow-inner md:py-0'>
+    <footer className='sticky w-full bg-background py-6 text-center shadow-inner md:py-0'>
       <div className='mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 md:flex-row'>
         {/* Social Links */}
         <div className='flex gap-4'>

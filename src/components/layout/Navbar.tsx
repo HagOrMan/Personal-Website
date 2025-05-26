@@ -44,7 +44,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='sticky top-0 w-full max-w-full'
+      className='sticky top-0 w-full max-w-full bg-background'
       onPointerLeave={() => setValue('')}
     >
       <NavigationMenuList>
@@ -58,19 +58,19 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                   {item.link ? (
                     // Optionally has the trigger also be a link to a page
                     <Link href={item.link}>
-                      <NavigationMenuTrigger className='rounded-md hover:bg-lush-800 hover:text-accent-foreground data-[state=open]:bg-lush-800/70'>
+                      <NavigationMenuTrigger className='rounded-md hover:bg-primary hover:text-accent-foreground data-[state=open]:bg-primary/70'>
                         {item.title}
                       </NavigationMenuTrigger>
                     </Link>
                   ) : (
-                    <NavigationMenuTrigger className='rounded-md hover:bg-lush-800 hover:text-accent-foreground'>
+                    <NavigationMenuTrigger className='rounded-md hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80'>
                       {item.title}
                     </NavigationMenuTrigger>
                   )}
                 </div>
 
                 {/* Next we include all the content needed inside the dropdown */}
-                <NavigationMenuContent className='!bg-gradient-to-b from-lush-200 to-breeze-400 focus:shadow-md'>
+                <NavigationMenuContent className='!bg-gradient-to-b from-lush-200 to-breeze-400 focus:shadow-md dark:from-lush-800 dark:to-breeze-800'>
                   <div
                     className='relative'
                     onPointerEnter={() => setValue(`${index}`)}
@@ -97,7 +97,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                   <NavigationMenuLink
                     className={cn(
                       navigationMenuTriggerStyle(),
-                      'rounded-md hover:bg-lush-800 hover:text-accent-foreground',
+                      'rounded-md hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80',
                     )}
                   >
                     {item.title}
