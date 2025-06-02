@@ -22,10 +22,27 @@ export type NavbarProps = {
 export const Navbar = ({ navbarItems }: NavbarProps) => {
   const [value, setValue] = useState(''); // represents the index as a string of the currently chosen navigation item
 
+  // Find navigation items that need dropdowns since only those should have their value set
+  const dropdownIndices = navbarItems.reduce<string[]>(
+    (acc, navItem, index) => {
+      if (navItem.dropdownItems !== undefined) {
+        acc.push(`${index}`);
+      }
+      return acc;
+    },
+    [],
+  );
+
+  // Wrapper to first check if the string is is the list of indices we want to consider. If not, set it to empty string.
+  // Only used in functions where we might not be setting the value to a dropdown nav item
+  const setValueWrapper = (newValue: string) => {
+    setValue(dropdownIndices.includes(newValue) ? newValue : '');
+  };
+
   // Handles the value changing in the main navigation menu, which is really just an override so we manually control the value.
   const handleValueChange = (newValue: string) => {
     if (newValue !== '') {
-      setValue(newValue);
+      setValueWrapper(newValue);
     }
   };
 
@@ -36,7 +53,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
       // the timeout is needed to close the dropdown menu, but we ensure we don't glitch it when we go from the dropdown back to the triggering nav item
       await new Promise((resolve) => setTimeout(resolve, 1));
     }
-    setValue(`${index}`);
+    setValueWrapper(`${index}`);
   };
 
   return (
