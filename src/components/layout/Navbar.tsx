@@ -7,7 +7,6 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-  NavigationMenuViewport,
 } from '@/components/ui/NavigationMenu';
 import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
 
@@ -115,10 +114,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
       </div>
 
       {/* The Indicator - visually highlights the active menu item */}
-      <NavigationMenuIndicator />
-
-      {/* Viewport that holds dropdown content */}
-      <NavigationMenuViewport />
+      <NavigationMenuIndicator classNameTriangle='bg-primary/90' />
     </NavigationMenu>
   );
 };
