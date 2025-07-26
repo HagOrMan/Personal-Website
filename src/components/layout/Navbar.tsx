@@ -86,7 +86,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                 </div>
 
                 {/* Next we include all the content needed inside the dropdown */}
-                <NavigationMenuContent className='!bg-gradient-to-b from-lush-200 to-breeze-400 focus:shadow-md dark:from-lush-800 dark:to-breeze-800'>
+                <NavigationMenuContent className='bg-linear-to-b! from-lush-200 to-breeze-400 focus:shadow-md dark:from-lush-800 dark:to-breeze-800'>
                   <div
                     className='relative'
                     onPointerEnter={() => setValue(`${index}`)}
@@ -146,7 +146,7 @@ const ListItem = React.forwardRef<
         <a
           ref={ref}
           className={cn(
-            'block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground',
+            'outline-hidden block select-none space-y-1 rounded-md p-3 leading-none no-underline transition-colors hover:bg-accent hover:text-accent-foreground',
             className,
           )}
           {...props}
