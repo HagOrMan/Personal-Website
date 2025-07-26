@@ -60,7 +60,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='sticky top-0 w-full max-w-full bg-background'
+      className='bg-background sticky top-0 w-full max-w-full'
       onPointerLeave={() => setValue('')}
     >
       <NavigationMenuList>
@@ -74,19 +74,19 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                   {item.link ? (
                     // Optionally has the trigger also be a link to a page
                     <Link href={item.link}>
-                      <NavigationMenuTrigger className='rounded-md hover:bg-primary hover:text-accent-foreground data-[state=open]:bg-primary/70'>
+                      <NavigationMenuTrigger className='hover:bg-primary hover:text-accent-foreground data-[state=open]:bg-primary/70 rounded-md'>
                         {item.title}
                       </NavigationMenuTrigger>
                     </Link>
                   ) : (
-                    <NavigationMenuTrigger className='rounded-md hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80'>
+                    <NavigationMenuTrigger className='hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80 rounded-md'>
                       {item.title}
                     </NavigationMenuTrigger>
                   )}
                 </div>
 
                 {/* Next we include all the content needed inside the dropdown */}
-                <NavigationMenuContent className='bg-linear-to-b! from-lush-200 to-breeze-400 focus:shadow-md dark:from-lush-800 dark:to-breeze-800'>
+                <NavigationMenuContent className='from-lush-200 to-breeze-400 dark:from-lush-800 dark:to-breeze-800 bg-linear-to-b! focus:shadow-md'>
                   <div
                     className='relative'
                     onPointerEnter={() => setValue(`${index}`)}
@@ -109,16 +109,17 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
             ) : (
               // This occurs if there are no dropdown items and there just needs to be a button in the navbar that links somewhere
               <div onPointerEnter={() => handlePointerEnter(index)}>
-                <Link href={item.link!} legacyBehavior passHref>
-                  <NavigationMenuLink
+                <NavigationMenuLink asChild>
+                  <Link
                     className={cn(
                       navigationMenuTriggerStyle(),
-                      'rounded-md hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80',
+                      'hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80 rounded-md',
                     )}
+                    href={item.link!}
                   >
                     {item.title}
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </div>
             )}
           </NavigationMenuItem>
@@ -146,13 +147,13 @@ const ListItem = React.forwardRef<
         <a
           ref={ref}
           className={cn(
-            'outline-hidden block select-none space-y-1 rounded-md p-3 leading-none no-underline transition-colors hover:bg-accent hover:text-accent-foreground',
+            'hover:bg-accent hover:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline outline-hidden transition-colors select-none',
             className,
           )}
           {...props}
         >
-          <div className='text-sm font-bold leading-none'>{title}</div>
-          <p className='line-clamp-2 text-sm leading-snug text-muted-foreground'>
+          <div className='text-sm leading-none font-bold'>{title}</div>
+          <p className='text-muted-foreground line-clamp-2 text-sm leading-snug'>
             {children}
           </p>
         </a>
