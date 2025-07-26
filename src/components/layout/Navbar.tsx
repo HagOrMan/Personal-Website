@@ -60,7 +60,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='bg-background sticky top-0 w-full max-w-full'
+      className='bg-background sticky top-0 hidden w-full max-w-full md:flex'
       onPointerLeave={() => setValue('')}
     >
       <NavigationMenuList>
