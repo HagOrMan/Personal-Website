@@ -16,7 +16,13 @@ export const navbarItems: NavbarItem[] = [
   },
   {
     title: 'Projects',
+    link: '/projects',
     dropdownItems: [
+      {
+        title: 'View all Projects',
+        link: '/projects',
+        description: 'A quick look through everything I am proud of',
+      },
       {
         title: 'Hatch Booking System',
         link: '/projects/hatch-booking-system',
