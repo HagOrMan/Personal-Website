@@ -86,14 +86,13 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                   >
                     <ul className='grid w-[400px] gap-3 p-4 md:w-[500px] lg:w-[600px]'>
                       {item.dropdownItems.map((dropdownItem, index) => (
-                        <div key={dropdownItem.title + index}>
-                          <ListItem
-                            title={dropdownItem.title}
-                            href={dropdownItem.link}
-                          >
-                            {dropdownItem.description || ''}
-                          </ListItem>
-                        </div>
+                        <ListItem
+                          title={dropdownItem.title}
+                          href={dropdownItem.link}
+                          key={dropdownItem.title + index}
+                        >
+                          {dropdownItem.description || ''}
+                        </ListItem>
                       ))}
                     </ul>
                   </div>
@@ -136,7 +135,10 @@ function ListItem({
 }: React.ComponentPropsWithoutRef<'li'> & { href: string }) {
   return (
     <li {...props}>
-      <NavigationMenuLink className='hover:bg-accent/60' asChild>
+      <NavigationMenuLink
+        className='after:bg-accent-foreground/50 relative after:absolute after:bottom-0 after:left-0 after:block after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100'
+        asChild
+      >
         <Link href={href}>
           <div className='text-sm leading-none font-medium'>{title}</div>
           <p className='text-muted-foreground line-clamp-2 text-sm leading-snug'>
