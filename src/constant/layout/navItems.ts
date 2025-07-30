@@ -16,7 +16,6 @@ export const navbarItems: NavbarItem[] = [
   },
   {
     title: 'Projects',
-    link: '/projects',
     dropdownItems: [
       {
         title: 'Hatch Booking System',

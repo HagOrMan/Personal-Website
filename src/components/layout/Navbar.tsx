@@ -60,30 +60,23 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='bg-background sticky top-0 hidden w-full max-w-full md:flex'
+      className='bg-background sticky top-0 z-10 hidden w-full max-w-full md:flex'
       onPointerLeave={() => setValue('')}
     >
       <NavigationMenuList>
         {navbarItems.map((item, index) => (
-          <NavigationMenuItem key={index} value={`${index}`}>
+          <NavigationMenuItem
+            key={index}
+            value={`${index}`}
+            onPointerEnter={() => handlePointerEnter(index)}
+          >
             {/*First we check if there are any dropdownItems. If yes, map down again.*/}
             {item.dropdownItems ? (
               // First give a trigger to open to dropdown menu with the title of the item
               <>
-                <div onPointerEnter={() => handlePointerEnter(index)}>
-                  {item.link ? (
-                    // Optionally has the trigger also be a link to a page
-                    <Link href={item.link}>
-                      <NavigationMenuTrigger className='hover:bg-primary hover:text-accent-foreground data-[state=open]:bg-primary/70 rounded-md'>
-                        {item.title}
-                      </NavigationMenuTrigger>
-                    </Link>
-                  ) : (
-                    <NavigationMenuTrigger className='hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80 rounded-md'>
-                      {item.title}
-                    </NavigationMenuTrigger>
-                  )}
-                </div>
+                <NavigationMenuTrigger className='hover:bg-primary data-[state=open]:bg-primary/70 data-[state=open]:hover:bg-primary/50 hover:text-accent-foreground active:bg-lush-700/80 rounded-md'>
+                  {item.title}
+                </NavigationMenuTrigger>
 
                 {/* Next we include all the content needed inside the dropdown */}
                 <NavigationMenuContent className='from-lush-200 to-breeze-400 dark:from-lush-800 dark:to-breeze-800 bg-linear-to-b! focus:shadow-md'>
@@ -108,57 +101,49 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
               </>
             ) : (
               // This occurs if there are no dropdown items and there just needs to be a button in the navbar that links somewhere
-              <div onPointerEnter={() => handlePointerEnter(index)}>
-                <NavigationMenuLink asChild>
-                  <Link
-                    className={cn(
-                      navigationMenuTriggerStyle(),
-                      'hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80 rounded-md',
-                    )}
-                    href={item.link!}
-                  >
-                    {item.title}
-                  </Link>
-                </NavigationMenuLink>
-              </div>
+              <NavigationMenuLink asChild>
+                <Link
+                  className={cn(
+                    navigationMenuTriggerStyle(),
+                    'hover:bg-primary hover:text-accent-foreground active:bg-lush-700/80 rounded-md',
+                  )}
+                  href={item.link!}
+                >
+                  {item.title}
+                </Link>
+              </NavigationMenuLink>
             )}
           </NavigationMenuItem>
         ))}
+
+        {/* The Indicator - visually highlights the active menu item */}
+        <NavigationMenuIndicator classNameTriangle='bg-primary/90' />
       </NavigationMenuList>
 
       {/* Push the theme toggle to the right */}
       <div className='right-0 ml-auto'>
         <ThemeModeToggle />
       </div>
-
-      {/* The Indicator - visually highlights the active menu item */}
-      <NavigationMenuIndicator classNameTriangle='bg-primary/90' />
     </NavigationMenu>
   );
 };
 
-const ListItem = React.forwardRef<
-  React.ComponentRef<'a'>,
-  React.ComponentPropsWithoutRef<'a'>
->(({ className, title, children, ...props }, ref) => {
+function ListItem({
+  title,
+  children,
+  href,
+  ...props
+}: React.ComponentPropsWithoutRef<'li'> & { href: string }) {
   return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            'hover:bg-accent hover:text-accent-foreground block space-y-1 rounded-md p-3 leading-none no-underline outline-hidden transition-colors select-none',
-            className,
-          )}
-          {...props}
-        >
-          <div className='text-sm leading-none font-bold'>{title}</div>
+    <li {...props}>
+      <NavigationMenuLink className='hover:bg-accent/60' asChild>
+        <Link href={href}>
+          <div className='text-sm leading-none font-medium'>{title}</div>
           <p className='text-muted-foreground line-clamp-2 text-sm leading-snug'>
             {children}
           </p>
-        </a>
+        </Link>
       </NavigationMenuLink>
     </li>
   );
-});
-ListItem.displayName = 'ListItem';
+}
