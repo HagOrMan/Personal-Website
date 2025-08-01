@@ -72,9 +72,9 @@ export default function Footer({ navbarItems }: NavbarProps) {
 
             return (
               <React.Fragment key={index}>
-                <Link href={item.link}>
-                  <GradientTextHover>{item.title}</GradientTextHover>
-                </Link>
+                <GradientTextHover asChild>
+                  <Link href={item.link}>{item.title}</Link>
+                </GradientTextHover>
                 {/* Separator (not rendered if the last item) */}
                 {index < navbarItems.length - 1 && (
                   <Separator
