@@ -1,9 +1,10 @@
 'use client';
-import { Navbar } from '@/components/layout/Navbar';
-import { HamburgerMenu } from '@/components/layout/HamburgerMenu';
-import { navbarItems } from '@/constant/layout/navItems';
-import Footer from '@/components/layout/Footer';
 import { usePathname } from 'next/navigation';
+
+import Footer from '@/components/layout/Footer';
+import { HamburgerMenu } from '@/components/layout/HamburgerMenu';
+import { Navbar } from '@/components/layout/Navbar';
+import { navbarItems } from '@/constant/layout/navItems';
 
 export default function PageLayout({
   children,

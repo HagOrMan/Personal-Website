@@ -1,3 +1,7 @@
+import React, { useState } from 'react';
+import Link from 'next/link';
+
+import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -8,12 +12,8 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from '@/components/ui/NavigationMenu';
-import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
-
 import { NavbarItem } from '@/constant/layout/navItems';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import React, { useState } from 'react';
 
 export type NavbarProps = {
   navbarItems: NavbarItem[];

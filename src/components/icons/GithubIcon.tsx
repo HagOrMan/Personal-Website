@@ -1,7 +1,8 @@
 'use client';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+
 import { useResolvedTheme } from '@/context/ThemeContext';
+import { cn } from '@/lib/utils';
 
 type GitHubIconProps = {
   className?: string;
