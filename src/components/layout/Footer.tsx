@@ -1,14 +1,16 @@
+import React from 'react';
+import Link from 'next/link';
+
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { NavbarProps } from '@/components/layout/Navbar';
-import Link from 'next/link';
+import { GradientTextHover } from '@/components/ui/GradientTextHover';
+import { Separator } from '@/components/ui/Separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/Tooltip';
-import { Separator } from '@/components/ui/Separator';
-import React from 'react';
 
 export default function Footer({ navbarItems }: NavbarProps) {
   return (
@@ -29,7 +31,10 @@ export default function Footer({ navbarItems }: NavbarProps) {
                 />
               </a>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent
+              className='bg-nebula-800'
+              classNameArrow='bg-nebula-800 fill-nebula-800'
+            >
               <p>Github/HagOrMan</p>
             </TooltipContent>
           </Tooltip>
@@ -46,14 +51,17 @@ export default function Footer({ navbarItems }: NavbarProps) {
                 />
               </a>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent
+              className='bg-nebula-800'
+              classNameArrow='bg-nebula-800 fill-nebula-800'
+            >
               <p>LinkedIn/kyle-hagerman-se</p>
             </TooltipContent>
           </Tooltip>
         </div>
 
         {/* Copyright or Optional Signature */}
-        <div className='hidden md:block'>
+        <div className='text-foreground hidden md:block'>
           © {new Date().getFullYear()} Kyle Hagerman
         </div>
 
@@ -64,8 +72,8 @@ export default function Footer({ navbarItems }: NavbarProps) {
 
             return (
               <React.Fragment key={index}>
-                <Link href={item.link} className='text-black dark:text-white'>
-                  {item.title}
+                <Link href={item.link}>
+                  <GradientTextHover>{item.title}</GradientTextHover>
                 </Link>
                 {/* Separator (not rendered if the last item) */}
                 {index < navbarItems.length - 1 && (
