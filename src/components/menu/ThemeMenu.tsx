@@ -1,12 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
+
+import { Moon, Sun } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
+import { useResolvedTheme } from '@/context/ThemeContext';
 
 export function ThemeModeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
+  const { resolvedTheme: theme } = useResolvedTheme();
 
   // Toggle between light and dark
   const toggleTheme = () => {
@@ -19,6 +23,7 @@ export function ThemeModeToggle() {
       size='icon'
       onClick={toggleTheme}
       aria-label='Toggle theme'
+      className='active:bg-accent/85'
     >
       {theme === 'light' ? (
         <Sun className='h-[1.2rem] w-[1.2rem]' />

@@ -1,8 +1,10 @@
 'use client';
+import { usePathname } from 'next/navigation';
+
+import Footer from '@/components/layout/Footer';
+import { HamburgerMenu } from '@/components/layout/HamburgerMenu';
 import { Navbar } from '@/components/layout/Navbar';
 import { navbarItems } from '@/constant/layout/navItems';
-import Footer from '@/components/layout/Footer';
-import { usePathname } from 'next/navigation';
 
 export default function PageLayout({
   children,
@@ -16,7 +18,9 @@ export default function PageLayout({
 
   return (
     <>
+      {/* Each of the below will conditionally render based on the screen size */}
       <Navbar navbarItems={navbarItems} />
+      <HamburgerMenu navbarItems={navbarItems} />
       {children}
       {!hideFooter.includes(pathname) && <Footer navbarItems={navbarItems} />}
     </>

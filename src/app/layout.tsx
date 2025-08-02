@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
-import { Analytics } from '@vercel/analytics/react';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { ThemeProvider } from '@/components/ui/ThemeProvider';
+
+import { Analytics } from '@vercel/analytics/react';
+
 import PageLayout from '@/components/layout/PageLayout';
+import { ThemeProvider } from '@/components/ui/ThemeProvider';
+import { ThemeProvider as ThemeProviderCustom } from '@/context/ThemeContext';
+
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,8 +40,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PageLayout>{children}</PageLayout>
-          <Analytics />
+          <ThemeProviderCustom>
+            {/* This custom theme provider will help resolve the theme to light or dark, since system is an option too but we want to know for sure which one it actually is */}
+            <PageLayout>{children}</PageLayout>
+            <Analytics />
+          </ThemeProviderCustom>
         </ThemeProvider>
       </body>
     </html>

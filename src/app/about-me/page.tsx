@@ -1,6 +1,6 @@
 export default function AboutMe() {
   return (
-    <main>
+    <main className='bg-background'>
       <h1 className='text-4xl'>About Me</h1>
       <p>
         Hey! I&apos;m Kyle, a Software Engineering student at McMaster

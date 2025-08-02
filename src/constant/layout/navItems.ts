@@ -19,6 +19,11 @@ export const navbarItems: NavbarItem[] = [
     link: '/projects',
     dropdownItems: [
       {
+        title: 'View all Projects',
+        link: '/projects',
+        description: 'A quick look through everything I am proud of',
+      },
+      {
         title: 'Hatch Booking System',
         link: '/projects/hatch-booking-system',
         description: 'Custom booking system used by McMaster Engineering!',
@@ -45,6 +50,11 @@ export const navbarItems: NavbarItem[] = [
         link: '/projects/piraten-kapern',
         description:
           'A fun implementation of a game with the same name using Java',
+      },
+      {
+        title: 'Infinity Chess',
+        link: '/projects/infinity-chess',
+        description: 'A Chess variant where pieces can wrap around the walls',
       },
     ],
   },

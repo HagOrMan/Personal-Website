@@ -1,30 +1,41 @@
 'use client';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
+
+import { useResolvedTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 
 type LinkedInIconProps = {
   className?: string;
-  theme?: 'light' | 'dark' | 'main'; // main theme is the blue theme that has their standard colour blue
+  colour?: 'white' | 'black' | 'main'; // main theme is the blue theme that has their standard colour blue
+  useThemeForImgSource?: boolean;
 };
 
-const LinkedInIcon = ({ className, theme: themeProps }: LinkedInIconProps) => {
-  const { theme } = useTheme();
-  const currentTheme = themeProps || theme;
-  const imgSource =
-    currentTheme === 'dark'
-      ? '/png/InBug-White.png'
-      : currentTheme === 'light'
-        ? '/png/InBug-Black.png'
+const LinkedInIcon = ({
+  className,
+  colour,
+  useThemeForImgSource,
+}: LinkedInIconProps) => {
+  const { resolvedTheme } = useResolvedTheme();
+
+  const imgSource = useThemeForImgSource
+    ? resolvedTheme === 'light'
+      ? '/png/InBug-Black.png'
+      : '/png/InBug-White.png'
+    : colour === 'black'
+      ? '/png/InBug-Black.png'
+      : colour === 'white'
+        ? '/png/InBug-White.png'
         : '/png/LI-In-Bug.png';
 
+  const darkModeStyle =
+    colour === undefined && !useThemeForImgSource ? 'dark:invert' : '';
   return (
     <Image
-      className={cn(className, 'object-contain')}
+      className={cn(darkModeStyle, 'object-contain', className)}
       src={imgSource}
       alt='LinkedIn Icon'
-      width={currentTheme === 'main' ? 32 : 24} // Adjust width for main theme (since it's smaller than the others)
-      height={currentTheme === 'main' ? 32 : 24} // ^
+      width={colour === 'main' ? 32 : 24} // Adjust width for main theme (since it's smaller than the others)
+      height={colour === 'main' ? 32 : 24} // ^
     />
   );
 };

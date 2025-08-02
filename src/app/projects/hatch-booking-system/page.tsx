@@ -1,6 +1,6 @@
 export default function HatchBookingSystem() {
   return (
-    <main>
+    <main className='bg-background'>
       <h1 className='text-4xl'>Hatch Booking System</h1>
       <p>
         I led a team of engineering students in the McMaster Engineering Society
