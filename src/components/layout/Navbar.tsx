@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
@@ -63,6 +64,16 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
       className='bg-background sticky top-0 z-10 hidden w-full max-w-full md:flex'
       onPointerLeave={() => setValue('')}
     >
+      {/* Website logo but to navigate home */}
+      <Link href='/' className='flex items-center'>
+        <Image
+          src='/svg/favicon.svg'
+          alt='Logo'
+          width={32}
+          height={32}
+          className='mx-2'
+        />
+      </Link>
       <NavigationMenuList>
         {navbarItems.map((item, index) => (
           <NavigationMenuItem
