@@ -1,6 +1,7 @@
+'use client';
+
 import Image from 'next/image';
 
-import { GlitchText } from '@/components/text/GlitchText';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 
 export default function Home() {
@@ -10,7 +11,6 @@ export default function Home() {
         <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
           Hey! I&apos;m Kyle
         </h1>
-        <GlitchText text='Programmer' />
         <GlitchTextCycle words={['Programmer', 'Innovator', 'Engineer']} />
 
         <div className='flex flex-col items-center gap-4 sm:flex-row'>
