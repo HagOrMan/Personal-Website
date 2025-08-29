@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -10,23 +10,35 @@ type TGlitchTextCycle = {
   style?: object;
 };
 
+/**
+ *
+ * @param words Words to rotate between
+ * @param duration time between glitches
+ * @param glitchDuration how long glitch lasts
+ * @param className extra classname for the outer component
+ */
 export const GlitchTextCycle = ({
   words,
   duration = 3000,
   glitchDuration = 500,
   className,
-  style = {},
 }: TGlitchTextCycle) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isGlitching, setIsGlitching] = useState(false);
   const [displayText, setDisplayText] = useState(words[0]);
   const [glitchText, setGlitchText] = useState('');
-  const intervalRef = useRef(null);
-  const glitchIntervalRef = useRef(null);
+  const intervalRef = useRef<NodeJS.Timeout>(null);
+  const glitchIntervalRef = useRef<NodeJS.Timeout>(null);
 
   const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?~`';
 
-  const scrambleText = (originalText, intensity = 0.3) => {
+  /**
+   * Scrambles the input text by randomly replacing each character in that text with a glitch character, the likelihood of a replacement dependent on `intensity`
+   * @param originalText Text to scramble with glitch characters
+   * @param intensity a value from `0` to `1` to determine how likely it is that a character will glitch. Set to `1` to scramble all characters in the glitch
+   * @returns
+   */
+  const scrambleText = (originalText: string, intensity: number = 0.3) => {
     return originalText
       .split('')
       .map((char) => {
@@ -38,7 +50,7 @@ export const GlitchTextCycle = ({
       .join('');
   };
 
-  const startGlitch = () => {
+  const startGlitch = useCallback(() => {
     setIsGlitching(true);
     const currentWord = words[currentWordIndex];
     const nextIndex = (currentWordIndex + 1) % words.length;
@@ -69,14 +81,14 @@ export const GlitchTextCycle = ({
       glitchStep++;
 
       if (glitchStep >= totalSteps) {
-        clearInterval(glitchIntervalRef.current);
+        clearInterval(glitchIntervalRef.current!);
         setDisplayText(nextWord);
         setGlitchText('');
         setIsGlitching(false);
         setCurrentWordIndex(nextIndex);
       }
     }, glitchDuration / totalSteps);
-  };
+  }, [currentWordIndex, glitchDuration, words]);
 
   useEffect(() => {
     if (words.length > 1) {
@@ -89,14 +101,14 @@ export const GlitchTextCycle = ({
         if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
       };
     }
-  }, [currentWordIndex, duration, glitchDuration, words]);
+  }, [currentWordIndex, duration, glitchDuration, startGlitch, words]);
 
   useEffect(() => {
     setDisplayText(words[0]);
   }, [words]);
 
   return (
-    <div className={cn('relative inline-block', className)} style={style}>
+    <div className={cn('relative inline-block', className)}>
       {/* Main text */}
       <span
         className={cn(
@@ -119,7 +131,7 @@ export const GlitchTextCycle = ({
       {isGlitching && (
         <>
           <span
-            className='absolute top-0 left-0 z-5 text-4xl font-bold tracking-wider text-red-500 opacity-70'
+            className='text-lush-500 absolute top-0 left-0 z-10 text-4xl font-bold tracking-wider opacity-70'
             style={{
               transform: 'translate(-2px, 0)',
               clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)',
@@ -129,7 +141,7 @@ export const GlitchTextCycle = ({
           </span>
 
           <span
-            className='absolute top-0 left-0 z-5 text-4xl font-bold tracking-wider text-cyan-500 opacity-70'
+            className='text-breeze-500 absolute top-0 left-0 z-10 text-4xl font-bold tracking-wider opacity-70'
             style={{
               transform: 'translate(2px, 0)',
               clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)',
@@ -139,7 +151,7 @@ export const GlitchTextCycle = ({
           </span>
 
           <span
-            className='absolute top-0 left-0 z-5 text-4xl font-bold tracking-wider text-yellow-400 opacity-50'
+            className='text-nebula-500 absolute top-0 left-0 z-10 text-4xl font-bold tracking-wider opacity-50'
             style={{
               transform: 'translate(-1px, 1px)',
               clipPath: 'polygon(0 25%, 100% 25%, 100% 75%, 0 75%)',
@@ -182,114 +194,6 @@ export const GlitchTextCycle = ({
           />
         </div>
       )}
-
-      <style jsx>{`
-        @keyframes glitch-skew {
-          0% {
-            transform: skew(0deg);
-          }
-          10% {
-            transform: skew(2deg);
-          }
-          20% {
-            transform: skew(-1deg);
-          }
-          30% {
-            transform: skew(1deg);
-          }
-          40% {
-            transform: skew(-2deg);
-          }
-          50% {
-            transform: skew(1deg);
-          }
-          60% {
-            transform: skew(-1deg);
-          }
-          70% {
-            transform: skew(0deg);
-          }
-          80% {
-            transform: skew(1deg);
-          }
-          90% {
-            transform: skew(-1deg);
-          }
-          100% {
-            transform: skew(0deg);
-          }
-        }
-
-        @keyframes glitch-bar {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-      `}</style>
-    </div>
-  );
-};
-
-// Demo component showing different usage examples
-const GlitchTextDemo = () => {
-  return (
-    <div className='flex min-h-screen flex-col items-center justify-center gap-12 bg-black p-8'>
-      <div className='text-center'>
-        <h1 className='mb-8 text-2xl text-white'>Glitch Text Component Demo</h1>
-
-        {/* Default glitch */}
-        <div className='mb-8'>
-          <p className='mb-4 text-sm text-gray-400'>Default Settings</p>
-          <GlitchTextCycle />
-        </div>
-
-        {/* Custom words with faster glitch */}
-        <div className='mb-8'>
-          <p className='mb-4 text-sm text-gray-400'>
-            Custom Words - Fast Glitch
-          </p>
-          <GlitchTextCycle
-            words={['REACT', 'NEXTJS', 'TAILWIND', 'AWESOME']}
-            duration={2000}
-            glitchDuration={300}
-            className='text-green-400'
-          />
-        </div>
-
-        {/* Slower, more dramatic glitch */}
-        <div className='mb-8'>
-          <p className='mb-4 text-sm text-gray-400'>Dramatic Glitch</p>
-          <GlitchTextCycle
-            words={['CYBERPUNK', 'MATRIX', 'DIGITAL', 'FUTURE']}
-            duration={4000}
-            glitchDuration={800}
-            className='text-5xl text-purple-400'
-          />
-        </div>
-
-        {/* Single word (no cycling) */}
-        <div className='mb-8'>
-          <p className='mb-4 text-sm text-gray-400'>Static Text</p>
-          <GlitchTextCycle words={['STATIC']} className='text-red-400' />
-        </div>
-      </div>
-
-      <div className='max-w-2xl text-center'>
-        <h2 className='mb-4 text-xl text-white'>Usage</h2>
-        <div className='rounded-lg bg-gray-900 p-4 text-left'>
-          <code className='text-sm text-green-400'>
-            {`<GlitchText 
-  words={['WORD1', 'WORD2', 'WORD3']}
-  duration={3000}        // Time between glitches
-  glitchDuration={500}   // How long glitch lasts  
-  className="text-blue-400"
-/>`}
-          </code>
-        </div>
-      </div>
     </div>
   );
 };

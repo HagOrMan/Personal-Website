@@ -11,7 +11,10 @@ export default function Home() {
         <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
           Hey! I&apos;m Kyle
         </h1>
-        <GlitchTextCycle words={['Programmer', 'Innovator', 'Engineer']} />
+        <GlitchTextCycle
+          words={['Programmer', 'Innovator', 'Engineer']}
+          className='text-primary-rgb-600'
+        />
 
         <div className='flex flex-col items-center gap-4 sm:flex-row'>
           <a

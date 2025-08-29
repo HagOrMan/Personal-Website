@@ -61,7 +61,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='bg-background sticky top-0 z-10 hidden w-full max-w-full md:flex'
+      className='bg-background sticky top-0 z-50 hidden w-full max-w-full md:flex'
       onPointerLeave={() => setValue('')}
     >
       {/* Website logo but to navigate home */}

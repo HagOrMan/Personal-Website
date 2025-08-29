@@ -108,6 +108,51 @@
       background-position: 700px 0;
     }
   }
+
+  @keyframes glitch-skew {
+    0% {
+      transform: skew(0deg);
+    }
+    10% {
+      transform: skew(2deg);
+    }
+    20% {
+      transform: skew(-1deg);
+    }
+    30% {
+      transform: skew(1deg);
+    }
+    40% {
+      transform: skew(-2deg);
+    }
+    50% {
+      transform: skew(1deg);
+    }
+    60% {
+      transform: skew(-1deg);
+    }
+    70% {
+      transform: skew(0deg);
+    }
+    80% {
+      transform: skew(1deg);
+    }
+    90% {
+      transform: skew(-1deg);
+    }
+    100% {
+      transform: skew(0deg);
+    }
+  }
+
+  @keyframes glitch-bar {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
 
 /*
