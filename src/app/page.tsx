@@ -2,12 +2,18 @@
 
 import Image from 'next/image';
 
+import { ElectricShockBackground } from '@/components/ElectricShockBackground';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 
 export default function Home() {
   return (
     <div className='bg-background grid grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-(family-name:--font-geist-sans) sm:p-20'>
-      <main className='row-start-2 flex flex-col items-center gap-8 sm:items-start'>
+      <div className='absolute top-0 left-0 h-screen w-screen'>
+        <ElectricShockBackground />
+        {/* gradient to blend into page below */}
+        <div className='from-background absolute bottom-0 left-0 h-32 w-full bg-gradient-to-t to-transparent' />
+      </div>
+      <main className='relative z-10 row-start-2 flex flex-col items-center gap-8 sm:items-start'>
         <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
           Hey! I&apos;m Kyle
         </h1>
