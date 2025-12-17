@@ -108,15 +108,15 @@ const fragmentShader = `
   }
 `;
 
-// Create the custom material using drei's helper
+// Initial material setup (Default values before hydration)
 const ElectricMaterial = shaderMaterial(
   {
     uTime: 0,
-    // Convert your RGB (0-255) to GLSL RGB (0.0 - 1.0)
-    uColorLush: new THREE.Color(0 / 255, 209 / 255, 176 / 255),
-    uColorBreeze: new THREE.Color(9 / 255, 172 / 255, 238 / 255),
+    // Convert css RGB (0-255) to GLSL RGB (0.0 - 1.0)
+    uColorLush: new THREE.Color('#00d1b2'),
+    uColorBreeze: new THREE.Color('#09adee'),
     // Using a very dark version of Nebula for the deep background fog
-    uColorBg: new THREE.Color(20 / 255, 10 / 255, 50 / 255),
+    uColorBg: new THREE.Color('#140a32'),
   },
   vertexShader,
   fragmentShader,
@@ -125,22 +125,36 @@ const ElectricMaterial = shaderMaterial(
 // Make the material available as a JSX element (<electricMaterial />)
 extend({ ElectricMaterial });
 
-// --- CONFIGURATION ---
-// Define colors for light and dark mode
-const COLORS = {
-  dark: {
-    bg: new THREE.Color(20 / 255, 10 / 255, 50 / 255), // Deep Nebula/Black
-    lush: new THREE.Color(0 / 255, 209 / 255, 176 / 255), // Bright Lush
-    breeze: new THREE.Color(9 / 255, 172 / 255, 238 / 255), // Bright Breeze
-  },
-  light: {
-    // Light Mode Background (Matches --background: 180 60% 97%)
-    // HSL(180, 60%, 97%) is roughly #f0fafa
-    bg: new THREE.Color('#f0fafa'),
-    // In light mode, the lightning usually needs to be slightly darker or more saturated to stand out
-    lush: new THREE.Color(0 / 255, 168 / 255, 146 / 255), // Darker Lush (Lush-600)
-    breeze: new THREE.Color(0 / 255, 138 / 255, 204 / 255), // Darker Breeze (Breeze-600)
-  },
+/**
+ * Reads a CSS variable from the root document and converts it to a THREE.Color.
+ * Handles both HSL (e.g., "180 60% 97%") and RGB space-separated (e.g., "0 209 176") formats.
+ */
+const getCssColorAsThreeColor = (
+  variableName: string,
+  fallbackHex: string,
+): THREE.Color => {
+  if (typeof window === 'undefined') return new THREE.Color(fallbackHex);
+
+  const style = getComputedStyle(document.documentElement);
+  const value = style.getPropertyValue(variableName).trim();
+
+  if (!value) return new THREE.Color(fallbackHex);
+
+  // 1. Handle Tailwind v4 Raw Numbers (e.g., "0 209 176")
+  // We check if the string is just numbers and spaces
+  if (/^[\d.]+(\s+[\d.]+)+$/.test(value)) {
+    const [r, g, b] = value.split(/\s+/).map(Number);
+    // CRITICAL: Three.js expects 0-1 range for numbers, but CSS gives 0-255.
+    return new THREE.Color(r / 255, g / 255, b / 255);
+  }
+
+  // 2. Handle HSL values (e.g., "180 60% 97%")
+  if (value.includes('%') && !value.startsWith('hsl')) {
+    return new THREE.Color(`hsl(${value})`);
+  }
+
+  // 3. Handle standard formats (Hex, standard rgb(), standard hsl())
+  return new THREE.Color(value);
 };
 
 // The internal component that holds the plane and updates the shader
@@ -148,16 +162,19 @@ const Scene = () => {
   const materialRef = useRef<ElectricMaterialType>(null);
   const { resolvedTheme } = useResolvedTheme();
 
-  // Create target colors refs so we can lerp (smoothly transition) to them
-  const targetBg = useRef(COLORS.dark.bg);
-  const targetLush = useRef(COLORS.dark.lush);
-  const targetBreeze = useRef(COLORS.dark.breeze);
+  // Initialize targets with defaults
+  const targetBg = useRef(new THREE.Color('#140a32'));
+  const targetLush = useRef(new THREE.Color('#00d1b0'));
+  const targetBreeze = useRef(new THREE.Color('#09acee'));
 
+  // Updated colours when theme changes.
   useEffect(() => {
-    // When theme changes, update our targets
-    targetBg.current = COLORS[resolvedTheme].bg;
-    targetLush.current = COLORS[resolvedTheme].lush;
-    targetBreeze.current = COLORS[resolvedTheme].breeze;
+    targetLush.current = getCssColorAsThreeColor('--shader-lush', '#00d1b0');
+    targetBreeze.current = getCssColorAsThreeColor(
+      '--shader-breeze',
+      '#09acee',
+    );
+    targetBg.current = getCssColorAsThreeColor('--shader-bg', '#140a32');
   }, [resolvedTheme]);
 
   // This hook runs on every single frame (usually 60fps)
