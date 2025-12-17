@@ -312,9 +312,11 @@
 
     /* #region  /**=========== Shader Semantic Variables =========== */
     /* Light mode uses darker colors (600) for visibility on light backgrounds */
-    --shader-bg: var(--background);
-    --shader-lush: var(--tw-color-lush-600); /* Darker Teal */
-    --shader-breeze: var(--tw-color-breeze-600); /* Darker Blue */
+    --shader-bg: var(
+      --tw-color-nebula-950
+    ); /* slightly darker than main background */
+    --shader-lush: var(--tw-color-lush-800); /* Darker Teal */
+    --shader-breeze: var(--tw-color-breeze-800); /* Darker Blue */
     /* #endregion /**=========== Shader Semantic Variables =========== */
   }
 
@@ -387,7 +389,7 @@
 
     /* #region  /**=========== Shader Semantic Variables (Dark Mode) =========== */
     /* Dark mode uses standard vivid colors (500) and the deep nebula background */
-    --shader-bg: var(--tw-color-nebula-950); /* Deep Purple/Black */
+    --shader-bg: var(--background);
     --shader-lush: var(--tw-color-lush-500); /* Vivid Teal */
     --shader-breeze: var(--tw-color-breeze-500); /* Vivid Blue */
     /* #endregion /**=========== Shader Semantic Variables (Dark Mode) =========== */

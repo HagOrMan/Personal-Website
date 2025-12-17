@@ -15,6 +15,7 @@ import { Canvas, extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useResolvedTheme } from '@/context/ThemeContext';
+import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
 
 type ElectricMaterialType = THREE.ShaderMaterial & {
   uTime: number;
@@ -124,38 +125,6 @@ const ElectricMaterial = shaderMaterial(
 
 // Make the material available as a JSX element (<electricMaterial />)
 extend({ ElectricMaterial });
-
-/**
- * Reads a CSS variable from the root document and converts it to a THREE.Color.
- * Handles both HSL (e.g., "180 60% 97%") and RGB space-separated (e.g., "0 209 176") formats.
- */
-const getCssColorAsThreeColor = (
-  variableName: string,
-  fallbackHex: string,
-): THREE.Color => {
-  if (typeof window === 'undefined') return new THREE.Color(fallbackHex);
-
-  const style = getComputedStyle(document.documentElement);
-  const value = style.getPropertyValue(variableName).trim();
-
-  if (!value) return new THREE.Color(fallbackHex);
-
-  // 1. Handle Tailwind v4 Raw Numbers (e.g., "0 209 176")
-  // We check if the string is just numbers and spaces
-  if (/^[\d.]+(\s+[\d.]+)+$/.test(value)) {
-    const [r, g, b] = value.split(/\s+/).map(Number);
-    // CRITICAL: Three.js expects 0-1 range for numbers, but CSS gives 0-255.
-    return new THREE.Color(r / 255, g / 255, b / 255);
-  }
-
-  // 2. Handle HSL values (e.g., "180 60% 97%")
-  if (value.includes('%') && !value.startsWith('hsl')) {
-    return new THREE.Color(`hsl(${value})`);
-  }
-
-  // 3. Handle standard formats (Hex, standard rgb(), standard hsl())
-  return new THREE.Color(value);
-};
 
 // The internal component that holds the plane and updates the shader
 const Scene = () => {

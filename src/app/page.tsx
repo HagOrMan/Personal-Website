@@ -2,16 +2,16 @@
 
 import Image from 'next/image';
 
-import { ElectricShockBackground } from '@/components/ElectricShockBackground';
-// import { OceanScene } from '@/components/OceanParticles';
+// import { ElectricShockBackground } from '@/components/ElectricShockBackground';
+import { OceanScene } from '@/components/OceanParticles';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 
 export default function Home() {
   return (
     <div className='bg-background grid grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-(family-name:--font-geist-sans) sm:p-20'>
       <div className='absolute top-0 left-0 h-screen w-screen'>
-        <ElectricShockBackground />
-        {/* <OceanScene /> */}
+        {/* <ElectricShockBackground /> */}
+        <OceanScene />
         {/* gradient to blend into page below */}
         <div className='from-background absolute bottom-0 left-0 h-32 w-full bg-gradient-to-t to-transparent' />
       </div>

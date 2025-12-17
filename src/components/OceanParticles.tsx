@@ -1,10 +1,17 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { OrbitControls, shaderMaterial } from '@react-three/drei';
 import { Canvas, extend, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+
+import { useResolvedTheme } from '@/context/ThemeContext';
+import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
+
+const defaultLushColour = 'rgb(0, 209, 176)';
+const defaultBreezeColour = 'rgb(9, 172, 238)';
+const defaultBgColour = '#5c7e8a';
 
 type OceanParticleType = THREE.ShaderMaterial & {
   uTime: number;
@@ -13,18 +20,8 @@ type OceanParticleType = THREE.ShaderMaterial & {
   uPixelRatio: number;
 };
 
-// 1. Define the Custom Shader Material
-// This handles the math for the waves (vertex) and the look of the particles (fragment)
-const WaveShaderMaterial = shaderMaterial(
-  // Uniforms: Variables passed from React to the GPU
-  {
-    uTime: 0,
-    uColorStart: new THREE.Color('rgb(0, 209, 176)'), // Lush-500
-    uColorEnd: new THREE.Color('rgb(9, 172, 238)'), // Breeze-500
-    uPixelRatio: 1, // Will be set on mount
-  },
-  // Vertex Shader: Calculates position and movement
-  `
+// Vertex Shader: Calculates position and movement
+const vertexShader = `
     uniform float uTime;
     uniform float uPixelRatio;
     
@@ -60,9 +57,10 @@ const WaveShaderMaterial = shaderMaterial(
       gl_PointSize = 6.0 * uPixelRatio; // Base size
       gl_PointSize *= (1.0 / -viewPosition.z);
     }
-  `,
-  // Fragment Shader: Calculates color and shape of each particle
-  `
+  `;
+
+// Fragment Shader: Calculates color and shape of each particle
+const fragmentShader = `
     uniform vec3 uColorStart;
     uniform vec3 uColorEnd;
     
@@ -85,7 +83,19 @@ const WaveShaderMaterial = shaderMaterial(
 
       gl_FragColor = vec4(color, strength); 
     }
-  `,
+  `;
+
+// Initial material setup (Default values before hydration)
+const WaveShaderMaterial = shaderMaterial(
+  // Uniforms: Variables passed from React to the GPU
+  {
+    uTime: 0,
+    uColorStart: new THREE.Color(defaultLushColour), // Lush-500
+    uColorEnd: new THREE.Color(defaultBreezeColour), // Breeze-500
+    uPixelRatio: 1, // Will be set on mount
+  },
+  vertexShader,
+  fragmentShader,
 );
 
 // Allow React-Three-Fiber to use the custom material as <waveShaderMaterial />
@@ -94,11 +104,48 @@ extend({ WaveShaderMaterial });
 const WaveParticles = () => {
   const materialRef = useRef<OceanParticleType>(null);
 
+  const { resolvedTheme } = useResolvedTheme();
+
+  // Initialize targets with defaults
+  const targetStart = useRef(new THREE.Color(defaultLushColour));
+  const targetEnd = useRef(new THREE.Color(defaultBreezeColour));
+  const targetBg = useRef(new THREE.Color(defaultBgColour));
+
+  // Updated colours when theme changes.
+  useEffect(() => {
+    targetStart.current = getCssColorAsThreeColor(
+      '--shader-lush',
+      defaultLushColour,
+    );
+    targetEnd.current = getCssColorAsThreeColor(
+      '--shader-breeze',
+      defaultBreezeColour,
+    );
+    targetBg.current = getCssColorAsThreeColor('--shader-bg', defaultBgColour);
+  }, [resolvedTheme]);
+
   // Hook to animate the uTime uniform every frame
   useFrame((state) => {
     if (materialRef.current) {
       materialRef.current.uTime = state.clock.getElapsedTime();
+
+      // Smoothly transition colors (Lerp)
+      // This prevents the background from snapping instantly when you toggle the theme
+      materialRef.current.uColorStart.lerp(targetStart.current, 0.05);
+      materialRef.current.uColorEnd.lerp(targetEnd.current, 0.05);
     }
+
+    // Animate the Scene Background (The void behind the particles)
+    // We check if the background is a Color object; if not, we initialize it.
+    if (
+      !state.scene.background ||
+      !(state.scene.background instanceof THREE.Color)
+    ) {
+      state.scene.background = new THREE.Color(defaultBgColour);
+    }
+
+    // Smoothly transition the background color
+    (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
   });
 
   // Calculate pixel ratio for sharp rendering on all screens
@@ -108,7 +155,6 @@ const WaveParticles = () => {
   return (
     // Points is the Three.js object for particle systems
     <points rotation={[-Math.PI / 2, 0, 0]}>
-      {' '}
       {/* Rotate to lay flat like an ocean */}
       {/* PlaneGeometry creates a grid of vertices. 
         args: [width, height, segmentsX, segmentsY] 
