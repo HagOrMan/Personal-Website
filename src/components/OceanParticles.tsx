@@ -1,6 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+/**
+ * Customization:
+ * * gl_FragColor = vec4(color, strength * x);  -> If the dark particles represent too "thin," multiply strength here. x=1 means normal alpha
+ */
+
+import React, { useEffect, useRef, useState } from 'react';
 
 import { OrbitControls, shaderMaterial } from '@react-three/drei';
 import { Canvas, extend, useFrame } from '@react-three/fiber';
@@ -81,7 +86,9 @@ const fragmentShader = `
       float mixStrength = (vElevation + 0.25) * 1.5;
       vec3 color = mix(uColorStart, uColorEnd, mixStrength);
 
-      gl_FragColor = vec4(color, strength); 
+      // OPTIONAL: Boost alpha for visibility
+      // If the dark particles represent too "thin," multiply strength here
+      gl_FragColor = vec4(color, strength * 1.5); 
     }
   `;
 
@@ -106,6 +113,11 @@ const WaveParticles = () => {
 
   const { resolvedTheme } = useResolvedTheme();
 
+  // State to control blending mode
+  const [blendingMode, setBlendingMode] = useState<THREE.Blending>(
+    THREE.AdditiveBlending,
+  );
+
   // Initialize targets with defaults
   const targetStart = useRef(new THREE.Color(defaultLushColour));
   const targetEnd = useRef(new THREE.Color(defaultBreezeColour));
@@ -122,19 +134,22 @@ const WaveParticles = () => {
       defaultBreezeColour,
     );
     targetBg.current = getCssColorAsThreeColor('--shader-bg', defaultBgColour);
+
+    // If Dark Mode: Additive makes it glow.
+    // If Light Mode: Normal makes it look like dark ink/smoke.
+    const isLightMode = resolvedTheme === 'light';
+    setBlendingMode(
+      isLightMode ? THREE.NormalBlending : THREE.AdditiveBlending,
+    );
+
+    // Force material update if needed (rarely needed with state, but good for safety)
+    if (materialRef.current) {
+      materialRef.current.needsUpdate = true;
+    }
   }, [resolvedTheme]);
 
   // Hook to animate the uTime uniform every frame
   useFrame((state) => {
-    if (materialRef.current) {
-      materialRef.current.uTime = state.clock.getElapsedTime();
-
-      // Smoothly transition colors (Lerp)
-      // This prevents the background from snapping instantly when you toggle the theme
-      materialRef.current.uColorStart.lerp(targetStart.current, 0.05);
-      materialRef.current.uColorEnd.lerp(targetEnd.current, 0.05);
-    }
-
     // Animate the Scene Background (The void behind the particles)
     // We check if the background is a Color object; if not, we initialize it.
     if (
@@ -144,8 +159,16 @@ const WaveParticles = () => {
       state.scene.background = new THREE.Color(defaultBgColour);
     }
 
-    // Smoothly transition the background color
-    (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
+    if (materialRef.current) {
+      materialRef.current.uTime = state.clock.getElapsedTime();
+
+      // Smoothly transition colors (Lerp)
+      // This prevents the background from snapping instantly when you toggle the theme
+      materialRef.current.uColorStart.lerp(targetStart.current, 0.05);
+      materialRef.current.uColorEnd.lerp(targetEnd.current, 0.05);
+      // Smoothly transition the background color
+      (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
+    }
   });
 
   // Calculate pixel ratio for sharp rendering on all screens
@@ -160,12 +183,13 @@ const WaveParticles = () => {
         args: [width, height, segmentsX, segmentsY] 
         Higher segments = more particles = denser fog/waves
       */}
-      <planeGeometry args={[12, 12, 128, 128]} />
+      <planeGeometry args={[12, 12, 256, 128]} />
       <waveShaderMaterial
         ref={materialRef}
+        key={blendingMode} // Forces re-rendering since Three.js doesn't like to swap blending modes
         transparent={true}
         depthWrite={false} // Prevents particles from occluding each other weirdly
-        blending={THREE.AdditiveBlending} // Makes overlapping particles glow brighter
+        blending={blendingMode} // dynamically changes based on light or dark mode
         uPixelRatio={pixelRatio}
       />
     </points>
