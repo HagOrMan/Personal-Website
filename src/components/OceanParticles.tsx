@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Customization:
- * * gl_FragColor = vec4(color, strength * x);  -> If the dark particles represent too "thin," multiply strength here. x=1 means normal alpha
- */
-
 import React, { useEffect, useRef, useState } from 'react';
 
 import { OrbitControls, shaderMaterial } from '@react-three/drei';
@@ -23,6 +18,7 @@ type OceanParticleType = THREE.ShaderMaterial & {
   uColorStart: THREE.Color;
   uColorEnd: THREE.Color;
   uPixelRatio: number;
+  uAlphaBoost: number;
 };
 
 // Vertex Shader: Calculates position and movement
@@ -68,6 +64,7 @@ const vertexShader = `
 const fragmentShader = `
     uniform vec3 uColorStart;
     uniform vec3 uColorEnd;
+    uniform float uAlphaBoost;
     
     varying float vElevation;
 
@@ -86,9 +83,9 @@ const fragmentShader = `
       float mixStrength = (vElevation + 0.25) * 1.5;
       vec3 color = mix(uColorStart, uColorEnd, mixStrength);
 
-      // OPTIONAL: Boost alpha for visibility
-      // If the dark particles represent too "thin," multiply strength here
-      gl_FragColor = vec4(color, strength * 1.5); 
+      // 3. Apply Alpha Boost
+      // In light mode, we multiply by a higher number to make the "smoke" thicker
+      gl_FragColor = vec4(color, strength * uAlphaBoost);
     }
   `;
 
@@ -100,6 +97,7 @@ const WaveShaderMaterial = shaderMaterial(
     uColorStart: new THREE.Color(defaultLushColour), // Lush-500
     uColorEnd: new THREE.Color(defaultBreezeColour), // Breeze-500
     uPixelRatio: 1, // Will be set on mount
+    uAlphaBoost: 1.5, // Amount that the alpha of the particles is boosted by to make "smoke" thicker
   },
   vertexShader,
   fragmentShader,
@@ -122,6 +120,7 @@ const WaveParticles = () => {
   const targetStart = useRef(new THREE.Color(defaultLushColour));
   const targetEnd = useRef(new THREE.Color(defaultBreezeColour));
   const targetBg = useRef(new THREE.Color(defaultBgColour));
+  const targetAlphaBoost = useRef(1.5);
 
   // Updated colours when theme changes.
   useEffect(() => {
@@ -141,6 +140,10 @@ const WaveParticles = () => {
     setBlendingMode(
       isLightMode ? THREE.NormalBlending : THREE.AdditiveBlending,
     );
+
+    // Dark Mode (Additive) = 1.5 (Soft Glow)
+    // Light Mode (Normal) = 4.0 (Thick/Vibrant Ink)
+    targetAlphaBoost.current = isLightMode ? 4.0 : 1.5;
 
     // Force material update if needed (rarely needed with state, but good for safety)
     if (materialRef.current) {
@@ -168,6 +171,14 @@ const WaveParticles = () => {
       materialRef.current.uColorEnd.lerp(targetEnd.current, 0.05);
       // Smoothly transition the background color
       (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
+
+      // Smooth lerp for alpha thickness
+      // This allows the particles to "thicken up" smoothly when switching to light mode
+      materialRef.current.uAlphaBoost = THREE.MathUtils.lerp(
+        materialRef.current.uAlphaBoost,
+        targetAlphaBoost.current,
+        0.05,
+      );
     }
   });
 
