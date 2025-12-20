@@ -20,7 +20,7 @@ export default function Home() {
           Hey! I&apos;m Kyle
         </h1>
         <GlitchTextCycle
-          words={['Programmer', 'Innovator', 'Developer']}
+          words={['Developer', 'Innovator', 'Creator']}
           className='text-primary-rgb-600'
         />
 

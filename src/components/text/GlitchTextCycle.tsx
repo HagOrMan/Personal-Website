@@ -23,14 +23,25 @@ export const GlitchTextCycle = ({
   glitchDuration = 500,
   className,
 }: TGlitchTextCycle) => {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isGlitching, setIsGlitching] = useState(false);
   const [displayText, setDisplayText] = useState(words[0]);
   const [glitchText, setGlitchText] = useState('');
-  const intervalRef = useRef<NodeJS.Timeout>(null);
-  const glitchIntervalRef = useRef<NodeJS.Timeout>(null);
+
+  // Track the current index in a Ref so accessing it inside the interval doesn't force the useEffect to re-run.
+  const currentIndexRef = useRef(0);
+
+  // Track words in a Ref to handle parent re-renders where the 'words' array reference might change.
+  const wordsRef = useRef(words);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const glitchIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?~`';
+
+  // Keep wordsRef in sync with props, but don't trigger effects
+  useEffect(() => {
+    wordsRef.current = words;
+  }, [words]);
 
   /**
    * Scrambles the input text by randomly replacing each character in that text with a glitch character, the likelihood of a replacement dependent on `intensity`
@@ -51,13 +62,19 @@ export const GlitchTextCycle = ({
   };
 
   const startGlitch = useCallback(() => {
-    setIsGlitching(true);
-    const currentWord = words[currentWordIndex];
-    const nextIndex = (currentWordIndex + 1) % words.length;
-    const nextWord = words[nextIndex];
+    // Get current and next word and the indices
+    const currentWords = wordsRef.current;
+    const currentIndex = currentIndexRef.current;
+    const nextIndex = (currentIndex + 1) % currentWords.length;
+    const currentWord = currentWords[currentIndex];
+    const nextWord = currentWords[nextIndex];
 
+    setIsGlitching(true);
     let glitchStep = 0;
     const totalSteps = 20;
+
+    // Clear any existing glitch interval to prevent overlaps
+    if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
 
     glitchIntervalRef.current = setInterval(() => {
       if (glitchStep < totalSteps / 2) {
@@ -81,14 +98,16 @@ export const GlitchTextCycle = ({
       glitchStep++;
 
       if (glitchStep >= totalSteps) {
-        clearInterval(glitchIntervalRef.current!);
+        if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
         setDisplayText(nextWord);
         setGlitchText('');
         setIsGlitching(false);
-        setCurrentWordIndex(nextIndex);
+
+        // Update the Ref for the next cycle
+        currentIndexRef.current = nextIndex;
       }
     }, glitchDuration / totalSteps);
-  }, [currentWordIndex, glitchDuration, words]);
+  }, [glitchDuration]);
 
   useEffect(() => {
     if (words.length > 1) {
@@ -101,7 +120,7 @@ export const GlitchTextCycle = ({
         if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
       };
     }
-  }, [currentWordIndex, duration, glitchDuration, startGlitch, words]);
+  }, [duration, startGlitch, words.length]);
 
   useEffect(() => {
     setDisplayText(words[0]);
