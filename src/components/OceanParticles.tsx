@@ -12,6 +12,11 @@ import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
 const defaultLushColour = 'rgb(0, 209, 176)';
 const defaultBreezeColour = 'rgb(9, 172, 238)';
 const defaultBgColour = '#5c7e8a';
+const defaultAlphaBoost = 1.5;
+// Default Physics (Dark Mode / Electric defaults)
+const defaultWaveSpeed = 0.75;
+const defaultWaveElevation = 0.6;
+const defaultWaveFrequency = 1.5;
 
 type OceanParticleType = THREE.ShaderMaterial & {
   uTime: number;
@@ -19,12 +24,19 @@ type OceanParticleType = THREE.ShaderMaterial & {
   uColorEnd: THREE.Color;
   uPixelRatio: number;
   uAlphaBoost: number;
+  uWaveSpeed: number;
+  uWaveElevation: number;
+  uWaveFrequency: number;
 };
 
 // Vertex Shader: Calculates position and movement
 const vertexShader = `
     uniform float uTime;
     uniform float uPixelRatio;
+
+    uniform float uWaveSpeed;
+    uniform float uWaveElevation;
+    uniform float uWaveFrequency;
     
     varying float vElevation; // Pass wave height to fragment shader for coloring
 
@@ -39,11 +51,12 @@ const vertexShader = `
       // --- WAVE LOGIC ---
       // We combine two Sine waves to make the movement look more organic/oceanic
       // Wave 1 (Big swells)
-      float elevation = sin(modelPosition.x * 1.5 + uTime * 0.8) 
-                      * sin(modelPosition.z * 1.0 + uTime * 0.6) * 0.5;
+      float elevation = sin(modelPosition.x * uWaveFrequency + uTime * uWaveSpeed) 
+                      * sin(modelPosition.z * (uWaveFrequency * 0.8) + uTime * (uWaveSpeed * 0.8)) 
+                      * uWaveElevation;
       
-      // Wave 2 (Smaller ripples)
-      elevation -= abs(sin(modelPosition.x * 4.0 + uTime * 1.5) * 0.1);
+      // Secondary ripples
+      elevation -= abs(sin(modelPosition.x * (uWaveFrequency * 2.5) + uTime * (uWaveSpeed * 2.0)) * 0.1);
 
       modelPosition.y += elevation;
       vElevation = elevation; 
@@ -97,7 +110,10 @@ const WaveShaderMaterial = shaderMaterial(
     uColorStart: new THREE.Color(defaultLushColour), // Lush-500
     uColorEnd: new THREE.Color(defaultBreezeColour), // Breeze-500
     uPixelRatio: 1, // Will be set on mount
-    uAlphaBoost: 1.5, // Amount that the alpha of the particles is boosted by to make "smoke" thicker
+    uAlphaBoost: defaultAlphaBoost, // Amount that the alpha of the particles is boosted by to make "smoke" thicker
+    uWaveSpeed: defaultWaveSpeed,
+    uWaveElevation: defaultWaveElevation,
+    uWaveFrequency: defaultWaveFrequency,
   },
   vertexShader,
   fragmentShader,
@@ -120,7 +136,12 @@ const WaveParticles = () => {
   const targetStart = useRef(new THREE.Color(defaultLushColour));
   const targetEnd = useRef(new THREE.Color(defaultBreezeColour));
   const targetBg = useRef(new THREE.Color(defaultBgColour));
-  const targetAlphaBoost = useRef(1.5);
+  const targetAlphaBoost = useRef(defaultAlphaBoost);
+
+  // Physics Refs (Current Target Values)
+  const targetSpeed = useRef(defaultWaveSpeed);
+  const targetElevation = useRef(defaultWaveElevation);
+  const targetFrequency = useRef(defaultWaveFrequency);
 
   // Updated colours when theme changes.
   useEffect(() => {
@@ -134,16 +155,24 @@ const WaveParticles = () => {
     );
     targetBg.current = getCssColorAsThreeColor('--shader-bg', defaultBgColour);
 
-    // If Dark Mode: Additive makes it glow.
-    // If Light Mode: Normal makes it look like dark ink/smoke.
     const isLightMode = resolvedTheme === 'light';
-    setBlendingMode(
-      isLightMode ? THREE.NormalBlending : THREE.AdditiveBlending,
-    );
 
-    // Dark Mode (Additive) = 1.5 (Soft Glow)
-    // Light Mode (Normal) = 4.0 (Thick/Vibrant Ink)
-    targetAlphaBoost.current = isLightMode ? 4.0 : 1.5;
+    // Update Physics Targets based on Theme
+    if (isLightMode) {
+      // Flowing Water Settings
+      targetSpeed.current = 0.6; // Slow movement
+      targetElevation.current = 0.8; // Slightly higher waves for more impact at low speed
+      targetFrequency.current = 1.0; // waves slightly more spaced out
+      targetAlphaBoost.current = 4.0; // more strength for light colour to show, Thick/Vibrant Ink
+      setBlendingMode(THREE.NormalBlending); // dark ink/smoke
+    } else {
+      // Electric/Storm Settings
+      targetSpeed.current = 0.8; // Fast movement
+      targetElevation.current = 0.6; // High peaks
+      targetFrequency.current = 1.5; // Tight, chaotic waves
+      targetAlphaBoost.current = 1.5; // Soft glow
+      setBlendingMode(THREE.AdditiveBlending); // Glowing look
+    }
 
     // Force material update if needed (rarely needed with state, but good for safety)
     if (materialRef.current) {
@@ -163,21 +192,39 @@ const WaveParticles = () => {
     }
 
     if (materialRef.current) {
-      materialRef.current.uTime = state.clock.getElapsedTime();
+      const mat = materialRef.current;
+      mat.uTime = state.clock.getElapsedTime();
 
       // Smoothly transition colors (Lerp)
       // This prevents the background from snapping instantly when you toggle the theme
-      materialRef.current.uColorStart.lerp(targetStart.current, 0.05);
-      materialRef.current.uColorEnd.lerp(targetEnd.current, 0.05);
+      mat.uColorStart.lerp(targetStart.current, 0.05);
+      mat.uColorEnd.lerp(targetEnd.current, 0.05);
       // Smoothly transition the background color
       (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
 
       // Smooth lerp for alpha thickness
       // This allows the particles to "thicken up" smoothly when switching to light mode
-      materialRef.current.uAlphaBoost = THREE.MathUtils.lerp(
-        materialRef.current.uAlphaBoost,
+      mat.uAlphaBoost = THREE.MathUtils.lerp(
+        mat.uAlphaBoost,
         targetAlphaBoost.current,
         0.05,
+      );
+
+      // Lerp Physics (slow to let the physics gradually change)
+      mat.uWaveSpeed = THREE.MathUtils.lerp(
+        mat.uWaveSpeed,
+        targetSpeed.current,
+        0.03,
+      );
+      mat.uWaveElevation = THREE.MathUtils.lerp(
+        mat.uWaveElevation,
+        targetElevation.current,
+        0.03,
+      );
+      mat.uWaveFrequency = THREE.MathUtils.lerp(
+        mat.uWaveFrequency,
+        targetFrequency.current,
+        0.03,
       );
     }
   });
