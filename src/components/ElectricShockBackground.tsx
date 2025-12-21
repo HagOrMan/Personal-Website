@@ -24,6 +24,13 @@ type ElectricMaterialType = THREE.ShaderMaterial & {
   uColorBg: THREE.Color;
 };
 
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    electricMaterial: any;
+  }
+}
+
 // --- THE GLSL SHADER CODE ---
 
 // Vertex Shader: The simplest part. It just tells the GPU where the corners of the plane are.

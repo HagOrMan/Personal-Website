@@ -29,6 +29,13 @@ type OceanParticleType = THREE.ShaderMaterial & {
   uWaveFrequency: number;
 };
 
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    waveShaderMaterial: any;
+  }
+}
+
 // Vertex Shader: Calculates position and movement
 const vertexShader = `
     uniform float uTime;
