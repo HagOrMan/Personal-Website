@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { OrbitControls, shaderMaterial } from '@react-three/drei';
-import { Canvas, extend, useFrame } from '@react-three/fiber';
+import { Canvas, extend, ThreeEvent, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useResolvedTheme } from '@/context/ThemeContext';
@@ -27,6 +27,8 @@ type OceanParticleType = THREE.ShaderMaterial & {
   uWaveSpeed: number;
   uWaveElevation: number;
   uWaveFrequency: number;
+  uMouseClick: THREE.Vector2;
+  uLastClickTime: number;
 };
 
 declare module '@react-three/fiber' {
@@ -47,6 +49,10 @@ const vertexShader = `
     
     varying float vElevation; // Pass wave height to fragment shader for coloring
 
+    // Variables for enabling clicks to add ripples
+    uniform vec2 uMouseClick;
+    uniform float uLastClickTime;
+
     void main() {
       vec4 modelPosition = modelMatrix * vec4(position, 1.0);
 
@@ -59,6 +65,21 @@ const vertexShader = `
       
       // Secondary ripples
       elevation -= abs(sin(modelPosition.x * (uWaveFrequency * 2.5) + uTimeOffset * 2.0) * 0.1);
+
+      // --- CLICK RIPPLE LOGIC ---
+      float dist = distance(modelPosition.xz, uMouseClick);
+      float timeSinceClick = uTimeOffset - uLastClickTime;
+
+      // Create a pulse that moves outward over time
+      // Use a sine wave masked by an exponential decay so it fades out
+      // In Dark mode, ripples zip out fast.
+      // In Light mode, they gently expand.
+      float ripple = sin(dist * 5.0 - timeSinceClick * 10.0) * exp(-dist * 0.5) * exp(-timeSinceClick * 1.5);
+
+      // Only apply ripple if the click is recent
+      if(timeSinceClick < 5.0 && timeSinceClick >= 0.0) {
+          elevation += ripple * 0.3; 
+      }
 
       modelPosition.y += elevation;
       vElevation = elevation; 
@@ -116,6 +137,8 @@ const WaveShaderMaterial = shaderMaterial(
     uWaveSpeed: defaultWaveSpeed,
     uWaveElevation: defaultWaveElevation,
     uWaveFrequency: defaultWaveFrequency,
+    uMouseClick: new THREE.Vector2(-10, -10), // Start off-screen
+    uLastClickTime: -10.0,
   },
   vertexShader,
   fragmentShader,
@@ -149,6 +172,15 @@ const WaveParticles = () => {
   const targetSpeed = useRef(defaultWaveSpeed);
   const targetElevation = useRef(defaultWaveElevation);
   const targetFrequency = useRef(defaultWaveFrequency);
+
+  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+    if (materialRef.current) {
+      // Set the center of the ripple to the clicked 3D point
+      // event.point is the Vector3 {x, y, z} where the ray hit the plane
+      materialRef.current.uMouseClick.set(event.point.x, event.point.z);
+      materialRef.current.uLastClickTime = timeOffsetRef.current;
+    }
+  };
 
   // Updated colours when theme changes.
   useEffect(() => {
@@ -247,7 +279,7 @@ const WaveParticles = () => {
 
   return (
     // Points is the Three.js object for particle systems
-    <points rotation={[-Math.PI / 2, 0, 0]}>
+    <points rotation={[-Math.PI / 2, 0, 0]} onPointerDown={handlePointerDown}>
       {/* Rotate to lay flat like an ocean */}
       {/* PlaneGeometry creates a grid of vertices. 
         args: [width, height, segmentsX, segmentsY] 
@@ -269,7 +301,7 @@ const WaveParticles = () => {
 // The Main Scene Component
 export const OceanScene = () => {
   return (
-    <Canvas camera={{ position: [0, 2, 4], fov: 60 }}>
+    <Canvas className='touch-pan-y' camera={{ position: [0, 2, 4], fov: 60 }}>
       {/* OrbitControls lets you rotate the view with mouse */}
       <OrbitControls
         enableZoom={false}
