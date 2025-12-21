@@ -19,7 +19,7 @@ const defaultWaveElevation = 0.6;
 const defaultWaveFrequency = 1.5;
 
 type OceanParticleType = THREE.ShaderMaterial & {
-  uTime: number;
+  uTimeOffset: number;
   uColorStart: THREE.Color;
   uColorEnd: THREE.Color;
   uPixelRatio: number;
@@ -38,19 +38,14 @@ declare module '@react-three/fiber' {
 
 // Vertex Shader: Calculates position and movement
 const vertexShader = `
-    uniform float uTime;
+    // Use time offset because using just time makes light/dark mode transition funky
+    uniform float uTimeOffset;
     uniform float uPixelRatio;
 
-    uniform float uWaveSpeed;
     uniform float uWaveElevation;
     uniform float uWaveFrequency;
     
     varying float vElevation; // Pass wave height to fragment shader for coloring
-
-    // A simple pseudo-random function for extra "fog" noise if needed
-    float random(vec2 st) {
-        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-    }
 
     void main() {
       vec4 modelPosition = modelMatrix * vec4(position, 1.0);
@@ -58,12 +53,12 @@ const vertexShader = `
       // --- WAVE LOGIC ---
       // We combine two Sine waves to make the movement look more organic/oceanic
       // Wave 1 (Big swells)
-      float elevation = sin(modelPosition.x * uWaveFrequency + uTime * uWaveSpeed) 
-                      * sin(modelPosition.z * (uWaveFrequency * 0.8) + uTime * (uWaveSpeed * 0.8)) 
+      float elevation = sin(modelPosition.x * uWaveFrequency + uTimeOffset) 
+                      * sin(modelPosition.z * (uWaveFrequency * 0.8) + uTimeOffset * 0.8) 
                       * uWaveElevation;
       
       // Secondary ripples
-      elevation -= abs(sin(modelPosition.x * (uWaveFrequency * 2.5) + uTime * (uWaveSpeed * 2.0)) * 0.1);
+      elevation -= abs(sin(modelPosition.x * (uWaveFrequency * 2.5) + uTimeOffset * 2.0) * 0.1);
 
       modelPosition.y += elevation;
       vElevation = elevation; 
@@ -113,7 +108,7 @@ const fragmentShader = `
 const WaveShaderMaterial = shaderMaterial(
   // Uniforms: Variables passed from React to the GPU
   {
-    uTime: 0,
+    uTimeOffset: 0,
     uColorStart: new THREE.Color(defaultLushColour), // Lush-500
     uColorEnd: new THREE.Color(defaultBreezeColour), // Breeze-500
     uPixelRatio: 1, // Will be set on mount
@@ -133,6 +128,11 @@ const WaveParticles = () => {
   const materialRef = useRef<OceanParticleType>(null);
 
   const { resolvedTheme } = useResolvedTheme();
+
+  // Ref to track the accumulated time offset manually, since math for particle positions depends on time
+  // Using time offset instead of time helps trasition dark vs light mode
+  // Without it, dark->light moves the "waves" backwards, which looks weird
+  const timeOffsetRef = useRef(0);
 
   // State to control blending mode
   const [blendingMode, setBlendingMode] = useState<THREE.Blending>(
@@ -167,14 +167,14 @@ const WaveParticles = () => {
     // Update Physics Targets based on Theme
     if (isLightMode) {
       // Flowing Water Settings
-      targetSpeed.current = 0.6; // Slow movement
-      targetElevation.current = 0.8; // Slightly higher waves for more impact at low speed
+      targetSpeed.current = 0.55; // Slow movement
+      targetElevation.current = 0.9; // Slightly higher waves for more impact at low speed
       targetFrequency.current = 1.0; // waves slightly more spaced out
       targetAlphaBoost.current = 4.0; // more strength for light colour to show, Thick/Vibrant Ink
-      setBlendingMode(THREE.NormalBlending); // dark ink/smoke
+      setBlendingMode(THREE.NormalBlending); // dark ink, lets the colours show properly
     } else {
       // Electric/Storm Settings
-      targetSpeed.current = 0.8; // Fast movement
+      targetSpeed.current = 0.9; // Fast movement
       targetElevation.current = 0.6; // High peaks
       targetFrequency.current = 1.5; // Tight, chaotic waves
       targetAlphaBoost.current = 1.5; // Soft glow
@@ -188,7 +188,7 @@ const WaveParticles = () => {
   }, [resolvedTheme]);
 
   // Hook to animate the uTime uniform every frame
-  useFrame((state) => {
+  useFrame((state, delta) => {
     // Animate the Scene Background (The void behind the particles)
     // We check if the background is a Color object; if not, we initialize it.
     if (
@@ -200,7 +200,29 @@ const WaveParticles = () => {
 
     if (materialRef.current) {
       const mat = materialRef.current;
-      mat.uTime = state.clock.getElapsedTime();
+
+      // Lerp Physics (slow to let the physics gradually change)
+      mat.uWaveSpeed = THREE.MathUtils.lerp(
+        mat.uWaveSpeed,
+        targetSpeed.current,
+        0.025,
+      );
+      mat.uWaveElevation = THREE.MathUtils.lerp(
+        mat.uWaveElevation,
+        targetElevation.current,
+        0.03,
+      );
+      mat.uWaveFrequency = THREE.MathUtils.lerp(
+        mat.uWaveFrequency,
+        targetFrequency.current,
+        0.05,
+      );
+
+      // Increment offset by (time_passed * current_speed)
+      timeOffsetRef.current += delta * mat.uWaveSpeed;
+
+      // Update the shader uniform
+      mat.uTimeOffset = timeOffsetRef.current;
 
       // Smoothly transition colors (Lerp)
       // This prevents the background from snapping instantly when you toggle the theme
@@ -215,23 +237,6 @@ const WaveParticles = () => {
         mat.uAlphaBoost,
         targetAlphaBoost.current,
         0.05,
-      );
-
-      // Lerp Physics (slow to let the physics gradually change)
-      mat.uWaveSpeed = THREE.MathUtils.lerp(
-        mat.uWaveSpeed,
-        targetSpeed.current,
-        0.03,
-      );
-      mat.uWaveElevation = THREE.MathUtils.lerp(
-        mat.uWaveElevation,
-        targetElevation.current,
-        0.03,
-      );
-      mat.uWaveFrequency = THREE.MathUtils.lerp(
-        mat.uWaveFrequency,
-        targetFrequency.current,
-        0.03,
       );
     }
   });
