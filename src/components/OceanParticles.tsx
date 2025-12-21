@@ -278,30 +278,51 @@ const WaveParticles = () => {
     typeof window !== 'undefined' ? window.devicePixelRatio : 1;
 
   return (
-    // Points is the Three.js object for particle systems
-    <points rotation={[-Math.PI / 2, 0, 0]} onPointerDown={handlePointerDown}>
-      {/* Rotate to lay flat like an ocean */}
-      {/* PlaneGeometry creates a grid of vertices. 
+    <>
+      {/* Points is the Three.js object for particle systems */}
+      <points rotation={[-Math.PI / 2, 0, 0]}>
+        {/* Rotate to lay flat like an ocean */}
+        {/* PlaneGeometry creates a grid of vertices. 
         args: [width, height, segmentsX, segmentsY] 
         Higher segments = more particles = denser fog/waves
       */}
-      <planeGeometry args={[12, 12, 256, 128]} />
-      <waveShaderMaterial
-        ref={materialRef}
-        key={blendingMode} // Forces re-rendering since Three.js doesn't like to swap blending modes
-        transparent={true}
-        depthWrite={false} // Prevents particles from occluding each other weirdly
-        blending={blendingMode} // dynamically changes based on light or dark mode
-        uPixelRatio={pixelRatio}
-      />
-    </points>
+        <planeGeometry args={[12, 12, 256, 128]} />
+        <waveShaderMaterial
+          ref={materialRef}
+          key={blendingMode} // Forces re-rendering since Three.js doesn't like to swap blending modes
+          transparent={true}
+          depthWrite={false} // Prevents particles from occluding each other weirdly
+          blending={blendingMode} // dynamically changes based on light or dark mode
+          uPixelRatio={pixelRatio}
+        />
+      </points>
+
+      {/* THE HITBOX (Low Poly) 
+        - Invisible (visible={false})
+        - Extremely simple geometry (args={[12, 12, 1, 1]}) = 2 triangles
+        - Handles the click instantly and updates the shader ref
+      */}
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        visible={false}
+        onPointerDown={handlePointerDown}
+      >
+        <planeGeometry args={[12, 12, 1, 1]} />
+        {/* We need a material for raycasting to work, even if invisible. 
+            meshBasicMaterial is the cheapest option. */}
+        <meshBasicMaterial />
+      </mesh>
+    </>
   );
 };
 
 // The Main Scene Component
 export const OceanScene = () => {
   return (
-    <Canvas className='touch-pan-y' camera={{ position: [0, 2, 4], fov: 60 }}>
+    <Canvas
+      className='touch-pan-y select-none'
+      camera={{ position: [0, 2, 4], fov: 60 }}
+    >
       {/* OrbitControls lets you rotate the view with mouse */}
       <OrbitControls
         enableZoom={false}
