@@ -14,7 +14,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
       <div className='mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 align-middle md:flex-row'>
         {/* Social Links */}
         <div className='flex gap-4'>
-          <HaloRingHover>
+          <HaloRingHover className='rounded-full shadow-[0_2px_10px_hsl(var(--accent)_/_0.2)] hover:shadow-[0_3px_20px_rgb(var(--tw-color-lush-600)_/_1.0)]'>
             <Link
               href='https://github.com/hagorman'
               target='_blank'
@@ -32,6 +32,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
               { colour: 'lush-500', opacity: 0.2, position: 80 },
               { colour: 'transparent', position: 90 },
             ]}
+            className='shadow-[0_2px_10px_hsl(var(--accent)_/_0.2)] hover:shadow-[0_3px_20px_rgb(var(--tw-color-lush-600)_/_1.0)]'
           >
             <Link
               href='https://linkedin.com/in/kyle-hagerman-se'
