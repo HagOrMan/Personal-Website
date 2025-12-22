@@ -8,10 +8,11 @@ import * as THREE from 'three';
 
 import { useResolvedTheme } from '@/context/ThemeContext';
 import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
+import { cn } from '@/lib/utils';
 
 const defaultLushColour = 'rgb(0, 209, 176)';
 const defaultBreezeColour = 'rgb(9, 172, 238)';
-const defaultBgColour = '#5c7e8a';
+const defaultBgColour = 'rgb(0, 209, 176)';
 const defaultAlphaBoost = 1.5;
 // Default Physics (Dark Mode / Electric defaults)
 const defaultWaveSpeed = 0.75;
@@ -165,7 +166,7 @@ const WaveParticles = () => {
   // Initialize targets with defaults
   const targetStart = useRef(new THREE.Color(defaultLushColour));
   const targetEnd = useRef(new THREE.Color(defaultBreezeColour));
-  const targetBg = useRef(new THREE.Color(defaultBgColour));
+  const targetBg = useRef<THREE.Color | null>(null);
   const targetAlphaBoost = useRef(defaultAlphaBoost);
 
   // Physics Refs (Current Target Values)
@@ -221,15 +222,6 @@ const WaveParticles = () => {
 
   // Hook to animate the uTime uniform every frame
   useFrame((state, delta) => {
-    // Animate the Scene Background (The void behind the particles)
-    // We check if the background is a Color object; if not, we initialize it.
-    if (
-      !state.scene.background ||
-      !(state.scene.background instanceof THREE.Color)
-    ) {
-      state.scene.background = new THREE.Color(defaultBgColour);
-    }
-
     if (materialRef.current) {
       const mat = materialRef.current;
 
@@ -260,8 +252,15 @@ const WaveParticles = () => {
       // This prevents the background from snapping instantly when you toggle the theme
       mat.uColorStart.lerp(targetStart.current, 0.05);
       mat.uColorEnd.lerp(targetEnd.current, 0.05);
-      // Smoothly transition the background color
-      (state.scene.background as THREE.Color).lerp(targetBg.current, 0.1);
+
+      // If the scene is currently transparent (null), snap immediately to the target
+      // This prevents a lerp from "black" or "white" -> it just matches the CSS instantly
+      if (!state.scene.background && targetBg.current !== null) {
+        state.scene.background = targetBg.current.clone();
+      } else if (targetBg.current !== null) {
+        // If we already have a color, lerp it (handles light/dark mode switches smoothly)
+        (state.scene.background as THREE.Color).lerp(targetBg.current, 0.1);
+      }
 
       // Smooth lerp for alpha thickness
       // This allows the particles to "thicken up" smoothly when switching to light mode
@@ -318,18 +317,31 @@ const WaveParticles = () => {
 
 // The Main Scene Component
 export const OceanScene = () => {
+  // State to track when the scene is ready to be shown. Fixes issue where particles took milliseconds to load and appeared abruptly on screen, looks much smoother
+  const [isReady, setIsReady] = useState(false);
+
   return (
-    <Canvas
-      className='touch-pan-y select-none'
-      camera={{ position: [0, 2, 4], fov: 60 }}
+    <div
+      // Slowly pops into display once the Canvas is ready
+      className={cn(
+        'h-full w-full transition-opacity duration-1000 ease-in-out',
+        isReady ? 'opacity-100' : 'opacity-0',
+      )}
     >
-      {/* OrbitControls lets you rotate the view with mouse */}
-      <OrbitControls
-        enableZoom={false}
-        minPolarAngle={Math.PI / 3}
-        maxPolarAngle={Math.PI / 2.2}
-      />
-      <WaveParticles />
-    </Canvas>
+      <Canvas
+        className='touch-pan-y select-none'
+        camera={{ position: [0, 2, 4], fov: 60 }}
+        gl={{ alpha: true }} // allows empty background
+        onCreated={() => setIsReady(true)}
+      >
+        {/* OrbitControls lets you rotate the view with mouse */}
+        <OrbitControls
+          enableZoom={false}
+          minPolarAngle={Math.PI / 3}
+          maxPolarAngle={Math.PI / 2.2}
+        />
+        <WaveParticles />
+      </Canvas>
+    </div>
   );
 };
