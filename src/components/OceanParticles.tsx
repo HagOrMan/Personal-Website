@@ -261,7 +261,7 @@ const WaveParticles = () => {
       mat.uColorStart.lerp(targetStart.current, 0.05);
       mat.uColorEnd.lerp(targetEnd.current, 0.05);
       // Smoothly transition the background color
-      (state.scene.background as THREE.Color).lerp(targetBg.current, 0.05);
+      (state.scene.background as THREE.Color).lerp(targetBg.current, 0.1);
 
       // Smooth lerp for alpha thickness
       // This allows the particles to "thicken up" smoothly when switching to light mode
