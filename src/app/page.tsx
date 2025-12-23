@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-import { motion, useScroll, useTransform } from 'motion/react';
+import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
@@ -36,18 +36,58 @@ export default function Home() {
   const cardHeight = useTransform(
     scrollYProgress,
     [0, 0.3, 0.5],
-    ['200px', '200px', '450px'],
+    ['200px', '300px', '450px'],
   );
   // Start narrow (for name), expand to wider (for bio)
   const cardWidth = useTransform(
     scrollYProgress,
     [0, 0.3, 0.5],
-    ['300px', '300px', '550px'],
+    ['300px', '400px', '550px'],
   );
 
   // Phase 3 (30% - 60%): Photo appears on the right
   const photoOpacity = useTransform(scrollYProgress, [0.35, 0.6], [0, 1]);
   const photoX = useTransform(scrollYProgress, [0.35, 0.6], [100, 0]);
+
+  // --- Auto scroll logic to have the main content appear without requiring the user to scroll themselves ---
+  useEffect(() => {
+    // Wait 2 seconds before starting
+    const startTimeout = setTimeout(() => {
+      // Calculate how far to scroll.
+      // The container is 200vh. The animations finish around 60% (0.6) progress.
+      // 60% of the scrollable area (which is roughly 100vh) is ~0.6 * window height.
+      // Add a little buffer to ensure everything is fully visible.
+      const targetY = window.innerHeight * 0.75;
+
+      // Animate the scroll
+      const controls = animate(0, targetY, {
+        duration: 3, // Slow scroll (3 seconds)
+        ease: 'easeInOut',
+        onUpdate: (value) => {
+          window.scrollTo(0, value);
+        },
+      });
+
+      // User Interrupt Logic (The "Emergency Brake"). If the user tries to scroll manually, stop the auto-scroll
+      const handleUserInteraction = () => {
+        controls.stop();
+        window.removeEventListener('wheel', handleUserInteraction);
+        window.removeEventListener('touchstart', handleUserInteraction);
+      };
+
+      window.addEventListener('wheel', handleUserInteraction);
+      window.addEventListener('touchstart', handleUserInteraction);
+
+      // Cleanup function to remove listeners if component unmounts
+      return () => {
+        controls.stop();
+        window.removeEventListener('wheel', handleUserInteraction);
+        window.removeEventListener('touchstart', handleUserInteraction);
+      };
+    }, 2000);
+
+    return () => clearTimeout(startTimeout);
+  }, []);
 
   return (
     <div className='bg-background min-h-screen w-full font-(family-name:--font-geist-sans)'>
