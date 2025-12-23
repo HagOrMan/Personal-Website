@@ -7,6 +7,7 @@ import { NavbarProps } from '@/components/layout/Navbar';
 import { GradientTextHover } from '@/components/ui/GradientTextHover';
 import { HaloRingHover } from '@/components/ui/HaloRingHover';
 import { Separator } from '@/components/ui/Separator';
+import { GitHubLink, LinkedInLink } from '@/constant/socials';
 
 export default function Footer({ navbarItems }: NavbarProps) {
   return (
@@ -16,7 +17,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
         <div className='flex gap-4'>
           <HaloRingHover className='rounded-full shadow-[0_2px_10px_hsl(var(--accent)_/_0.2)] hover:shadow-[0_3px_20px_rgb(var(--tw-color-lush-600)_/_1.0)]'>
             <Link
-              href='https://github.com/hagorman'
+              href={GitHubLink}
               target='_blank'
               rel='noopener noreferrer'
               className='cursor-newtab'
@@ -35,7 +36,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
             className='shadow-[0_2px_10px_hsl(var(--accent)_/_0.2)] hover:shadow-[0_3px_20px_rgb(var(--tw-color-lush-600)_/_1.0)]'
           >
             <Link
-              href='https://linkedin.com/in/kyle-hagerman-se'
+              href={LinkedInLink}
               target='_blank'
               rel='noopener noreferrer'
               className='cursor-newtab'

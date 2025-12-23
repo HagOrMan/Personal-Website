@@ -1,13 +1,17 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
 
 import { motion, useScroll, useTransform } from 'motion/react';
 
+import GitHubIcon from '@/components/icons/GithubIcon';
+import LinkedInIcon from '@/components/icons/LinkedInIcon';
 // import { ElectricShockBackground } from '@/components/ElectricShockBackground';
 import { OceanScene } from '@/components/OceanParticles';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { GitHubLink, LinkedInLink } from '@/constant/socials';
 
 export default function Home() {
   const containerRef = useRef(null);
@@ -92,6 +96,41 @@ export default function Home() {
                     technology and will always say &ldquo;yes&rdquo; to the
                     craziest ideas.
                   </p>
+
+                  {/* --- Social Prompts --- */}
+                  <div className='mt-4 flex flex-wrap items-center gap-4 pt-2'>
+                    {/* GitHub Link - "View my projects" */}
+                    <Link
+                      href={GitHubLink}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='group cursor-newtab bg-nebula-500/5 border-nebula-600/10 text-nebula-950 hover:bg-nebula-500/10 hover:border-nebula-600/20 dark:bg-nebula-400/10 dark:border-nebula-300/20 dark:text-nebula-50 dark:hover:bg-nebula-400/20 dark:hover:border-nebula-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors'
+                    >
+                      <GitHubIcon
+                        className='h-5 w-5 opacity-80 transition-opacity group-hover:opacity-100'
+                        useThemeForImgSource
+                      />
+                      <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
+                        View my projects
+                      </span>
+                    </Link>
+
+                    {/* LinkedIn Link - "Let's Connect" */}
+                    <Link
+                      href={LinkedInLink}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='group cursor-newtab bg-nebula-500/5 border-nebula-600/10 text-nebula-950 hover:bg-nebula-500/10 hover:border-nebula-600/20 dark:bg-nebula-400/10 dark:border-nebula-300/20 dark:text-nebula-50 dark:hover:bg-nebula-400/20 dark:hover:border-nebula-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors'
+                    >
+                      <LinkedInIcon
+                        className='h-5 w-5 opacity-80 transition-opacity group-hover:opacity-100'
+                        useThemeForImgSource
+                      />
+                      <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
+                        Connect with me
+                      </span>
+                    </Link>
+                  </div>
                 </motion.div>
               </LiquidGlassCard>
 
