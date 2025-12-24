@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
+import { ChevronDown } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 import GitHubIcon from '@/components/icons/GithubIcon';
@@ -59,22 +60,36 @@ export default function Home() {
   // Phase 3 (30% - 60%): Photo appears
   const photoOpacity = useTransform(
     scrollYProgress,
-    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.7],
     [0, 1],
   );
   // Desktop: Slide in from right (100 to 0)
   // Mobile: Keep X at 0 to prevent horizontal scrollbar
   const photoX = useTransform(
     scrollYProgress,
-    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.7],
     [isDesktop ? 100 : 0, 0],
   );
   // Mobile: Slide UP from bottom slightly
   // Desktop: No vertical slide needed
   const photoY = useTransform(
     scrollYProgress,
-    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.7],
     [isDesktop ? 0 : 50, 0],
+  );
+
+  // Fade out the arrow at the end as the user scrolls
+  const scrollArrowOpacity = useTransform(
+    scrollYProgress,
+    [0.6, 0.69, 0.7, 0.99, 1.0],
+    [0, 0.8, 1, 1, 0],
+  );
+
+  // Move down slightly to stay in page
+  const scrollArrowY = useTransform(
+    scrollYProgress,
+    [0.95, 1.0], // Only start moving in the final 20%
+    ['0px', '48px'],
   );
 
   // --- Auto scroll logic to have the main content appear without requiring the user to scroll themselves ---
@@ -148,7 +163,7 @@ export default function Home() {
                 alpha={glassOpacity}
                 style={{ x: xPosition, height: cardHeight, width: cardWidth }}
                 className='pointer-events-auto z-20 translate-x-0 lg:-translate-x-16'
-                contentClassName='relative row-start-2 flex flex-col items-start gap-6 md:gap-8 overflow-hidden'
+                contentClassName='relative row-start-2 flex flex-col items-start gap-6 overflow-hidden'
               >
                 <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
                   Hey! I&apos;m Kyle
@@ -171,7 +186,7 @@ export default function Home() {
                   </p>
 
                   {/* --- Social Prompts --- */}
-                  <div className='mt-4 flex flex-wrap items-center gap-4 pt-2'>
+                  <div className='mt-6 flex flex-wrap items-center gap-4 pt-2 md:mt-8'>
                     {/* GitHub Link - "View my projects" */}
                     <Link
                       href={GitHubLink}
@@ -216,7 +231,7 @@ export default function Home() {
                   y: photoY,
                 }}
                 className={cn(
-                  'pointer-events-auto z-30 hidden rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md min-[450px]:block',
+                  'pointer-events-none z-30 hidden rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md min-[450px]:block',
                   // Mobile: Absolute Bottom Right, hanging off the edge
                   'absolute right-2 -bottom-8 h-[135px] w-[170px]',
                   // Medium (Tablet): Larger, slightly different offset
@@ -230,6 +245,27 @@ export default function Home() {
                 <div className='from-background absolute bottom-0 left-0 z-10 h-12 w-full bg-gradient-to-t to-transparent lg:hidden' />
               </motion.div>
             </div>
+
+            {/* Scroll indicator arrow */}
+            <motion.div
+              style={{
+                opacity: scrollArrowOpacity,
+                y: scrollArrowY, // This moves it down 64px based on scroll
+              }}
+              className='absolute bottom-10 left-1/2 z-40 -translate-x-1/2 lg:bottom-16'
+            >
+              {/* Handles the bobbing animation loop */}
+              <motion.div
+                animate={{ y: [0, 10, 0] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              >
+                <ChevronDown className='text-primary-rgb-600/80 dark:text-primary-rgb-500/80 h-10 w-10 drop-shadow-[0_0_8px_rgba(var(--tw-color-lush-400),0.6)]' />
+              </motion.div>
+            </motion.div>
           </div>
         </section>
 
