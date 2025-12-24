@@ -12,9 +12,14 @@ import { OceanScene } from '@/components/OceanParticles';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
+import { useMediaQuery } from '@/lib/screenUtils';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
   const containerRef = useRef(null);
+
+  // Check if screen is Large (Desktop)
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   // Track scroll progress specifically for this container
   // "start 40px": when top of container hits 40px down the top of viewport (used so the scroll animation triggers immediately)
@@ -26,8 +31,12 @@ export default function Home() {
 
   // --- ANIMATION MAPPING ---
 
-  // Phase 1 (0% - 30%): Text moves Left & Glass Border appears
-  const xPosition = useTransform(scrollYProgress, [0, 0.3], ['0%', '-50%']);
+  // Phase 1 (0% - 30%): Text moves Left (desktop moves more) & Glass Border appears
+  const xPosition = useTransform(
+    scrollYProgress,
+    [0, 0.3],
+    ['0%', isDesktop ? '-15vw' : '0%'],
+  );
   const glassOpacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
   // Phase 2 (30% - 60%): Description fades in & Card expands
@@ -39,15 +48,34 @@ export default function Home() {
     ['200px', '300px', '450px'],
   );
   // Start narrow (for name), expand to wider (for bio)
+  // Desktop: Grows to 550px
+  // Mobile: Grows to 90vw (almost full screen width) to prevent overflow
   const cardWidth = useTransform(
     scrollYProgress,
     [0, 0.3, 0.5],
-    ['300px', '400px', '550px'],
+    isDesktop ? ['300px', '400px', '550px'] : ['75vw', '85vw', '90vw'],
   );
 
-  // Phase 3 (30% - 60%): Photo appears on the right
-  const photoOpacity = useTransform(scrollYProgress, [0.35, 0.6], [0, 1]);
-  const photoX = useTransform(scrollYProgress, [0.35, 0.6], [100, 0]);
+  // Phase 3 (30% - 60%): Photo appears
+  const photoOpacity = useTransform(
+    scrollYProgress,
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [0, 1],
+  );
+  // Desktop: Slide in from right (100 to 0)
+  // Mobile: Keep X at 0 to prevent horizontal scrollbar
+  const photoX = useTransform(
+    scrollYProgress,
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [isDesktop ? 100 : 0, 0],
+  );
+  // Mobile: Slide UP from bottom slightly
+  // Desktop: No vertical slide needed
+  const photoY = useTransform(
+    scrollYProgress,
+    [isDesktop ? 0.35 : 0.5, isDesktop ? 0.6 : 0.8],
+    [isDesktop ? 0 : 50, 0],
+  );
 
   // --- Auto scroll logic to have the main content appear without requiring the user to scroll themselves ---
   useEffect(() => {
@@ -75,8 +103,12 @@ export default function Home() {
         window.removeEventListener('touchstart', handleUserInteraction);
       };
 
-      window.addEventListener('wheel', handleUserInteraction);
-      window.addEventListener('touchstart', handleUserInteraction);
+      window.addEventListener('wheel', handleUserInteraction, {
+        passive: true,
+      });
+      window.addEventListener('touchstart', handleUserInteraction, {
+        passive: true,
+      });
 
       // Cleanup function to remove listeners if component unmounts
       return () => {
@@ -104,18 +136,19 @@ export default function Home() {
             <div className='absolute inset-0 z-0 -translate-y-6'>
               {/* <ElectricShockBackground /> */}
               <OceanScene />
-              {/* gradient to blend into page below */}
-              <div className='from-background absolute bottom-0 left-0 h-32 w-full bg-gradient-to-t to-transparent' />
             </div>
 
+            {/* gradient to blend into page below */}
+            <div className='from-background pointer-events-none absolute bottom-0 left-0 z-50 h-32 w-full bg-gradient-to-t to-transparent' />
+
             {/* CONTENT CONTAINER */}
-            <div className='pointer-events-none relative z-10 mt-30 flex w-full max-w-7xl flex-col items-center'>
+            <div className='pointer-events-none relative z-10 mt-20 flex w-full max-w-7xl flex-col items-center lg:mt-30'>
               {/* Liquid glass card that starts invisible and appears as the text inside moves left on page. */}
               <LiquidGlassCard
                 alpha={glassOpacity}
                 style={{ x: xPosition, height: cardHeight, width: cardWidth }}
-                className='pointer-events-auto -translate-x-16'
-                contentClassName='relative row-start-2 flex flex-col items-start gap-8 overflow-hidden'
+                className='pointer-events-auto z-20 translate-x-0 lg:-translate-x-16'
+                contentClassName='relative row-start-2 flex flex-col items-start gap-6 md:gap-8 overflow-hidden'
               >
                 <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
                   Hey! I&apos;m Kyle
@@ -175,16 +208,26 @@ export default function Home() {
               </LiquidGlassCard>
 
               {/* RIGHT SIDE: Photo (Appears later) */}
-              {/* Absolute positioning helps keep it from affecting layout before it appears */}
+              {/* Mobile: Relative, centered, margin-top. Desktop: Absolute, right aligned. */}
               <motion.div
                 style={{
                   opacity: photoOpacity,
                   x: photoX,
+                  y: photoY,
                 }}
-                className='pointer-events-auto absolute top-1/2 right-20 -translate-y-1/2 rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md'
+                className={cn(
+                  'pointer-events-auto z-30 rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md',
+                  // Mobile: Absolute Bottom Right, hanging off the edge
+                  'absolute right-2 -bottom-8 h-[135px] w-[170px]',
+                  // Medium (Tablet): Larger, slightly different offset
+                  'md:right-8 md:bottom-[-20px] md:mt-0 md:h-[220px] md:w-[260px] md:translate-x-0',
+                  // Desktop: Absolute, Right Center, Full Size
+                  'lg:top-1/2 lg:right-20 lg:bottom-auto lg:mt-0 lg:block lg:h-auto lg:w-auto lg:-translate-y-1/2',
+                )}
               >
                 {/* Replace with your actual Image component */}
-                <div className='h-[400px] w-[300px] rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 shadow-2xl' />
+                <div className='h-full w-full rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 shadow-2xl lg:h-[400px] lg:w-[300px]' />
+                <div className='from-background absolute bottom-0 left-0 z-10 h-12 w-full bg-gradient-to-t to-transparent lg:hidden' />
               </motion.div>
             </div>
           </div>
