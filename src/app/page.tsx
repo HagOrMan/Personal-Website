@@ -216,7 +216,7 @@ export default function Home() {
                   y: photoY,
                 }}
                 className={cn(
-                  'pointer-events-auto z-30 rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md',
+                  'pointer-events-auto z-30 hidden rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md min-[450px]:block',
                   // Mobile: Absolute Bottom Right, hanging off the edge
                   'absolute right-2 -bottom-8 h-[135px] w-[170px]',
                   // Medium (Tablet): Larger, slightly different offset
