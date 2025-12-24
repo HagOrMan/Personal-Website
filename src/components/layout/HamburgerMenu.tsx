@@ -2,16 +2,23 @@
 
 import * as React from 'react';
 
-import { ChevronDown, ChevronRight,Menu } from 'lucide-react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { ChevronDown, ChevronRight, Menu } from 'lucide-react';
 
 import { NavbarProps } from '@/components/layout/Navbar';
+import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
 import { Button } from '@/components/ui/Button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/Collapsible';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/Sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/Sheet';
 import { NavbarItem } from '@/constant/layout/navItems';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +80,7 @@ export const HamburgerMenu = ({ navbarItems }: NavbarProps) => {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className='bg-background block md:hidden'>
+    <div className='bg-background sticky top-0 z-50 flex md:hidden'>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button variant='ghost' size='icon' className='md:hidden'>
@@ -81,6 +88,11 @@ export const HamburgerMenu = ({ navbarItems }: NavbarProps) => {
             <span className='sr-only'>Toggle menu</span>
           </Button>
         </SheetTrigger>
+
+        <VisuallyHidden>
+          <SheetTitle>Hamburger Menu</SheetTitle>
+        </VisuallyHidden>
+
         <SheetContent
           side='left'
           className='w-[240px] overflow-y-scroll sm:w-[300px]'
@@ -92,6 +104,10 @@ export const HamburgerMenu = ({ navbarItems }: NavbarProps) => {
           </nav>
         </SheetContent>
       </Sheet>
+      {/* Push the theme toggle to the right */}
+      <div className='right-0 ml-auto'>
+        <ThemeModeToggle />
+      </div>
     </div>
   );
 };

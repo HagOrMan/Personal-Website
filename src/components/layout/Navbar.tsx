@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { ThemeModeToggle } from '@/components/menu/ThemeMenu';
 import {
@@ -21,7 +22,13 @@ export type NavbarProps = {
 };
 
 export const Navbar = ({ navbarItems }: NavbarProps) => {
+  const pathname = usePathname();
   const [value, setValue] = useState(''); // represents the index as a string of the currently chosen navigation item
+
+  // Ensures the menu closes when the route changes (w/o this, content from hovering on 'projects' stays open which clicking a specific project - big no no)
+  useEffect(() => {
+    setValue('');
+  }, [pathname]);
 
   // Find navigation items that need dropdowns since only those should have their value set
   const dropdownIndices = navbarItems.reduce<string[]>(
@@ -61,7 +68,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
     <NavigationMenu
       value={value}
       onValueChange={handleValueChange}
-      className='bg-background sticky top-0 z-10 hidden w-full max-w-full md:flex'
+      className='bg-background sticky top-0 z-50 hidden w-full max-w-full md:flex'
       onPointerLeave={() => setValue('')}
     >
       {/* Website logo but to navigate home */}
