@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
 
+// import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
+import { OceanScene } from '@/components/backgrounds/OceanParticles';
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
-// import { ElectricShockBackground } from '@/components/ElectricShockBackground';
-import { OceanScene } from '@/components/OceanParticles';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
