@@ -135,6 +135,7 @@ export const GlitchTextCycle = ({
           isGlitching && 'animate-pulse',
         )}
         style={{
+          fontKerning: 'normal',
           textShadow: isGlitching
             ? '2px 0 #ff0000, -2px 0 #00ffff, 0 2px #ffff00'
             : 'none',
