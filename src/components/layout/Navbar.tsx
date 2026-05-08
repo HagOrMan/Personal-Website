@@ -154,7 +154,14 @@ function ListItem({
   return (
     <li {...props}>
       <NavigationMenuLink
-        className='after:bg-accent-foreground/50 relative after:absolute after:bottom-0 after:left-0 after:block after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100'
+        className={cn(
+          'from-accent-foreground/50 to-accent-foreground/50 bg-linear-to-r', // The color of the line
+          'bg-no-repeat', // Don't tile it
+          'bg-[length:0%_2px]', // Initial state: 0% width, 2px height (same as h-0.5)
+          'bg-left-bottom', // Position at bottom left (same as absolute bottom-0 left-0)
+          'transition-[background-size] duration-500', // Animate the size
+          'hover:bg-[length:100%_2px]', // Hover state: 100% width, 2px height
+        )}
         asChild
       >
         <Link href={href}>
