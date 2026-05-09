@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { ChevronDown, ChevronRight, Menu } from 'lucide-react';
@@ -29,13 +30,29 @@ type MenuItemProp = {
 const MenuItemComponent = ({ item }: MenuItemProp) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const pathname = usePathname();
+
   if (item.dropdownItems) {
+    // Determine if the parent category should be marked as active
+    const isChildActive = item.dropdownItems.some((subItem) => {
+      const isExactMatch = pathname === subItem.link;
+      const isRootLink = subItem.link.split('/').length === 2;
+      const isNestedMatch =
+        pathname.startsWith(subItem.link + '/') && !isRootLink;
+
+      return isExactMatch || isNestedMatch;
+    });
+
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <button
             className={cn(
               'hover:text-primary flex w-full items-center justify-between py-2 pr-4 text-lg font-medium transition-colors',
+              // If a child is active but the dropdown is CLOSED: project tab gets the full primary color
+              isChildActive && !isOpen && 'text-primary',
+              // If a child is active and the dropdown is OPEN: mute the project tab, but keep it visibly active
+              isChildActive && isOpen && 'text-primary/80',
             )}
           >
             {item.title}
@@ -47,28 +64,52 @@ const MenuItemComponent = ({ item }: MenuItemProp) => {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          {item.dropdownItems.map((subItem) => (
-            <a
-              key={subItem.title}
-              href={subItem.link}
-              className={cn(
-                'hover:text-primary block py-2 pl-6 text-lg font-medium transition-colors',
-              )}
-            >
-              {subItem.title}
-            </a>
-          ))}
+          {item.dropdownItems.map((subItem) => {
+            // EXACT MATCH: The URL perfectly matches the sub-item link.
+            const isExactMatch = pathname === subItem.link;
+
+            // IDENTIFY ROOT LINKS: Detect if this is an overview page (e.g., '/projects')
+            // Splitting '/projects' by '/' yields ['', 'projects'] (length 2).
+            // Splitting '/projects/monpoke' yields ['', 'projects', 'monpoke'] (length 3).
+            const isRootLink = subItem.link.split('/').length === 2;
+
+            // NESTED MATCH: Allow deep-route highlighting, BUT exclude the root link.
+            const isNestedMatch =
+              pathname.startsWith(subItem.link + '/') && !isRootLink;
+
+            const isSubActive = isExactMatch || isNestedMatch;
+            return (
+              <a
+                key={subItem.title}
+                href={subItem.link}
+                className={cn(
+                  'hover:text-primary block py-2 pl-6 text-lg font-medium transition-colors',
+                  // The exact active subproject gets the full primary color
+                  isSubActive && 'text-primary',
+                )}
+              >
+                {subItem.title}
+              </a>
+            );
+          })}
         </CollapsibleContent>
       </Collapsible>
     );
   }
+
+  // Logic for standard (non-dropdown) links
+  const isActive = pathname === item.link;
+  const isHome = item.link === '/';
 
   return (
     <a
       href={item.link}
       className={cn(
         'hover:text-primary block py-2 text-lg font-medium transition-colors',
-        item.link === '/' && 'text-primary',
+        // The active page gets the standard color
+        isActive && 'text-primary',
+        // If the link is Home AND it is not currently active, it gets a unique breeze blue
+        !isActive && isHome && 'text-breeze-300/90',
       )}
     >
       {item.title}
