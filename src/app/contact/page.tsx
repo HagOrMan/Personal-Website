@@ -1,8 +1,12 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+
 export default function Contact() {
   return (
-    <main className='bg-background'>
-      <h1 className='text-4xl'>Contact</h1>
-      <p>Want to contact me? Enter your email below.</p>
+    <main className='bg-background page-shell'>
+      <PageHeader
+        title='Contact'
+        description='Want to contact me? Enter your email below.'
+      />
     </main>
   );
 }
