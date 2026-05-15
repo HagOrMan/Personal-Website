@@ -404,4 +404,56 @@
     background: var(--background);
     font-family: Arial, Helvetica, sans-serif;
   }
+
+  /* #region /**=========== Page Layout Utilities =========== */
+
+  /**
+   * Granular horizontal padding utility.
+   */
+  .page-padding-x {
+    padding-left: 1.5rem; /* px-6 */
+    padding-right: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .page-padding-x {
+      padding-left: 2.5rem; /* px-10 */
+      padding-right: 2.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .page-padding-x {
+      padding-left: 4rem; /* px-16 */
+      padding-right: 4rem;
+    }
+  }
+
+  /**
+   * The common-case page wrapper. Composes page-padding-x with:
+   *   - top padding to clear the fixed nav
+   *   - bottom breathing room so content doesn't kiss the viewport edge
+   *   - min-h-screen so short pages don't look stranded
+   */
+  .page-shell {
+    min-height: 100vh;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 6rem; /* pt-24 */
+    padding-bottom: 4rem; /* pb-16 */
+  }
+  @media (min-width: 768px) {
+    .page-shell {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+      padding-top: 7rem; /* pt-28 */
+      padding-bottom: 6rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .page-shell {
+      padding-left: 4rem;
+      padding-right: 4rem;
+    }
+  }
+
+  /* #endregion /**======== Page Layout Utilities =========== */
 }
