@@ -4,9 +4,9 @@
  * I want to keep a history of my tests and thought it would be a fun way of showing the progress
  */
 
-// import other variants as you build them
+// import other variants as they are built
 // import { ProjectShowcaseCardMinimal } from '@/components/containers/ProjectShowcaseCardMinimal';
-// import { ProjectShowcaseCardCompact } from '@/components/containers/ProjectShowcaseCardCompact';
+
 import type { ComponentType } from 'react';
 
 import { ProjectShowcaseCard } from '@/components/containers/ProjectShowcaseCard';

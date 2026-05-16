@@ -225,12 +225,12 @@
     --secondary-foreground: 210 30% 20%; /* muted navy */
 
     /* Muted Content */
-    --muted: 195 60% 94%; /* desaturated light aqua */
-    --muted-foreground: 195 20% 45%; /* slate-aqua for text */
+    --muted: 195 45% 93%; /* desaturated light aqua */
+    --muted-foreground: 200 22% 42%; /* slate-aqua for text */
 
     /* Accent (for highlights, tags, etc.) */
-    --accent: 195 55% 80%; /* light, bright turquoise */
-    --accent-foreground: 210 40% 20%;
+    --accent: 195 50% 90%; /* light, bright turquoise */
+    --accent-foreground: 200 35% 18%; /* light, bright turquoise */
 
     /* Destructive (red) */
     --destructive: 358 85% 65%; /* coral-red */
@@ -346,10 +346,10 @@
     --secondary: 200 25% 15%; /* Muted navy-blue, matches background family */
     --secondary-foreground: 195 25% 85%; /* Soft aqua-gray for text/icons */
 
-    --muted: 200 20% 12%; /* Very subdued cool charcoal */
-    --muted-foreground: 195 15% 60%; /* Dimmed seafoam, for subtle elements */
+    --muted: 200 18% 11%; /* Very subdued cool charcoal */
+    --muted-foreground: 195 15% 62%; /* Dimmed seafoam, for subtle elements */
 
-    --accent: 195 55% 40%; /* Bright, refreshing teal for highlights/buttons */
+    --accent: 195 30% 14%; /* Bright, refreshing teal for highlights/buttons */
     --accent-foreground: 195 20% 90%; /* Light ocean mist */
 
     --destructive: 0 65% 40%; /* Dark coral red */

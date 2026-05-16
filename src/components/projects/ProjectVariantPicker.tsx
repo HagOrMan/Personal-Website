@@ -82,9 +82,10 @@ function VariantItem({
     <DropdownMenuItem
       onSelect={onSelect}
       className={cn(
-        'group/item flex cursor-pointer flex-col items-start gap-0.5 rounded-lg px-3 py-2.5',
+        'group/item hover:bg-accent/40 flex cursor-pointer flex-col items-start gap-0.5 rounded-lg px-3 py-2.5',
         'transition-colors',
-        isActive && 'bg-accent/60',
+        isActive &&
+          'bg-accent/80 hover:bg-accent border-primary border-l-2 pl-[10px]',
       )}
     >
       <div className='flex w-full items-center justify-between'>

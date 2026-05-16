@@ -50,7 +50,6 @@ export function AnimatedProjectGrid({ variantId, projects }: Props) {
       className='flex flex-wrap justify-center gap-4'
       style={
         {
-          // expose timings as CSS vars so the children can read them
           '--exit-ms': `${EXIT_MS}ms`,
           '--enter-ms': `${ENTER_MS}ms`,
         } as React.CSSProperties
