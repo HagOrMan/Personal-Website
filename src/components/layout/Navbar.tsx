@@ -97,7 +97,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
                 </NavigationMenuTrigger>
 
                 {/* Next we include all the content needed inside the dropdown */}
-                <NavigationMenuContent className='from-lush-200 to-breeze-400 dark:from-lush-800 dark:to-breeze-800 bg-linear-to-b! focus:shadow-md'>
+                <NavigationMenuContent className='from-lush-200 to-breeze-200 dark:from-lush-800 dark:to-breeze-800 bg-linear-to-br! focus:shadow-md dark:bg-linear-to-b!'>
                   <div
                     className='relative'
                     onPointerEnter={() => setValue(`${index}`)}
@@ -155,12 +155,19 @@ function ListItem({
     <li {...props}>
       <NavigationMenuLink
         className={cn(
+          // Animated underline (uses background-image, not background-color)
           'from-accent-foreground/50 to-accent-foreground/50 bg-linear-to-r', // The color of the line
           'bg-no-repeat', // Don't tile it
           'bg-[length:0%_2px]', // Initial state: 0% width, 2px height (same as h-0.5)
           'bg-left-bottom', // Position at bottom left (same as absolute bottom-0 left-0)
           'transition-[background-size] duration-500', // Animate the size
           'hover:bg-[length:100%_2px]', // Hover state: 100% width, 2px height
+
+          // Hover background tint (separate property from the underline's bg-image)
+          // Light mode: deeper purple-tinted hover that reads against bright gradient
+          'hover:bg-nebula-600/15 hover:text-nebula-950',
+          // Dark mode: lighter, more luminous hover against the deep gradient
+          'dark:hover:bg-nebula-400/20 dark:hover:text-nebula-50',
         )}
         asChild
       >
