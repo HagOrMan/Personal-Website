@@ -10,10 +10,15 @@ export default function Projects() {
         description="Here are all the projects I've worked on and am proud to share!"
       />
 
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='flex flex-wrap justify-center gap-4'>
         {projects.map((project, index) => {
           return (
-            <ProjectShowcaseCard key={index} project={project} index={index} />
+            <ProjectShowcaseCard
+              key={index}
+              project={project}
+              index={index}
+              variant='alternating'
+            />
           );
         })}
       </div>

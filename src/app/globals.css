@@ -316,6 +316,18 @@
     --shader-lush: var(--tw-color-lush-500); /* Teal */
     --shader-breeze: var(--tw-color-breeze-400); /* Blue */
     /* #endregion /**=========== Shader Semantic Variables =========== */
+
+    /* #region /**=========== Accent Semantic Variables =========== */
+    /* Light mode: deeper shades for visibility on light backgrounds */
+    --accent-lush-border: var(--color-lush-700);
+    --accent-lush-glow: var(--color-lush-500);
+
+    --accent-breeze-border: var(--color-breeze-700);
+    --accent-breeze-glow: var(--color-breeze-500);
+
+    --accent-nebula-border: var(--color-nebula-700);
+    --accent-nebula-glow: var(--color-nebula-500);
+    /* #endregion */
   }
 
   html.dark {
@@ -391,6 +403,18 @@
     --shader-lush: var(--tw-color-lush-500); /* Vivid Teal */
     --shader-breeze: var(--tw-color-breeze-500); /* Vivid Blue */
     /* #endregion /**=========== Shader Semantic Variables (Dark Mode) =========== */
+
+    /* #region /**=========== Accent Semantic Variables (Dark Mode) =========== */
+    /* Dark mode: vivid lighter shades to pop against deep backgrounds */
+    --accent-lush-border: var(--color-lush-500);
+    --accent-lush-glow: var(--color-lush-400);
+
+    --accent-breeze-border: var(--color-breeze-500);
+    --accent-breeze-glow: var(--color-breeze-400);
+
+    --accent-nebula-border: var(--color-nebula-500);
+    --accent-nebula-glow: var(--color-nebula-400);
+    /* #endregion */
   }
 
   .cursor-newtab {

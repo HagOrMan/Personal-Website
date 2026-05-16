@@ -1,7 +1,7 @@
 export type TProjectShowcase = {
   name: string;
   description: string;
-  displayAsset: string; // path to asset to display above name
+  displayAsset?: string; // path to asset to display above name
 };
 
 export type TProjectShowcaseCard = {
