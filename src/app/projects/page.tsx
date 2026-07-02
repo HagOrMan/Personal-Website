@@ -8,6 +8,11 @@ export default function Projects() {
       <PageHeader
         title='Projects'
         description="Here are all the projects I've worked on and am proud to share!"
+        decoration={
+          <div className='size-24 overflow-hidden rounded-2xl bg-gray-600 md:size-28'>
+            {/* <OceanSunriseScene /> */}
+          </div>
+        }
       />
 
       <ProjectsClient projects={projects} />
