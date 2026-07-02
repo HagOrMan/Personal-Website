@@ -74,7 +74,7 @@ export const PageHeader = ({
         // Layout: text block + optional decoration slot
         'mb-10 flex flex-col gap-6 md:mb-14',
         // When there's a decoration, lay out row-wise on md+
-        decoration && 'md:flex-row md:items-center md:justify-between',
+        decoration && 'md:flex-row md:items-center md:gap-10',
         className,
       )}
     >

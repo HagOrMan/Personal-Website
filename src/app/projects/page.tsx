@@ -1,3 +1,4 @@
+import { WaveSpray } from '@/components/animated-fun/Wavespray';
 import { PageHeader } from '@/components/layout/PageHeader';
 import ProjectsClient from '@/components/projects/ProjectsClient';
 import { projects } from '@/constant/projects';
@@ -9,8 +10,8 @@ export default function Projects() {
         title='Projects'
         description="Here are all the projects I've worked on and am proud to share!"
         decoration={
-          <div className='size-24 overflow-hidden rounded-2xl bg-gray-600 md:size-28'>
-            {/* <OceanSunriseScene /> */}
+          <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
+            <WaveSpray />
           </div>
         }
       />
