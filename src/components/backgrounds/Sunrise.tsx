@@ -9,6 +9,14 @@ import * as THREE from 'three';
 import { useResolvedTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 
+/**
+ * My notes on what this scene was supposed to be represented by:
+ * - waves rolling from the top right to bottom left. Waves are in a pattern where it is like a grid, except every even column is moved down slightly so that its waves appear halfway between their row and the next row. Thus, each wave has a short length, and there are waves around it to its right and left slightly above it and slightly below it, in addition to waves directly behind and ahead that are a full length away. the waves roll slowly, are not very high, but are plentiful
+ * - waves are a light blue, and a shine appears from the top left and fades about halfway to the bottom right. the shine is very light, coming from a sun that i think i also want to appear on the animation
+ * - on the horizon line, there is a similar brightness that matches the sun brightness which goes slgihtly above teh horizon. this brightness has a tint to it. in light mode, I'm thinking orange. In dark mode, i think a purple with the nebula would look good. the brightness on the horizon fades into another blue, of similar shade to the water, but more matte. in front of that tint is a dark spot for clouds. they're lifted slightly off the water and don't go all the way up to the beginning of the transition of the horizon to blue, but add a little darkness as a separator
+ * - the ocean blue is more reflective as a colour while the sky is similar but more dull or matte
+ */
+
 /*
  * ==========================================================================
  * TUNING GUIDE — the main dials, all marked inline with "TWEAK:" comments
