@@ -10,12 +10,42 @@ import { useResolvedTheme } from '@/context/ThemeContext';
 import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
 import { cn } from '@/lib/utils';
 
-// Same theme defaults as OceanScene so both components feel related
+/**
+ * =========================================================================
+ * WAVE SPRAY TUNING GUIDE
+ * =========================================================================
+ * Modify the constants below to fundamentally change the particle physics
+ * and appearance of the wave.
+ * * --- 1. PARTICLE ALLOCATION (The Core Structure) ---
+ * @constant CORE_COUNT How many particles trace the exact mathematical center
+ * of the sine wave. A higher number creates a solid line; a lower number
+ * creates a dotted, sparse look.
+ * @constant SPRAY_COUNT How many particles are allowed to drift away from the
+ * center line. Higher numbers cost more performance but look like a thicker mist.
+ * @constant WAVE_WIDTH The horizontal span (in world units) of the wave.
+ * Increase this if your container is ultra-wide and you can see the edges popping.
+ * * --- 2. PHYSICS DEFAULTS (The Math Variables) ---
+ * @constant defaultWaveSpeed (0.9) - The base scrolling speed of the wave on the X axis.
+ * @constant defaultWaveAmplitude (0.55) - The height/depth of the wave (Y axis).
+ * Higher numbers result in extreme peaks and deep troughs.
+ * @constant defaultWaveFrequency (1.6) - Determines how tightly "bunched" the waves
+ * are. Higher frequency = more wave crests visible on screen at once.
+ * @constant defaultSprayRange (0.9) - The maximum vertical distance a spray
+ * particle can travel before its lifecycle ends and it respawns at the core.
+ * * --- 3. AESTHETICS ---
+ * @constant defaultLushColour / defaultBreezeColour - The fallback colors used
+ * if no props are provided (tied to OceanScene themes).
+ * @constant defaultAlphaBoost (1.5) - A global multiplier for particle opacity.
+ * Because we use AdditiveBlending in dark mode, higher alpha = a brighter "bloom" or "glow".
+ * =========================================================================
+ */
+
+// Theme defaults
 const defaultLushColour = 'rgb(0, 209, 176)';
 const defaultBreezeColour = 'rgb(9, 172, 238)';
 const defaultAlphaBoost = 1.5;
 
-// Physics defaults (Dark Mode / Electric)
+// Physics defaults
 const defaultWaveSpeed = 0.9;
 const defaultWaveAmplitude = 0.55;
 const defaultWaveFrequency = 1.6;
@@ -119,8 +149,7 @@ const vertexShader = `
     }
   `;
 
-// Fragment Shader: same soft-glow circle as OceanScene, but opacity also
-// falls off with distance from the wave line (vSpread).
+// Fragment Shader: creates the soft glow and handles color mixing based on height.
 const fragmentShader = `
     uniform vec3 uColorStart;
     uniform vec3 uColorEnd;
@@ -178,7 +207,12 @@ const WaveSprayShaderMaterial = shaderMaterial(
 
 extend({ WaveSprayShaderMaterial });
 
-const WaveSprayPoints = () => {
+interface WaveSprayPointsProps {
+  colorStart?: string;
+  colorEnd?: string;
+}
+
+const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
   const materialRef = useRef<WaveSprayMaterialType>(null);
   const { resolvedTheme } = useResolvedTheme();
 
@@ -237,14 +271,26 @@ const WaveSprayPoints = () => {
   }, []);
 
   useEffect(() => {
-    targetStart.current = getCssColorAsThreeColor(
-      '--shader-lush',
-      defaultLushColour,
-    );
-    targetEnd.current = getCssColorAsThreeColor(
-      '--shader-breeze',
-      defaultBreezeColour,
-    );
+    // Helper function: Routes CSS variables to our DOM reader, and static colors to Three.js
+    const parsePropColor = (colorStr: string, fallback: string) => {
+      if (colorStr.startsWith('--')) {
+        // It's a CSS variable; query the DOM and apply linear gamma correction automatically
+        return getCssColorAsThreeColor(colorStr, fallback);
+      }
+      // It's a static color string; instantiate and apply linear gamma correction manually
+      const c = new THREE.Color(colorStr);
+      c.convertSRGBToLinear();
+      return c;
+    };
+
+    // Parse the incoming props, falling back to the default semantic theme colors
+    targetStart.current = colorStart
+      ? parsePropColor(colorStart, defaultLushColour)
+      : getCssColorAsThreeColor('--shader-lush', defaultLushColour);
+
+    targetEnd.current = colorEnd
+      ? parsePropColor(colorEnd, defaultBreezeColour)
+      : getCssColorAsThreeColor('--shader-breeze', defaultBreezeColour);
 
     const isLightMode = resolvedTheme === 'light';
 
@@ -268,20 +314,12 @@ const WaveSprayPoints = () => {
       targetSprayBrightness.current = 0.45; // far spray glints toward white
       targetAlphaBoost.current = 1.5;
       setBlendingMode(THREE.AdditiveBlending);
-
-      // --- ALTERNATIVE: if spray is still too faint against a dark bg ---
-      // AdditiveBlending multiplies against what's behind it, so low-alpha
-      // spray on near-black ≈ invisible. NormalBlending paints the colour
-      // directly, at the cost of losing the "glow" look. Swap the two lines
-      // above for these to try it:
-      // targetAlphaBoost.current = 2.5;
-      // setBlendingMode(THREE.NormalBlending);
     }
 
     if (materialRef.current) {
       materialRef.current.needsUpdate = true;
     }
-  }, [resolvedTheme]);
+  }, [resolvedTheme, colorStart, colorEnd]);
 
   useFrame((_, delta) => {
     if (!materialRef.current) return;
@@ -353,21 +391,37 @@ const WaveSprayPoints = () => {
   );
 };
 
+export interface WaveSprayProps {
+  className?: string;
+  /** * Any valid CSS color string for the lower troughs of the wave.
+   * (e.g. '#ff0000', 'rgb(255, 0, 0)', 'red').
+   * Overrides theme defaults.
+   */
+  colorStart?: string;
+  /** * Any valid CSS color string for the upper crests of the wave.
+   * Overrides theme defaults.
+   */
+  colorEnd?: string;
+}
+
 /**
  * Small 2D "wave with spray" ambient animation.
  *
  * A dense band of particles traces a moving sine wave, with sparser,
- * fainter particles spraying off above and below it. Shares the same
- * theme colours + light/dark physics personality as OceanScene.
+ * fainter particles spraying off above and below it.
  *
  * Self-contained (owns its Canvas), transparent background, no controls.
- * Drop it straight into the PageHeader `decoration` slot:
+ * Drop it straight into a decoration slot:
  *
- *   <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
- *     <WaveSpray />
- *   </div>
+ * <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
+ * <WaveSpray colorStart="#FF0055" colorEnd="#00E5FF" />
+ * </div>
  */
-export const WaveSpray = ({ className }: { className?: string }) => {
+export const WaveSpray = ({
+  className,
+  colorStart,
+  colorEnd,
+}: WaveSprayProps) => {
   const [isReady, setIsReady] = useState(false);
 
   return (
@@ -385,7 +439,7 @@ export const WaveSpray = ({ className }: { className?: string }) => {
         gl={{ alpha: true }} // transparent so the slot's bg shows through
         onCreated={() => setIsReady(true)}
       >
-        <WaveSprayPoints />
+        <WaveSprayPoints colorStart={colorStart} colorEnd={colorEnd} />
       </Canvas>
     </div>
   );

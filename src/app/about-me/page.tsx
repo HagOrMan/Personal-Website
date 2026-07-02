@@ -1,3 +1,4 @@
+import { WaveSpray } from '@/components/animated-fun/Wavespray';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function AboutMe() {
@@ -7,6 +8,14 @@ export default function AboutMe() {
         title='About Me'
         description="Hey! I'm Kyle, a Software Engineering student at McMaster
         University."
+        decoration={
+          <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
+            <WaveSpray
+              colorStart='--tw-color-breeze-200'
+              colorEnd='--tw-color-lush-200'
+            />
+          </div>
+        }
       />
     </main>
   );
