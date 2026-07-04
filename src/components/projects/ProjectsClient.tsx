@@ -20,7 +20,11 @@ export default function ProjectsClient({
         <ProjectVariantPicker value={variantId} onChange={setVariantId} />
       </div>
 
-      <AnimatedProjectGrid variantId={variantId} projects={projects} />
+      <AnimatedProjectGrid
+        variantId={variantId}
+        projects={projects}
+        mode='checkerboard'
+      />
     </>
   );
 }
