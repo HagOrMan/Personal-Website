@@ -15,6 +15,7 @@ export default function Experience() {
             />
           </div>
         }
+        fadeDecoration={true}
       />
     </main>
   );

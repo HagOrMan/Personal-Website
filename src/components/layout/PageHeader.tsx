@@ -20,6 +20,8 @@ type PageHeaderProps = {
    * On mobile it stacks below the title to avoid cramping.
    */
   decoration?: React.ReactNode;
+  /** Optional fade on the decoration to have it blend in more seamlessly with the rest of the page */
+  fadeDecoration?: boolean;
   /** Extra classes for the outer <header> element. */
   className?: string;
 };
@@ -38,6 +40,7 @@ export const PageHeader = ({
   description,
   align = 'left',
   decoration,
+  fadeDecoration = false,
   className,
 }: PageHeaderProps) => {
   const isCenter = align === 'center';
@@ -65,6 +68,13 @@ export const PageHeader = ({
     },
   };
 
+  const edgeFadeMask = {
+    maskImage:
+      'linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, rgba(0,0,0,0))',
+    WebkitMaskImage:
+      'linear-gradient(to right, rgba(0,0,0,0), rgba(0,0,0,1) 15%, rgba(0,0,0,1) 85%, rgba(0,0,0,0))',
+  };
+
   return (
     <motion.header
       initial='hidden'
@@ -89,7 +99,20 @@ export const PageHeader = ({
           variants={itemVariants}
           className='text-foreground text-4xl font-bold tracking-tight md:text-5xl'
         >
-          {title}
+          <span className='relative inline-block'>
+            {title}
+
+            {decoration && (
+              <motion.span
+                variants={itemVariants}
+                className='absolute top-0 left-full -mt-9 ml-6 shrink-0 md:hidden'
+                style={fadeDecoration ? edgeFadeMask : undefined}
+                aria-hidden='true'
+              >
+                {decoration}
+              </motion.span>
+            )}
+          </span>
         </motion.h1>
 
         {description && (
@@ -105,11 +128,12 @@ export const PageHeader = ({
         )}
       </div>
 
-      {/* Decoration slot (e.g. floating lights canvas later) */}
+      {/* Decoration slot (e.g. floating lights canvas later), desktop only */}
       {decoration && (
         <motion.div
           variants={itemVariants}
-          className='pointer-events-none flex shrink-0 items-center justify-center md:pointer-events-auto'
+          className='pointer-events-none hidden shrink-0 items-center md:pointer-events-auto md:flex'
+          style={fadeDecoration ? edgeFadeMask : undefined}
           aria-hidden='true'
         >
           {decoration}

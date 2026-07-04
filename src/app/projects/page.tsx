@@ -14,6 +14,7 @@ export default function Projects() {
             <WaveSpray />
           </div>
         }
+        fadeDecoration={true}
       />
 
       <ProjectsClient projects={projects} />

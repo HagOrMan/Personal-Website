@@ -16,6 +16,7 @@ export default function AboutMe() {
             />
           </div>
         }
+        fadeDecoration={true}
       />
     </main>
   );

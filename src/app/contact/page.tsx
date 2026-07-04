@@ -15,6 +15,7 @@ export default function Contact() {
             />
           </div>
         }
+        fadeDecoration={true}
       />
     </main>
   );
