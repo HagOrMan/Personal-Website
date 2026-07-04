@@ -11,8 +11,8 @@ export default function AboutMe() {
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
             <WaveSpray
-              colorStart='--tw-color-breeze-200'
-              colorEnd='--tw-color-lush-200'
+              colorStart='--tw-color-breeze-300'
+              colorEnd='--tw-color-lush-300'
             />
           </div>
         }

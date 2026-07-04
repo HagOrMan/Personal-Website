@@ -461,15 +461,15 @@
     min-height: 100vh;
     padding-left: 1.5rem;
     padding-right: 1.5rem;
-    padding-top: 6rem; /* pt-24 */
+    padding-top: 4rem; /* pt-16 */
     padding-bottom: 4rem; /* pb-16 */
   }
   @media (min-width: 768px) {
     .page-shell {
       padding-left: 2.5rem;
       padding-right: 2.5rem;
-      padding-top: 7rem; /* pt-28 */
-      padding-bottom: 6rem;
+      padding-top: 5rem; /* pt-20 */
+      padding-bottom: 5rem;
     }
   }
   @media (min-width: 1024px) {
