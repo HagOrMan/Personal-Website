@@ -136,7 +136,7 @@ export const ProjectShowcaseCard = ({
         boxShadow: ambientGlow,
       }}
       className={cn(
-        'group relative w-[30rem] overflow-hidden rounded-xl border',
+        'group relative w-[18rem] overflow-hidden rounded-xl border md:w-[24rem] lg:w-[26rem] xl:w-[30rem]',
         'transition-shadow duration-300',
         'hover:shadow-lg',
         className,
