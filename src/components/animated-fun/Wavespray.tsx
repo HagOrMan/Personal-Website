@@ -296,8 +296,8 @@ const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
 
     if (isLightMode) {
       // Flowing water: slower, taller, thicker ink
-      targetSpeed.current = 1.05;
-      targetAmplitude.current = 0.7;
+      targetSpeed.current = 1.7;
+      targetAmplitude.current = 0.6;
       targetFrequency.current = 1.2;
       targetSprayRange.current = 0.75;
       targetSprayFalloff.current = 2.0; // ink spray fades quickly
@@ -306,7 +306,7 @@ const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
       setBlendingMode(THREE.NormalBlending);
     } else {
       // Electric/storm: faster, tighter, glowing spray thrown further
-      targetSpeed.current = 1.5;
+      targetSpeed.current = 2.5;
       targetAmplitude.current = 0.55;
       targetFrequency.current = 1.6;
       targetSprayRange.current = 0.9;
