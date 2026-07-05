@@ -2,7 +2,9 @@ import { cache } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { notFound, permanentRedirect } from 'next/navigation';
 
+import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';
+import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -92,7 +94,17 @@ export default async function BlogPostPage({
       )}
 
       <article className='blog-prose'>
-        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[
+            rehypeRaw,
+            rehypeSlug,
+            [
+              rehypeExternalLinks,
+              { target: '_blank', rel: ['noopener', 'noreferrer'] },
+            ],
+          ]}
+        >
           {post.content}
         </ReactMarkdown>
       </article>

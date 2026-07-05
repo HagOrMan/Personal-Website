@@ -488,6 +488,14 @@
     color: hsl(var(--foreground));
   }
 
+  html:has(.blog-prose) {
+    scroll-behavior: smooth;
+  }
+
+  .blog-prose :is(h1, h2, h3, h4, h5, h6) {
+    scroll-margin-top: 5rem; /* set to your navbar height + a little breathing room */
+  }
+
   .blog-prose > * + * {
     margin-top: 1em;
   }
@@ -572,9 +580,13 @@
   }
 
   .blog-prose a {
-    color: hsl(var(--primary));
+    color: rgb(var(--tw-color-lush-600));
     text-decoration: underline;
     text-underline-offset: 2px;
+  }
+
+  .dark .blog-prose a {
+    color: rgb(var(--tw-color-lush-500));
   }
 
   .blog-prose a:hover {
