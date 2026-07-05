@@ -7,7 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
-import { PageHeader } from '@/components/layout/PageHeader';
+import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { getPostBySlug, getPostSlugs } from '@/lib/blog';
 
 // Both /blog/my-first-post and /blog/MyFirstPost resolve; unknown slugs
@@ -17,18 +17,6 @@ export const dynamicParams = true;
 // Cached so generateMetadata and the page component share one file read
 // per request instead of parsing the markdown twice.
 const getPost = cache((slug: string) => getPostBySlug(slug));
-
-function formatDate(value: string | Date): string {
-  // Defensive: YAML turns an unquoted `date: 2024-01-05` into a Date object,
-  // while a quoted date stays a string. new Date() handles both. timeZone
-  // 'UTC' keeps the displayed day matching what was authored.
-  return new Date(value).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
 
 export function generateStaticParams() {
   return getPostSlugs().map((slug) => ({ slug }));
@@ -67,31 +55,12 @@ export default async function BlogPostPage({
 
   return (
     <main className='bg-background page-shell justify-items-center'>
-      <PageHeader
+      <BlogPostHeader
         title={post.title}
         description={post.frontmatter.description}
+        tags={tags}
+        date={date}
       />
-
-      {(tags.length > 0 || date) && (
-        <div className='mb-8 flex flex-wrap items-center gap-2'>
-          {date && (
-            <time
-              dateTime={new Date(date as string | Date).toISOString()}
-              className='text-muted-foreground text-sm'
-            >
-              {formatDate(date as string | Date)}
-            </time>
-          )}
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className='bg-accent text-accent-foreground rounded-full px-2.5 py-0.5 text-xs'
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
 
       <article className='blog-prose'>
         <ReactMarkdown

@@ -1,6 +1,8 @@
 ---
 tags:
   - article-like
+description: A dive into the data that powers stock trading
+date: 2026-07-05
 ---
 
 The **Reuters Instrument Code (RIC)** is one of the most widely used identifiers for referencing stocks. Traders are intimately familiar with the **Bloomberg Identifier**. However, there is a free, open-source alternative known as the **Financial Instrument Global Identifier (FIGI)**. These are part of "stock symbology", which is an essential aspect of trading systems and must-have knowledge in the world of algorithmic trading. Here, I'll give a quick crash course on relevant stock information to understand the symbology behind them, and then dive into fun features like the concept of "uniqueness" and why it matters.
