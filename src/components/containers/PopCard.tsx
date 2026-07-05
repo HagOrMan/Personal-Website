@@ -89,7 +89,7 @@ export default function PopCard({
             transition: { delay, duration, times: POP_TIMES, ease: 'easeOut' },
           },
         }}
-        onAnimationComplete={(definition) => {
+        onAnimationComplete={(definition: string) => {
           if (definition === 'popped') onPopped?.();
         }}
         style={{
