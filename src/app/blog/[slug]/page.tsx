@@ -54,29 +54,31 @@ export default async function BlogPostPage({
   const date = post.frontmatter.date;
 
   return (
-    <main className='bg-background page-shell justify-items-center'>
-      <BlogPostHeader
-        title={post.title}
-        description={post.frontmatter.description}
-        tags={tags}
-        date={date}
-      />
+    <main className='bg-background page-shell'>
+      <div className='mx-auto w-full max-w-[72ch]'>
+        <BlogPostHeader
+          title={post.title}
+          description={post.frontmatter.description}
+          tags={tags}
+          date={date}
+        />
 
-      <article className='blog-prose'>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[
-            rehypeRaw,
-            rehypeSlug,
-            [
-              rehypeExternalLinks,
-              { target: '_blank', rel: ['noopener', 'noreferrer'] },
-            ],
-          ]}
-        >
-          {post.content}
-        </ReactMarkdown>
-      </article>
+        <article className='blog-prose'>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[
+              rehypeRaw,
+              rehypeSlug,
+              [
+                rehypeExternalLinks,
+                { target: '_blank', rel: ['noopener', 'noreferrer'] },
+              ],
+            ]}
+          >
+            {post.content}
+          </ReactMarkdown>
+        </article>
+      </div>
     </main>
   );
 }
