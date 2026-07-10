@@ -3,6 +3,7 @@ import 'server-only';
 import matter from 'gray-matter';
 
 import { formatTitle, slugify } from '@/lib/blog/slug';
+import { withStaleFallback } from '@/lib/blog/staleCache';
 
 // Content lives in a private GitHub repo:
 //   posts/[fileName].md      - markdown files, optionally nested in
@@ -136,24 +137,35 @@ interface DirEntry {
   type: string;
 }
 
+/**
+ * Lists one directory level. A 404 (directory doesn't exist, e.g. a fresh
+ * repo with no posts yet) is a legitimate empty result. Any other failure
+ * throws so withStaleFallback can serve the last successful listing instead
+ * of silently reporting "no posts."
+ */
 async function listDirEntries(path: string): Promise<DirEntry[]> {
-  const res = await fetch(contentsUrl(path), {
-    headers: githubHeaders('application/vnd.github+json'),
-    next: { tags: ['blog'], revalidate: 300 },
+  return withStaleFallback(`dir:${path}`, async () => {
+    const res = await fetch(contentsUrl(path), {
+      headers: githubHeaders('application/vnd.github+json'),
+      next: { tags: ['blog'], revalidate: 300 },
+    });
+    if (res.status === 404) return [];
+    if (!res.ok) throw new Error(`Failed to list "${path}"`);
+    return (await res.json()) as DirEntry[];
   });
-  if (!res.ok) return [];
-  return (await res.json()) as DirEntry[];
 }
 
 /**
  * Recursively walks posts/ (and any subfolders) for markdown files. One
  * Contents API call per directory - cheap for a personal blog's post count,
- * and cached the same as everything else via the 'blog' tag.
+ * and cached the same as everything else via the 'blog' tag. A failure in
+ * one subfolder (after exhausting its own stale fallback) doesn't take
+ * down discovery of every other post - it's just skipped and logged.
  */
 async function walkPostsDir(dirPath: string): Promise<string[]> {
   const entries = await listDirEntries(dirPath);
 
-  const nested = await Promise.all(
+  const results = await Promise.allSettled(
     entries.map(async (entry): Promise<string[]> => {
       if (entry.type === 'file' && entry.name.endsWith('.md')) {
         return [`${dirPath}/${entry.name}`];
@@ -165,7 +177,11 @@ async function walkPostsDir(dirPath: string): Promise<string[]> {
     }),
   );
 
-  return nested.flat();
+  return results.flatMap((result) => {
+    if (result.status === 'fulfilled') return result.value;
+    console.error(`[blog] Failed to walk "${dirPath}", skipping`, result.reason);
+    return [];
+  });
 }
 
 /**
@@ -183,21 +199,24 @@ async function listPostPaths(): Promise<string[]> {
  * Fetches and parses a single post file by its path relative to posts/
  * (not yet slug-normalized, may include a subfolder). Returns null on a
  * 404 so callers can decide how to surface "not found" for their context.
- * Any other failure throws a generic error - GitHub's response body/headers
- * must never reach the client.
+ * Any other failure throws - GitHub's response body/headers must never
+ * reach the client - which withStaleFallback intercepts to serve the last
+ * successfully fetched version of this same post when one exists.
  */
 async function fetchPostFile(postPath: string): Promise<RawPostFile | null> {
-  const res = await fetch(contentsUrl(`posts/${postPath}.md`), {
-    headers: githubHeaders('application/vnd.github.raw+json'),
-    next: { tags: ['blog'], revalidate: 300 },
+  return withStaleFallback(`post:${postPath}`, async () => {
+    const res = await fetch(contentsUrl(`posts/${postPath}.md`), {
+      headers: githubHeaders('application/vnd.github.raw+json'),
+      next: { tags: ['blog'], revalidate: 300 },
+    });
+
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to fetch blog post "${postPath}"`);
+
+    const raw = await res.text();
+    const { data, content } = matter(raw);
+    return { frontmatter: data as PostFrontmatter, content };
   });
-
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error('Failed to fetch blog post content');
-
-  const raw = await res.text();
-  const { data, content } = matter(raw);
-  return { frontmatter: data as PostFrontmatter, content };
 }
 
 interface ResolvedPost extends RawPostFile {
@@ -207,15 +226,25 @@ interface ResolvedPost extends RawPostFile {
 /**
  * Resolves a requested (possibly non-canonical) slug to its post file.
  * Fast path: the request already matches a top-level file name verbatim -
- * one fetch, no directory walk. Slow path: recursively list posts/ once
- * and match by normalized file name (the old resolveFileName pattern),
- * for requests like /blog/MyFirstPost or posts nested in a subfolder.
+ * one fetch, no directory walk. If that fetch fails outright (and has no
+ * stale fallback of its own), fall through to the slow path instead of
+ * failing the whole request - it may resolve via an already-cached listing.
+ * Slow path: recursively list posts/ once and match by normalized file
+ * name (the old resolveFileName pattern), for requests like
+ * /blog/MyFirstPost or posts nested in a subfolder.
  */
 async function resolvePost(requestedSlug: string): Promise<ResolvedPost | null> {
   if (!isValidSlugParam(requestedSlug)) return null;
 
-  const direct = await fetchPostFile(requestedSlug);
-  if (direct) return { postPath: requestedSlug, ...direct };
+  try {
+    const direct = await fetchPostFile(requestedSlug);
+    if (direct) return { postPath: requestedSlug, ...direct };
+  } catch (error) {
+    console.error(
+      `[blog] Direct fetch failed for "${requestedSlug}", falling back to a full listing`,
+      error,
+    );
+  }
 
   const target = slugify(requestedSlug);
   const postPaths = await listPostPaths();
@@ -226,16 +255,26 @@ async function resolvePost(requestedSlug: string): Promise<ResolvedPost | null> 
   return file ? { postPath, ...file } : null;
 }
 
-/** Metadata for every post, for the blog index. Newest first when dated. */
+/**
+ * Metadata for every post, for the blog index. Newest first when dated.
+ * A single post failing (with no stale fallback available) is skipped
+ * rather than failing the entire index for every visitor.
+ */
 export async function listPosts(): Promise<PostMeta[]> {
   const postPaths = await listPostPaths();
 
-  const metas = await Promise.all(
+  const results = await Promise.allSettled(
     postPaths.map(async (postPath) => {
       const file = await fetchPostFile(postPath);
       return file ? toPostMeta(postPath, file.frontmatter) : null;
     }),
   );
+
+  const metas = results.map((result) => {
+    if (result.status === 'fulfilled') return result.value;
+    console.error('[blog] Failed to load a post for the index, skipping it', result.reason);
+    return null;
+  });
 
   return metas
     .filter((meta): meta is PostMeta => meta !== null)
@@ -302,24 +341,30 @@ function inferContentType(fileName: string): string {
   return MIME_TYPES[ext] ?? 'application/octet-stream';
 }
 
-/** Assets are always keyed by the canonical (kebab-case) slug - no PascalCase resolution. */
+/**
+ * Assets are always keyed by the canonical (kebab-case) slug - no
+ * PascalCase resolution. Falls back to the last successfully fetched
+ * bytes for this exact asset when a fresh fetch fails.
+ */
 export async function getAsset(
   slug: string,
   segments: string[],
 ): Promise<AssetFile | null> {
   if (!isValidSlug(slug) || !isValidAssetPath(segments)) return null;
 
-  const res = await fetch(contentsUrl(`assets/${slug}/${segments.join('/')}`), {
-    headers: githubHeaders('application/vnd.github.raw+json'),
-    next: { tags: ['blog'], revalidate: 300 },
+  return withStaleFallback(`asset:${slug}/${segments.join('/')}`, async () => {
+    const res = await fetch(contentsUrl(`assets/${slug}/${segments.join('/')}`), {
+      headers: githubHeaders('application/vnd.github.raw+json'),
+      next: { tags: ['blog'], revalidate: 300 },
+    });
+
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`Failed to fetch blog asset "${slug}/${segments.join('/')}"`);
+
+    const buffer = await res.arrayBuffer();
+    return {
+      bytes: new Uint8Array(buffer),
+      contentType: inferContentType(segments[segments.length - 1]),
+    };
   });
-
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error('Failed to fetch blog asset');
-
-  const buffer = await res.arrayBuffer();
-  return {
-    bytes: new Uint8Array(buffer),
-    contentType: inferContentType(segments[segments.length - 1]),
-  };
 }

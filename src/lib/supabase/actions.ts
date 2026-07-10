@@ -3,6 +3,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { supabaseEnv } from '@/lib/supabase/env';
 import { createClient } from '@/lib/supabase/server';
 
 export interface MagicLinkResult {
@@ -42,7 +43,15 @@ export async function signInWithGitHub(): Promise<void> {
   });
 
   if (error || !data.url) redirect('/login?error=auth');
-  redirect(data.url);
+
+  // signInWithOAuth() doesn't attach the API key to the authorize URL, and
+  // this redirect is a full browser navigation (no custom headers), so
+  // Supabase's gateway rejects it with "No API key found" unless it's added
+  // here as a query param. The anon key is public (NEXT_PUBLIC_*) - it's
+  // already shipped in the client bundle, so this adds no exposure.
+  const authorizeUrl = new URL(data.url);
+  authorizeUrl.searchParams.set('apikey', supabaseEnv().anonKey);
+  redirect(authorizeUrl.toString());
 }
 
 export async function signOut(): Promise<void> {
