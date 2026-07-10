@@ -1,6 +1,6 @@
-import { cache } from 'react';
-import ReactMarkdown from 'react-markdown';
+import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';
@@ -8,32 +8,34 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
-import { getPostBySlug, getPostSlugs } from '@/lib/blog';
+import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
+import { hasAccess } from '@/lib/blog/auth';
+import { getPost } from '@/lib/blog/github';
+import { rewriteAssetPaths } from '@/lib/blog/rewriteAssetPaths';
 
 // Both /blog/my-first-post and /blog/MyFirstPost resolve; unknown slugs
 // render on-demand and get redirected below (or 404 if no file matches).
 export const dynamicParams = true;
 
-// Cached so generateMetadata and the page component share one file read
-// per request instead of parsing the markdown twice.
-const getPost = cache((slug: string) => getPostBySlug(slug));
-
-export function generateStaticParams() {
-  return getPostSlugs().map((slug) => ({ slug }));
-}
+// hasAccess() reads cookies() (directly, and via the Supabase server
+// client), which already opts this route into fully dynamic rendering - no
+// need for `export const dynamic = 'force-dynamic'`. The underlying GitHub
+// content fetches still hit the tagged Data Cache.
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
   if (!post) return {};
-  return {
-    title: post.title,
-    description: post.frontmatter.description,
-  };
+
+  if (post.meta.locked) {
+    return { title: post.meta.title, robots: { index: false, follow: false } };
+  }
+
+  return { title: post.meta.title, description: post.meta.description };
 }
 
 export default async function BlogPostPage({
@@ -42,25 +44,39 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPost(slug);
+  const post = await getPost(slug);
 
   if (!post) notFound();
 
   // Canonicalize: if the visitor arrived via any non-kebab form
   // (e.g. /blog/MyFirstPost), 308-redirect to the canonical slug.
-  if (slug !== post.slug) permanentRedirect(`/blog/${post.slug}`);
+  if (slug !== post.meta.slug) permanentRedirect(`/blog/${post.meta.slug}`);
 
-  const tags = post.frontmatter.tags ?? [];
-  const date = post.frontmatter.date;
+  const canAccess = await hasAccess(post.meta.slug, post.meta.locked);
+
+  if (!canAccess) {
+    return (
+      <main className='bg-background page-shell'>
+        <div className='mx-auto w-full max-w-[72ch]'>
+          <BlogPostHeader
+            title={post.meta.title}
+            description={post.meta.description}
+            date={post.meta.date}
+          />
+          <PostPasswordForm slug={post.meta.slug} />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className='bg-background page-shell'>
       <div className='mx-auto w-full max-w-[72ch]'>
         <BlogPostHeader
-          title={post.title}
-          description={post.frontmatter.description}
-          tags={tags}
-          date={date}
+          title={post.meta.title}
+          description={post.meta.description}
+          tags={post.meta.tags}
+          date={post.meta.date}
         />
 
         <article className='blog-prose'>
@@ -75,7 +91,7 @@ export default async function BlogPostPage({
               ],
             ]}
           >
-            {post.content}
+            {rewriteAssetPaths(post.content, post.meta.slug)}
           </ReactMarkdown>
         </article>
       </div>
