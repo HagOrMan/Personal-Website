@@ -5,8 +5,12 @@ import matter from 'gray-matter';
 import { formatTitle, slugify } from '@/lib/blog/slug';
 
 // Content lives in a private GitHub repo:
-//   posts/[fileName].md      - one markdown file per post
-//   assets/[slug]/...        - per-post assets, keyed by the canonical slug
+//   posts/[fileName].md      - markdown files, optionally nested in
+//                              subfolders (e.g. posts/EventReflections/*.md)
+//                              for authoring convenience only - the
+//                              subfolder never appears in the slug/URL.
+//   assets/[slug]/...        - per-post assets, a sibling of posts/, keyed
+//                              by the canonical slug (not the subfolder path)
 //
 // Post file names can be kebab-case ("my-first-post.md") or PascalCase
 // ("MyFirstPost.md") - either resolves to the same canonical kebab-case
@@ -22,8 +26,8 @@ const GITHUB_API = 'https://api.github.com';
 
 // Canonical, post-normalization form.
 const SLUG_RE = /^[a-z0-9-]+$/;
-// What we accept off the URL before normalizing (still blocks traversal -
-// '.' isn't in the allowed set, so '..' can never match).
+// What we accept for a single path segment before normalizing (still
+// blocks traversal - '.' isn't in the allowed set, so '..' can never match).
 const SLUG_PARAM_RE = /^[A-Za-z0-9_-]+$/;
 const ASSET_SEGMENT_RE = /^[A-Za-z0-9._-]+$/;
 
@@ -31,16 +35,19 @@ export function isValidSlug(slug: string): boolean {
   return SLUG_RE.test(slug);
 }
 
-function isValidSlugParam(slug: string): boolean {
-  return SLUG_PARAM_RE.test(slug);
+function isValidSlugParam(segment: string): boolean {
+  return SLUG_PARAM_RE.test(segment);
+}
+
+/** Validates every segment of a (possibly nested) post path. */
+function isValidPostPath(postPath: string): boolean {
+  return postPath.split('/').every(isValidSlugParam);
 }
 
 export function isValidAssetPath(segments: string[]): boolean {
   return (
     segments.length > 0 &&
-    segments.every(
-      (segment) => segment !== '..' && ASSET_SEGMENT_RE.test(segment),
-    )
+    segments.every((segment) => segment !== '..' && ASSET_SEGMENT_RE.test(segment))
   );
 }
 
@@ -102,7 +109,13 @@ function isLocked(fm: PostFrontmatter): boolean {
   return Boolean(fm.password) || fm.private === true;
 }
 
-function toPostMeta(fileName: string, fm: PostFrontmatter): PostMeta {
+/** The slug/title are always derived from the file name alone, never the subfolder. */
+function lastSegment(postPath: string): string {
+  return postPath.split('/').pop()!;
+}
+
+function toPostMeta(postPath: string, fm: PostFrontmatter): PostMeta {
+  const fileName = lastSegment(postPath);
   return {
     slug: slugify(fileName),
     title: fm.title ?? formatTitle(fileName),
@@ -123,31 +136,58 @@ interface DirEntry {
   type: string;
 }
 
-async function listPostFileNames(): Promise<string[]> {
-  const res = await fetch(contentsUrl('posts'), {
+async function listDirEntries(path: string): Promise<DirEntry[]> {
+  const res = await fetch(contentsUrl(path), {
     headers: githubHeaders('application/vnd.github+json'),
     next: { tags: ['blog'], revalidate: 300 },
   });
-
   if (!res.ok) return [];
-
-  const entries = (await res.json()) as DirEntry[];
-  return entries
-    .filter((entry) => entry.type === 'file' && entry.name.endsWith('.md'))
-    .map((entry) => entry.name.slice(0, -3))
-    .filter(isValidSlugParam);
+  return (await res.json()) as DirEntry[];
 }
 
 /**
- * Fetches and parses a single post file by its exact repo file name (not
- * yet slug-normalized). Returns null on a 404 so callers can decide how to
- * surface "not found" for their context. Any other failure throws a
- * generic error - GitHub's response body/headers must never reach the client.
+ * Recursively walks posts/ (and any subfolders) for markdown files. One
+ * Contents API call per directory - cheap for a personal blog's post count,
+ * and cached the same as everything else via the 'blog' tag.
  */
-async function fetchPostFileByName(
-  fileName: string,
-): Promise<RawPostFile | null> {
-  const res = await fetch(contentsUrl(`posts/${fileName}.md`), {
+async function walkPostsDir(dirPath: string): Promise<string[]> {
+  const entries = await listDirEntries(dirPath);
+
+  const nested = await Promise.all(
+    entries.map(async (entry): Promise<string[]> => {
+      if (entry.type === 'file' && entry.name.endsWith('.md')) {
+        return [`${dirPath}/${entry.name}`];
+      }
+      if (entry.type === 'dir') {
+        return walkPostsDir(`${dirPath}/${entry.name}`);
+      }
+      return [];
+    }),
+  );
+
+  return nested.flat();
+}
+
+/**
+ * Every post's path relative to posts/, without the .md extension - e.g.
+ * "my-first-post" or "EventReflections/my-trip".
+ */
+async function listPostPaths(): Promise<string[]> {
+  const fullPaths = await walkPostsDir('posts');
+  return fullPaths
+    .map((path) => path.slice('posts/'.length, -'.md'.length))
+    .filter(isValidPostPath);
+}
+
+/**
+ * Fetches and parses a single post file by its path relative to posts/
+ * (not yet slug-normalized, may include a subfolder). Returns null on a
+ * 404 so callers can decide how to surface "not found" for their context.
+ * Any other failure throws a generic error - GitHub's response body/headers
+ * must never reach the client.
+ */
+async function fetchPostFile(postPath: string): Promise<RawPostFile | null> {
+  const res = await fetch(contentsUrl(`posts/${postPath}.md`), {
     headers: githubHeaders('application/vnd.github.raw+json'),
     next: { tags: ['blog'], revalidate: 300 },
   });
@@ -161,41 +201,39 @@ async function fetchPostFileByName(
 }
 
 interface ResolvedPost extends RawPostFile {
-  fileName: string;
+  postPath: string;
 }
 
 /**
  * Resolves a requested (possibly non-canonical) slug to its post file.
- * Fast path: the request already matches a file name verbatim - one fetch,
- * no directory listing. Slow path: list posts/ once and match by
- * normalized slug (the old resolveFileName pattern), for requests like
- * /blog/MyFirstPost.
+ * Fast path: the request already matches a top-level file name verbatim -
+ * one fetch, no directory walk. Slow path: recursively list posts/ once
+ * and match by normalized file name (the old resolveFileName pattern),
+ * for requests like /blog/MyFirstPost or posts nested in a subfolder.
  */
-async function resolvePost(
-  requestedSlug: string,
-): Promise<ResolvedPost | null> {
+async function resolvePost(requestedSlug: string): Promise<ResolvedPost | null> {
   if (!isValidSlugParam(requestedSlug)) return null;
 
-  const direct = await fetchPostFileByName(requestedSlug);
-  if (direct) return { fileName: requestedSlug, ...direct };
+  const direct = await fetchPostFile(requestedSlug);
+  if (direct) return { postPath: requestedSlug, ...direct };
 
   const target = slugify(requestedSlug);
-  const fileNames = await listPostFileNames();
-  const fileName = fileNames.find((name) => slugify(name) === target);
-  if (!fileName) return null;
+  const postPaths = await listPostPaths();
+  const postPath = postPaths.find((path) => slugify(lastSegment(path)) === target);
+  if (!postPath) return null;
 
-  const file = await fetchPostFileByName(fileName);
-  return file ? { fileName, ...file } : null;
+  const file = await fetchPostFile(postPath);
+  return file ? { postPath, ...file } : null;
 }
 
 /** Metadata for every post, for the blog index. Newest first when dated. */
 export async function listPosts(): Promise<PostMeta[]> {
-  const fileNames = await listPostFileNames();
+  const postPaths = await listPostPaths();
 
   const metas = await Promise.all(
-    fileNames.map(async (fileName) => {
-      const file = await fetchPostFileByName(fileName);
-      return file ? toPostMeta(fileName, file.frontmatter) : null;
+    postPaths.map(async (postPath) => {
+      const file = await fetchPostFile(postPath);
+      return file ? toPostMeta(postPath, file.frontmatter) : null;
     }),
   );
 
@@ -218,7 +256,7 @@ export async function getPost(requestedSlug: string): Promise<Post | null> {
   const resolved = await resolvePost(requestedSlug);
   if (!resolved) return null;
   return {
-    meta: toPostMeta(resolved.fileName, resolved.frontmatter),
+    meta: toPostMeta(resolved.postPath, resolved.frontmatter),
     content: resolved.content,
   };
 }
@@ -240,7 +278,7 @@ export async function getPostSecret(requestedSlug: string): Promise<{
       typeof resolved.frontmatter.password === 'string'
         ? resolved.frontmatter.password
         : undefined,
-    canonicalSlug: slugify(resolved.fileName),
+    canonicalSlug: slugify(lastSegment(resolved.postPath)),
   };
 }
 

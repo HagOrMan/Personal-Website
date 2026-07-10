@@ -20,7 +20,17 @@ function isRewritableUrl(url: string): boolean {
 }
 
 function toAssetUrl(url: string, slug: string): string {
-  const relative = url.replace(/^\.\//, '').replace(/^assets\//, '');
+  // assets/ is a sibling of posts/, not colocated with the markdown file,
+  // so a correct relative reference needs at least one `../` to leave
+  // posts/ (more if the post itself is nested, e.g. posts/Foo/bar.md needs
+  // ../../assets/bar/cover.png). Strip that navigation, an optional
+  // leading assets/, and a redundant slug segment, then re-root under the
+  // asset proxy.
+  let relative = url.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
+  relative = relative.replace(/^assets\//, '');
+  if (relative.startsWith(`${slug}/`)) {
+    relative = relative.slice(slug.length + 1);
+  }
   return `/blog-assets/${slug}/${relative}`;
 }
 

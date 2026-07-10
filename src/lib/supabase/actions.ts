@@ -34,6 +34,17 @@ export async function signInWithMagicLink(
   return { success: true, message: 'Check your email for a sign-in link.' };
 }
 
+export async function signInWithGitHub(): Promise<void> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: `${await siteOrigin()}/auth/callback` },
+  });
+
+  if (error || !data.url) redirect('/login?error=auth');
+  redirect(data.url);
+}
+
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
