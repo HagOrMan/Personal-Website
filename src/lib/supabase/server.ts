@@ -1,10 +1,10 @@
-import 'server-only';
-
 import { cookies } from 'next/headers';
 
 import { createServerClient } from '@supabase/ssr';
 
 import { supabaseEnv } from '@/lib/supabase/env';
+
+import 'server-only';
 
 /**
  * Supabase client for Server Components, Route Handlers, and Server Actions.

@@ -2,11 +2,11 @@
 
 import { useActionState } from 'react';
 
-import {
-  signInWithMagicLink,
-  type MagicLinkResult,
-} from '@/lib/supabase/actions';
 import { Button } from '@/components/ui/Button';
+import {
+  type MagicLinkResult,
+  signInWithMagicLink,
+} from '@/lib/supabase/actions';
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState<

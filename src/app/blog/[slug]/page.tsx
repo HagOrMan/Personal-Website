@@ -1,6 +1,6 @@
+import ReactMarkdown from 'react-markdown';
 import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
 
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';

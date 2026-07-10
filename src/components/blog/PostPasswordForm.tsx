@@ -3,8 +3,8 @@
 import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { unlockPost, type UnlockResult } from '@/lib/blog/actions';
 import { Button } from '@/components/ui/Button';
+import { unlockPost, type UnlockResult } from '@/lib/blog/actions';
 
 async function submitUnlock(
   _prevState: UnlockResult | undefined,

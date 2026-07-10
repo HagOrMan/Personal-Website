@@ -1,9 +1,9 @@
 'use client';
 
-import { Github } from 'lucide-react';
-
-import { signInWithGitHub } from '@/lib/supabase/actions';
 import { Button } from '@/components/ui/Button';
+import { signInWithGitHub } from '@/lib/supabase/actions';
+
+import GitHubIcon from '../icons/GithubIcon';
 
 export function GitHubSignInButton() {
   return (
@@ -12,7 +12,7 @@ export function GitHubSignInButton() {
       className='w-fit gap-2'
       onClick={() => signInWithGitHub()}
     >
-      <Github className='size-4' />
+      <GitHubIcon className='size-4' />
       Continue with GitHub
     </Button>
   );

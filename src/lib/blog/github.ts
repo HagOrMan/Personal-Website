@@ -1,9 +1,9 @@
-import 'server-only';
-
 import matter from 'gray-matter';
 
 import { formatTitle, slugify } from '@/lib/blog/slug';
 import { withStaleFallback } from '@/lib/blog/staleCache';
+
+import 'server-only';
 
 // Content lives in a private GitHub repo:
 //   posts/[fileName].md      - markdown files, optionally nested in

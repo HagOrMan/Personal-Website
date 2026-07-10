@@ -1,8 +1,9 @@
 'use server';
 
-import crypto from 'crypto';
-import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+
+import crypto from 'crypto';
 
 import { addUnlockedScope, MASTER_SCOPE, secureCompare } from '@/lib/blog/auth';
 import { getPostSecret, isValidSlug } from '@/lib/blog/github';

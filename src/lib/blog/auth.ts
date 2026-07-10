@@ -1,9 +1,10 @@
-import 'server-only';
-
-import crypto from 'crypto';
 import { cookies } from 'next/headers';
 
+import crypto from 'crypto';
+
 import { createClient } from '@/lib/supabase/server';
+
+import 'server-only';
 
 const COOKIE_NAME = 'blog_unlock';
 const MAX_AGE_SECONDS = 60 * 60 * 12; // 12 hours
