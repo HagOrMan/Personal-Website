@@ -4,9 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { Lock } from 'lucide-react';
+import { ChevronDown, Lock } from 'lucide-react';
 
 import { Chip } from '@/components/ui/Chip';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/Collapsible';
 import type { PostMeta } from '@/lib/blog/github';
 import { cn } from '@/lib/utils';
 
@@ -144,19 +149,26 @@ export function BlogIndexClient({ posts }: { posts: PostMeta[] }) {
       ) : (
         <div className='flex flex-col gap-10'>
           {sortedGroups.map(([folder, folderPosts]) => (
-            <section key={folder} className='flex flex-col gap-4'>
-              <h2 className='text-foreground text-lg font-semibold tracking-tight'>
-                {folder}
-                <span className='text-muted-foreground/70 ml-2 text-sm font-normal'>
-                  {folderPosts.length}
-                </span>
-              </h2>
-              <ul className='flex flex-col gap-6'>
-                {folderPosts.map((post) => (
-                  <PostListItem key={post.slug} post={post} />
-                ))}
-              </ul>
-            </section>
+            <Collapsible key={folder} defaultOpen asChild>
+              <section>
+                <h2 className='text-foreground text-lg font-semibold tracking-tight'>
+                  <CollapsibleTrigger className='group hover:text-primary flex cursor-pointer items-center gap-2 transition-colors'>
+                    <ChevronDown className='size-4 shrink-0 transition-transform duration-200 group-data-[state=closed]:-rotate-90' />
+                    {folder}
+                    <span className='text-muted-foreground/70 text-sm font-normal'>
+                      {folderPosts.length}
+                    </span>
+                  </CollapsibleTrigger>
+                </h2>
+                <CollapsibleContent className='data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden'>
+                  <ul className='flex flex-col gap-6 pt-4'>
+                    {folderPosts.map((post) => (
+                      <PostListItem key={post.slug} post={post} />
+                    ))}
+                  </ul>
+                </CollapsibleContent>
+              </section>
+            </Collapsible>
           ))}
         </div>
       )}
