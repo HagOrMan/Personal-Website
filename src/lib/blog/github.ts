@@ -118,15 +118,12 @@ function isLocked(fm: PostFrontmatter): boolean {
 // URL, unlock action, assets).
 const PARENT_NODE_TAG = 'obsidian-parent-node';
 
-/** Frontmatter tags as a clean string array (YAML may yield a scalar). */
+/** Frontmatter tags as a clean string array (always authored as a YAML list). */
 function normalizeTags(tags: unknown): string[] | undefined {
-  const list =
-    typeof tags === 'string'
-      ? tags.split(',').map((tag) => tag.trim())
-      : Array.isArray(tags)
-        ? tags.filter((tag): tag is string => typeof tag === 'string')
-        : [];
-  const cleaned = list.filter(Boolean);
+  if (!Array.isArray(tags)) return undefined;
+  const cleaned = tags.filter(
+    (tag): tag is string => typeof tag === 'string' && tag.length > 0,
+  );
   return cleaned.length > 0 ? cleaned : undefined;
 }
 

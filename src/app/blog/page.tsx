@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import { BlogIndexClient } from '@/components/blog/BlogIndexClient';
 import { listPosts } from '@/lib/blog/github';
 
@@ -16,7 +18,11 @@ export default async function BlogPage() {
             No posts yet — check back soon.
           </p>
         ) : (
-          <BlogIndexClient posts={posts} />
+          // useSearchParams() inside BlogIndexClient needs a Suspense
+          // boundary when this page is prerendered.
+          <Suspense>
+            <BlogIndexClient posts={posts} />
+          </Suspense>
         )}
       </div>
     </main>

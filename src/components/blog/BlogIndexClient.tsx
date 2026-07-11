@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { Lock } from 'lucide-react';
 
+import { Chip } from '@/components/ui/Chip';
 import type { PostMeta } from '@/lib/blog/github';
 import { cn } from '@/lib/utils';
 
@@ -49,8 +51,22 @@ function PostListItem({ post }: { post: PostMeta }) {
 }
 
 export function BlogIndexClient({ posts }: { posts: PostMeta[] }) {
+  const searchParams = useSearchParams();
   const [view, setView] = useState<View>('newest');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  // Tag links in article headers point at /blog?tag=x, so the filter
+  // starts from the URL and stays in it (shareable, survives refresh).
+  const [selectedTag, setSelectedTag] = useState<string | null>(
+    () => searchParams.get('tag'),
+  );
+
+  function selectTag(tag: string | null) {
+    setSelectedTag(tag);
+    window.history.replaceState(
+      null,
+      '',
+      tag ? `/blog?tag=${encodeURIComponent(tag)}` : '/blog',
+    );
+  }
 
   const tags = [...new Set(posts.flatMap((post) => post.tags ?? []))].sort(
     (a, b) => a.localeCompare(b),
@@ -85,16 +101,14 @@ export function BlogIndexClient({ posts }: { posts: PostMeta[] }) {
               <TagChip
                 label='All'
                 active={selectedTag === null}
-                onClick={() => setSelectedTag(null)}
+                onClick={() => selectTag(null)}
               />
               {tags.map((tag) => (
                 <TagChip
                   key={tag}
                   label={tag}
                   active={selectedTag === tag}
-                  onClick={() =>
-                    setSelectedTag((current) => (current === tag ? null : tag))
-                  }
+                  onClick={() => selectTag(selectedTag === tag ? null : tag)}
                 />
               ))}
             </div>
@@ -160,19 +174,11 @@ function TagChip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type='button'
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        'rounded-full px-2.5 py-0.5 text-xs transition-colors',
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-accent text-accent-foreground hover:bg-accent/70',
-      )}
-    >
-      {label}
-    </button>
+    <Chip asChild variant={active ? 'active' : 'default'}>
+      <button type='button' aria-pressed={active} onClick={onClick}>
+        {label}
+      </button>
+    </Chip>
   );
 }
 

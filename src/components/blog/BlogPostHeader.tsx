@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 import { motion, Variants } from 'motion/react';
 
+import { Chip } from '@/components/ui/Chip';
 import { cn } from '@/lib/utils';
 
 type BlogPostHeaderProps = {
@@ -108,12 +110,9 @@ export const BlogPostHeader = ({
         {tags.length > 0 && (
           <span className='mt-1 flex flex-wrap gap-2'>
             {tags.map((tag) => (
-              <span
-                key={tag}
-                className='bg-accent text-accent-foreground rounded-full px-2.5 py-0.5 text-xs'
-              >
-                {tag}
-              </span>
+              <Chip key={tag} asChild>
+                <Link href={`/blog?tag=${encodeURIComponent(tag)}`}>{tag}</Link>
+              </Chip>
             ))}
           </span>
         )}
