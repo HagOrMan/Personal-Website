@@ -1,18 +1,5 @@
-import Link from 'next/link';
-
-import { Lock } from 'lucide-react';
-
+import { BlogIndexClient } from '@/components/blog/BlogIndexClient';
 import { listPosts } from '@/lib/blog/github';
-
-function formatDate(value?: string): string | null {
-  if (!value) return null;
-  return new Date(value).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
 
 export default async function BlogPage() {
   const posts = await listPosts();
@@ -29,44 +16,7 @@ export default async function BlogPage() {
             No posts yet — check back soon.
           </p>
         ) : (
-          <ul className='flex flex-col gap-6'>
-            {posts.map((post) => (
-              <li
-                key={post.slug}
-                className='border-border border-b pb-6 last:border-none'
-              >
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className='group flex flex-col gap-1'
-                >
-                  <span className='text-foreground group-hover:text-primary flex items-center gap-2 text-xl font-semibold'>
-                    {post.locked && (
-                      <Lock
-                        className='size-4 shrink-0'
-                        aria-label='Password protected'
-                      />
-                    )}
-                    {post.title}
-                  </span>
-
-                  {!post.locked && (
-                    <>
-                      {post.description && (
-                        <span className='text-muted-foreground text-sm'>
-                          {post.description}
-                        </span>
-                      )}
-                      {post.date && (
-                        <span className='text-muted-foreground/70 text-xs'>
-                          {formatDate(post.date)}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <BlogIndexClient posts={posts} />
         )}
       </div>
     </main>

@@ -11,7 +11,7 @@ import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { hasAccess } from '@/lib/blog/auth';
 import { getPost } from '@/lib/blog/github';
-import { rewriteAssetPaths } from '@/lib/blog/rewriteAssetPaths';
+import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 
 // Both /blog/my-first-post and /blog/MyFirstPost resolve; unknown slugs
 // render on-demand and get redirected below (or 404 if no file matches).
@@ -91,7 +91,7 @@ export default async function BlogPostPage({
               ],
             ]}
           >
-            {rewriteAssetPaths(post.content, post.meta.slug)}
+            {rewriteContentPaths(post.content, post.meta.slug)}
           </ReactMarkdown>
         </article>
       </div>

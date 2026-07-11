@@ -7,9 +7,10 @@ import 'server-only';
 
 // Content lives in a private GitHub repo:
 //   posts/[fileName].md      - markdown files, optionally nested in
-//                              subfolders (e.g. posts/EventReflections/*.md)
-//                              for authoring convenience only - the
-//                              subfolder never appears in the slug/URL.
+//                              subfolders (e.g. posts/EventReflections/*.md).
+//                              The subfolder never appears in the slug/URL,
+//                              but it does surface as PostMeta.folder so the
+//                              index can group posts by it.
 //   assets/[slug]/...        - per-post assets, a sibling of posts/, keyed
 //                              by the canonical slug (not the subfolder path)
 //
@@ -69,6 +70,8 @@ export interface PostMeta {
   date?: string;
   description?: string;
   tags?: string[];
+  /** Human-readable subfolder label (e.g. "Event Reflections"), if nested. */
+  folder?: string;
   locked: boolean;
 }
 
@@ -110,19 +113,55 @@ function isLocked(fm: PostFrontmatter): boolean {
   return Boolean(fm.password) || fm.private === true;
 }
 
+// Obsidian "parent node" notes exist purely to organize sub-notes in the
+// vault - they're never a real post, so they 404 everywhere (index, direct
+// URL, unlock action, assets).
+const PARENT_NODE_TAG = 'obsidian-parent-node';
+
+/** Frontmatter tags as a clean string array (YAML may yield a scalar). */
+function normalizeTags(tags: unknown): string[] | undefined {
+  const list =
+    typeof tags === 'string'
+      ? tags.split(',').map((tag) => tag.trim())
+      : Array.isArray(tags)
+        ? tags.filter((tag): tag is string => typeof tag === 'string')
+        : [];
+  const cleaned = list.filter(Boolean);
+  return cleaned.length > 0 ? cleaned : undefined;
+}
+
+function isParentNode(fm: PostFrontmatter): boolean {
+  return normalizeTags(fm.tags)?.includes(PARENT_NODE_TAG) ?? false;
+}
+
 /** The slug/title are always derived from the file name alone, never the subfolder. */
 function lastSegment(postPath: string): string {
   return postPath.split('/').pop()!;
 }
 
+/** "EventReflections" -> "Event Reflections", "event-reflections" too. */
+function formatFolderLabel(segment: string): string {
+  return formatTitle(segment.replace(/[-_]+/g, ' '))
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word[0]!.toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 function toPostMeta(postPath: string, fm: PostFrontmatter): PostMeta {
-  const fileName = lastSegment(postPath);
+  const segments = postPath.split('/');
+  const fileName = segments.pop()!;
+  const folder =
+    segments.length > 0
+      ? segments.map(formatFolderLabel).join(' / ')
+      : undefined;
   return {
     slug: slugify(fileName),
     title: fm.title ?? formatTitle(fileName),
     date: fm.date,
     description: fm.description,
-    tags: fm.tags,
+    tags: normalizeTags(fm.tags),
+    folder,
     locked: isLocked(fm),
   };
 }
@@ -238,7 +277,11 @@ async function resolvePost(requestedSlug: string): Promise<ResolvedPost | null> 
 
   try {
     const direct = await fetchPostFile(requestedSlug);
-    if (direct) return { postPath: requestedSlug, ...direct };
+    if (direct) {
+      return isParentNode(direct.frontmatter)
+        ? null
+        : { postPath: requestedSlug, ...direct };
+    }
   } catch (error) {
     console.error(
       `[blog] Direct fetch failed for "${requestedSlug}", falling back to a full listing`,
@@ -252,13 +295,16 @@ async function resolvePost(requestedSlug: string): Promise<ResolvedPost | null> 
   if (!postPath) return null;
 
   const file = await fetchPostFile(postPath);
-  return file ? { postPath, ...file } : null;
+  if (!file || isParentNode(file.frontmatter)) return null;
+  return { postPath, ...file };
 }
 
 /**
- * Metadata for every post, for the blog index. Newest first when dated.
- * A single post failing (with no stale fallback available) is skipped
- * rather than failing the entire index for every visitor.
+ * Metadata for every post, for the blog index. Newest first; undated posts
+ * sink to the bottom; ties (and the undated tail) sort alphabetically.
+ * Parent-node organizational notes are excluded. A single post failing
+ * (with no stale fallback available) is skipped rather than failing the
+ * entire index for every visitor.
  */
 export async function listPosts(): Promise<PostMeta[]> {
   const postPaths = await listPostPaths();
@@ -266,7 +312,9 @@ export async function listPosts(): Promise<PostMeta[]> {
   const results = await Promise.allSettled(
     postPaths.map(async (postPath) => {
       const file = await fetchPostFile(postPath);
-      return file ? toPostMeta(postPath, file.frontmatter) : null;
+      return file && !isParentNode(file.frontmatter)
+        ? toPostMeta(postPath, file.frontmatter)
+        : null;
     }),
   );
 
@@ -279,9 +327,12 @@ export async function listPosts(): Promise<PostMeta[]> {
   return metas
     .filter((meta): meta is PostMeta => meta !== null)
     .sort((a, b) => {
-      if (a.date && b.date) {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
+      const aTime = a.date ? new Date(a.date).getTime() : NaN;
+      const bTime = b.date ? new Date(b.date).getTime() : NaN;
+      const aDated = !Number.isNaN(aTime);
+      const bDated = !Number.isNaN(bTime);
+      if (aDated !== bDated) return aDated ? -1 : 1;
+      if (aDated && bDated && aTime !== bTime) return bTime - aTime;
       return a.title.localeCompare(b.title);
     });
 }
