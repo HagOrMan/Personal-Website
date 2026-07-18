@@ -270,20 +270,20 @@ export default function Home() {
         </section>
 
         {/* Experience */}
-        <section className='mx-auto flex min-h-screen w-full max-w-5xl flex-col items-start justify-center p-10'>
+        {/* <section className='mx-auto flex min-h-screen w-full max-w-5xl flex-col items-start justify-center p-10'>
           <h2 className='mb-8 text-3xl font-bold'>EXPERIENCE</h2>
           <div className='h-[500px] w-full rounded-xl border border-black/10 p-6 dark:border-white/10'>
             <p>Co-op</p>
           </div>
-        </section>
+        </section> */}
 
         {/* Projects */}
-        <section className='flex min-h-screen w-full flex-col items-end justify-center p-10'>
+        {/* <section className='flex min-h-screen w-full flex-col items-end justify-center p-10'>
           <div className='w-1/2'>
             <h2 className='mb-4 text-3xl font-bold'>PROJECTS</h2>
             <p>This?</p>
           </div>
-        </section>
+        </section> */}
       </main>
     </div>
   );
