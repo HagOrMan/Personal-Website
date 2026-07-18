@@ -60,6 +60,7 @@ interface PostFrontmatter {
   password?: string;
   private?: boolean;
   tags?: string[];
+  featured?: boolean | 'top';
   [key: string]: unknown;
 }
 
@@ -73,6 +74,9 @@ export interface PostMeta {
   /** Human-readable subfolder label (e.g. "Event Reflections"), if nested. */
   folder?: string;
   locked: boolean;
+  featured: boolean;
+  /** `featured: top` - leads the featured section instead of being tucked under "view all". */
+  featuredTop: boolean;
 }
 
 export interface Post {
@@ -111,6 +115,14 @@ function githubHeaders(accept: string): HeadersInit {
 
 function isLocked(fm: PostFrontmatter): boolean {
   return Boolean(fm.password) || fm.private === true;
+}
+
+function isFeatured(fm: PostFrontmatter): boolean {
+  return fm.featured === true || fm.featured === 'top';
+}
+
+function isFeaturedTop(fm: PostFrontmatter): boolean {
+  return fm.featured === 'top';
 }
 
 // Obsidian "parent node" notes exist purely to organize sub-notes in the
@@ -160,6 +172,8 @@ function toPostMeta(postPath: string, fm: PostFrontmatter): PostMeta {
     tags: normalizeTags(fm.tags),
     folder,
     locked: isLocked(fm),
+    featured: isFeatured(fm),
+    featuredTop: isFeaturedTop(fm),
   };
 }
 
