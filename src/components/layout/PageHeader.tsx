@@ -105,7 +105,7 @@ export const PageHeader = ({
             {decoration && (
               <motion.span
                 variants={itemVariants}
-                className='absolute top-0 left-full -mt-9 ml-6 shrink-0 md:hidden'
+                className='absolute top-0 left-full -mt-9 ml-6 shrink-0 md:ml-8'
                 style={fadeDecoration ? edgeFadeMask : undefined}
                 aria-hidden='true'
               >
@@ -127,18 +127,6 @@ export const PageHeader = ({
           </motion.p>
         )}
       </div>
-
-      {/* Decoration slot (e.g. floating lights canvas later), desktop only */}
-      {decoration && (
-        <motion.div
-          variants={itemVariants}
-          className='pointer-events-none hidden shrink-0 items-center md:pointer-events-auto md:flex'
-          style={fadeDecoration ? edgeFadeMask : undefined}
-          aria-hidden='true'
-        >
-          {decoration}
-        </motion.div>
-      )}
     </motion.header>
   );
 };
