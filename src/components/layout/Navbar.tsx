@@ -15,6 +15,7 @@ import {
   navigationMenuTriggerStyle,
 } from '@/components/ui/NavigationMenu';
 import { NavbarItem } from '@/constant/layout/navItems';
+import { useHomeIconClick } from '@/context/HomeIconClickContext';
 import { cn } from '@/lib/utils';
 
 export type NavbarProps = {
@@ -23,7 +24,17 @@ export type NavbarProps = {
 
 export const Navbar = ({ navbarItems }: NavbarProps) => {
   const pathname = usePathname();
+  const { registerClick } = useHomeIconClick();
   const [value, setValue] = useState(''); // represents the index as a string of the currently chosen navigation item
+
+  // On the homepage, clicking the logo is a fun easter egg (see HomeIconClickContext)
+  // instead of a no-op navigation to the page you're already on.
+  const handleLogoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (pathname === '/') {
+      event.preventDefault();
+      registerClick();
+    }
+  };
 
   // Ensures the menu closes when the route changes (w/o this, content from hovering on 'projects' stays open which clicking a specific project - big no no)
   useEffect(() => {
@@ -72,7 +83,7 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
       onPointerLeave={() => setValue('')}
     >
       {/* Website logo but to navigate home */}
-      <Link href='/' className='flex items-center'>
+      <Link href='/' className='flex items-center' onClick={handleLogoClick}>
         <Image
           src='/svg/favicon.svg'
           alt='Logo'

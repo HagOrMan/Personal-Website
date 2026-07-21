@@ -2,25 +2,58 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { ChevronDown } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 // import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
 import { OceanScene } from '@/components/backgrounds/OceanParticles';
+import { HomeIconPopOverlay } from '@/components/home/HomeIconPopOverlay';
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
+import { useHomeIconClick } from '@/context/HomeIconClickContext';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 
+// Number of navbar-logo clicks (see HomeIconClickContext) before we take the
+// user to /ocean — they clicked the "ocean icon" enough times to go there.
+const CLICKS_TO_OCEAN = 3;
+// Give the final pop animation time to play before navigating away.
+const OCEAN_REDIRECT_DELAY_MS = 900;
+
 export default function Home() {
   const containerRef = useRef(null);
+  const router = useRouter();
+  const { clickCount, lastClickId, resetClicks } = useHomeIconClick();
 
   // Check if screen is Large (Desktop)
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+
+  // Start every fresh visit to the homepage with a clean click count/URL,
+  // in case the provider carried a stale count over from a previous visit.
+  useEffect(() => {
+    resetClicks();
+    window.history.replaceState(null, '', '/');
+  }, [resetClicks]);
+
+  // Reflect the click count in the URL, then head to /ocean once the user
+  // has clicked the home icon enough times.
+  useEffect(() => {
+    if (clickCount === 0) return;
+
+    window.history.replaceState(null, '', `/?clicks=${clickCount}`);
+
+    if (clickCount >= CLICKS_TO_OCEAN) {
+      const timeout = setTimeout(() => {
+        router.push('/ocean');
+      }, OCEAN_REDIRECT_DELAY_MS);
+      return () => clearTimeout(timeout);
+    }
+  }, [clickCount, router]);
 
   // Track scroll progress specifically for this container
   // "start 40px": when top of container hits 40px down the top of viewport (used so the scroll animation triggers immediately)
@@ -138,6 +171,7 @@ export default function Home() {
 
   return (
     <div className='bg-background min-h-screen w-full font-(family-name:--font-geist-sans)'>
+      <HomeIconPopOverlay triggerId={lastClickId} />
       <main className='relative z-10 flex w-full flex-col'>
         {/* SCROLL TRACK: Scrolling this drives the animations.
         The intro page, with a welcome message */}
