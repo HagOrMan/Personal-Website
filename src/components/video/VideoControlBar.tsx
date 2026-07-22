@@ -86,30 +86,11 @@ export function VideoControlBar({
           <ChevronRight className='size-5' />
         </button>
 
-        <span className='text-muted-foreground ml-1 min-w-9 text-xs tabular-nums'>
-          {formatTime(currentTime)}
-        </span>
-
-        <input
-          type='range'
-          min={0}
-          max={Math.max(duration, 0.01)}
-          step={0.1}
-          value={Math.min(currentTime, duration)}
-          onChange={(event) => onSeek(Number(event.target.value))}
-          aria-label={`Seek — ${formatTime(currentTime)} of ${formatTime(duration)} through "${videoTitle}"`}
-          className='accent-lush-500 focus-visible:outline-ring h-1.5 flex-1 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-4'
-        />
-
-        <span className='text-muted-foreground min-w-9 text-xs tabular-nums'>
-          {formatTime(duration)}
-        </span>
-
         <button
           type='button'
           onClick={onToggleMute}
           aria-label={isMuted ? 'Unmute' : 'Mute'}
-          className={iconButtonClasses}
+          className={cn(iconButtonClasses, 'ml-auto')}
         >
           {isMuted ? (
             <VolumeX className='size-5' />
@@ -131,6 +112,30 @@ export function VideoControlBar({
         >
           <FileText className='size-5' />
         </button>
+      </div>
+
+      {/* Seek bar on its own row - sharing the row above with the
+          prev/play/next/mute/transcript buttons overflowed narrower cards
+          (e.g. the about-me sticky panel). */}
+      <div className='flex items-center gap-2 px-1'>
+        <span className='text-muted-foreground min-w-9 text-xs tabular-nums'>
+          {formatTime(currentTime)}
+        </span>
+
+        <input
+          type='range'
+          min={0}
+          max={Math.max(duration, 0.01)}
+          step={0.1}
+          value={Math.min(currentTime, duration)}
+          onChange={(event) => onSeek(Number(event.target.value))}
+          aria-label={`Seek — ${formatTime(currentTime)} of ${formatTime(duration)} through "${videoTitle}"`}
+          className='accent-lush-500 focus-visible:outline-ring h-1.5 flex-1 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-4'
+        />
+
+        <span className='text-muted-foreground min-w-9 text-xs tabular-nums'>
+          {formatTime(duration)}
+        </span>
       </div>
     </div>
   );

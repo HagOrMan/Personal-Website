@@ -3,6 +3,7 @@
 import { useCallback, useId } from 'react';
 import Image from 'next/image';
 
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -32,8 +33,8 @@ export type VideoExperienceProps = {
   initialVideoId?: VideoId;
   /** Autoplay as soon as this mounts - only appropriate right after the deliberate click that opens the modal. */
   autoplayOnMount?: boolean;
-  /** Id for the visible title element, so a wrapping Dialog can point aria-labelledby at it. */
-  titleId?: string;
+  /** Bump to force playback to start now, even if activeVideoId is already the target (e.g. a "Watch" chip for the currently-selected video). */
+  playSignal?: number;
   className?: string;
 };
 
@@ -51,13 +52,11 @@ export function VideoExperience({
   onActiveVideoChange,
   initialVideoId,
   autoplayOnMount = false,
-  titleId: titleIdProp,
+  playSignal,
   className,
 }: VideoExperienceProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const prefersReducedMotion = usePrefersReducedMotion();
-  const generatedTitleId = useId();
-  const titleId = titleIdProp ?? generatedTitleId;
   const transcriptPanelId = useId();
 
   // Only the sticky shell (desktop about-me) has page sections to scroll to;
@@ -80,6 +79,7 @@ export function VideoExperience({
     initialVideoId,
     onNavigate: handleNavigate,
     autoplayOnMount,
+    playSignal,
   });
 
   const { currentVideo, nextVideo, currentIndex, hasPrevVideo, actions } =
@@ -87,14 +87,42 @@ export function VideoExperience({
   const showPosterOverlay =
     !state.isPlaying && !state.ended && state.currentTime < 0.15;
 
+  // The desktop modal has no ancestor with a definite height (unlike the
+  // mobile modal's h-full flex column), so a percentage max-height (100%)
+  // can't resolve there. A viewport-relative clamp works regardless of that:
+  // shrink the video as the window gets shorter,
+  // down to a 400px floor (roughly a 225px-wide clip - still legible),
+  // below which shrinking further would hurt more than it helps and the
+  // panel's own scroll wrapper should take over instead. 240px approximates
+  // the title + two-row controls + gaps + panel padding around it with the
+  // transcript closed; opening the transcript eats into that budget, which
+  // is exactly when the scroll fallback should kick in.
+  const frameMaxHeightClass =
+    variant === 'modal' && isDesktop
+      ? 'max-h-[clamp(400px,calc(100vh_-_240px),640px)] self-center'
+      : 'max-h-full';
+
   const frame = (
     <div
-      className='relative aspect-[9/16] max-h-full w-full shrink-0 overflow-hidden rounded-2xl bg-black'
+      // No definite width on purpose: letting it stay auto (only capped by
+      // max-w) lets the browser solve the 9:16 box against whichever axis is
+      // tighter. A forced w-full here would win a conflict with max-h by
+      // keeping width fixed and clipping height instead - that's what was
+      // cropping/oversizing the video in the mobile modal. In the desktop
+      // modal, the frame is a flex item of a flex-col column whose default
+      // align-items: stretch would force width back to the column's full
+      // 320px regardless of the height clamp above - self-center (bundled
+      // into frameMaxHeightClass for the desktop-modal case) opts out of
+      // that stretch so width can shrink along with the clamped height.
+      className={cn(
+        'relative aspect-[9/16] max-w-full overflow-hidden rounded-2xl bg-black',
+        frameMaxHeightClass,
+      )}
       onClick={actions.togglePlay}
     >
       <video
         key={currentVideo.id}
-        ref={state.videoRef}
+        ref={state.bindVideoRef}
         src={currentVideo.src}
         preload='none'
         playsInline
@@ -147,14 +175,19 @@ export function VideoExperience({
     </div>
   );
 
-  const title = (
-    <h2
-      id={titleId}
-      className='text-foreground truncate text-xl font-semibold sm:text-2xl'
-    >
-      {currentVideo.title}
-    </h2>
-  );
+  const titleClassName =
+    'text-foreground truncate text-xl font-semibold sm:text-2xl';
+  // Modal variant renders inside a Radix Dialog, so the visible title doubles
+  // as the Dialog's accessible name via DialogPrimitive.Title (rather than a
+  // hidden duplicate) - the sticky variant has no Dialog context to hook into.
+  const title =
+    variant === 'modal' ? (
+      <DialogPrimitive.Title className={titleClassName}>
+        {currentVideo.title}
+      </DialogPrimitive.Title>
+    ) : (
+      <h2 className={titleClassName}>{currentVideo.title}</h2>
+    );
 
   const controls = (
     <VideoControlBar
@@ -200,7 +233,10 @@ export function VideoExperience({
     return (
       <div
         className={cn(
-          'bg-card flex w-full flex-col gap-4 rounded-2xl border p-4 sm:p-5',
+          // border/50 (rather than the full-strength border color) keeps
+          // this readable as a card edge without the harsh outline it had
+          // in light mode, where --border sits far lighter than --card.
+          'bg-card border-border/50 flex w-full flex-col gap-4 rounded-2xl border p-4 sm:p-5',
           className,
         )}
       >
@@ -230,28 +266,33 @@ export function VideoExperience({
     return (
       <div
         className={cn(
-          'bg-background relative flex max-w-3xl gap-8 rounded-3xl p-6 shadow-2xl sm:p-8',
+          'bg-background relative flex max-w-3xl rounded-3xl p-6 shadow-2xl sm:p-8',
           className,
         )}
       >
         {closeButton}
-        <div className='flex w-80 flex-col gap-4'>
-          {title}
-          {frame}
-          {controls}
-          {transcript}
-        </div>
-        <div className='border-border/70 flex w-56 flex-col gap-2 border-l pl-6'>
-          <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-            Contents
-          </h3>
-          <VideoTableOfContents
-            videos={videos}
-            currentId={currentVideo.id}
-            onSelect={actions.goToId}
-            density='list'
-            className='overflow-y-auto'
-          />
+        {/* The close button stays outside this scroll region (pinned to the
+            panel corner) - everything else scrolls together on short
+            viewports instead of being hard-clipped top and bottom. */}
+        <div className='flex max-h-[85vh] w-full gap-8 overflow-y-auto'>
+          <div className='flex w-80 flex-col gap-4'>
+            {title}
+            {frame}
+            {controls}
+            {transcript}
+          </div>
+          <div className='border-border/70 flex w-56 flex-col gap-2 border-l pl-6'>
+            <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+              Contents
+            </h3>
+            <VideoTableOfContents
+              videos={videos}
+              currentId={currentVideo.id}
+              onSelect={actions.goToId}
+              density='list'
+              className='overflow-y-auto'
+            />
+          </div>
         </div>
       </div>
     );
@@ -268,7 +309,7 @@ export function VideoExperience({
       {closeButton}
       <div className='pr-12'>{title}</div>
 
-      <div className='relative min-h-0 flex-1 overflow-hidden rounded-2xl'>
+      <div className='relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl'>
         {frame}
 
         <motion.div

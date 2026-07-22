@@ -22,6 +22,13 @@ export type UseVideoExperienceOptions = {
   autoplayOnMount?: boolean;
   /** Which video to start on when uncontrolled (e.g. a mobile "Watch" chip opening the modal to a specific clip). Ignored when `activeVideoId` is set. */
   initialVideoId?: VideoId;
+  /**
+   * Bump this (e.g. a counter incremented on every click) to force playback
+   * to start right now, even if the target video is already `activeVideoId`
+   * and therefore wouldn't otherwise re-trigger anything - e.g. a "Watch"
+   * chip elsewhere on the page whose video happens to already be selected.
+   */
+  playSignal?: number;
 };
 
 /**
@@ -36,6 +43,7 @@ export function useVideoExperience({
   onNavigate,
   autoplayOnMount = false,
   initialVideoId,
+  playSignal,
 }: UseVideoExperienceOptions) {
   const [internalId, setInternalId] = useState(initialVideoId ?? videos[0].id);
   const currentId = activeVideoId ?? internalId;
@@ -47,7 +55,24 @@ export function useVideoExperience({
   const nextVideo = videos[currentIndex + 1] ?? null;
   const hasPrevVideo = currentIndex > 0;
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hasAutoplayedOnMountRef = useRef(false);
+
+  // Fires synchronously during commit (unlike a useEffect, which React
+  // defers to a passive-effect pass after paint) - stricter autoplay
+  // policies (Safari in particular) only allow an unmuted play() call this
+  // close to the user gesture that opened the modal, so the very first
+  // autoplay is triggered from here rather than from the effect below.
+  const bindVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      videoRef.current = el;
+      if (el && autoplayOnMount && !hasAutoplayedOnMountRef.current) {
+        hasAutoplayedOnMountRef.current = true;
+        el.play().catch(() => {});
+      }
+    },
+    [autoplayOnMount],
+  );
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -62,7 +87,13 @@ export function useVideoExperience({
   // and autoplay - every id change after the first render is a deliberate
   // user action (ToC/chip click, next/prev, end card), so resuming
   // playback on the new clip matches what the visitor just asked for.
-  const isFirstRenderRef = useRef(true);
+  //
+  // Tracks the previous id (rather than a simple "is this the first run"
+  // flag) so this stays correct even if the effect fires more than once for
+  // the same id - e.g. React Strict Mode's dev-only mount/cleanup/remount
+  // cycle - which previously caused an unconditional videoEl.play() call on
+  // load for non-autoplay instances (the sticky about-me panel).
+  const previousIdRef = useRef<VideoId | null>(null);
   useEffect(() => {
     setCurrentTime(0);
     setDuration(currentVideo.durationSeconds);
@@ -70,21 +101,36 @@ export function useVideoExperience({
     setPreloadNext(false);
     setIsPlaying(false);
 
+    const isVideoChange =
+      previousIdRef.current !== null && previousIdRef.current !== currentId;
+    previousIdRef.current = currentId;
+
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    if (isFirstRenderRef.current) {
-      isFirstRenderRef.current = false;
-      if (autoplayOnMount) {
-        videoEl.play().catch(() => {});
-      }
-      return;
+    // The very first autoplay (autoplayOnMount) is handled by bindVideoRef
+    // above instead, which fires synchronously during commit rather than in
+    // this passive effect.
+    if (isVideoChange) {
+      videoEl.play().catch(() => {});
     }
-
-    videoEl.play().catch(() => {});
     // currentVideo.durationSeconds intentionally omitted - only currentId should retrigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentId]);
+
+  // A "Watch" chip (or similar) elsewhere on the page may target a video
+  // that's already `activeVideoId` - the effect above only fires on an
+  // actual id change, so that click would otherwise do nothing. Bumping
+  // playSignal forces a play() regardless. Guarded against firing on mount
+  // by seeding the "last seen" ref with playSignal's own initial value.
+  const lastPlaySignalRef = useRef(playSignal);
+  useEffect(() => {
+    if (playSignal === undefined || playSignal === lastPlaySignalRef.current) {
+      return;
+    }
+    lastPlaySignalRef.current = playSignal;
+    videoRef.current?.play().catch(() => {});
+  }, [playSignal]);
 
   const goToId = useCallback(
     (id: VideoId) => {
@@ -93,6 +139,13 @@ export function useVideoExperience({
       if (activeVideoId === undefined) setInternalId(id);
       onActiveVideoChange?.(id);
       onNavigate?.(target);
+      // Explicit navigation (ToC, next/prev, end card) should always start
+      // playback, even when re-selecting the video that's already current -
+      // that case wouldn't otherwise re-trigger the id-change effect above.
+      // A no-op when id is actually changing: this ref still points at the
+      // outgoing element, which is about to unmount anyway, and the new
+      // one autoplays via that same effect once it mounts.
+      videoRef.current?.play().catch(() => {});
     },
     [videos, activeVideoId, onActiveVideoChange, onNavigate],
   );
@@ -187,7 +240,7 @@ export function useVideoExperience({
     currentVideo,
     nextVideo,
     hasPrevVideo,
-    videoRef,
+    bindVideoRef,
     isPlaying,
     isMuted,
     currentTime,

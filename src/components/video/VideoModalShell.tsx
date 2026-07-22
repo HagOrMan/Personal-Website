@@ -1,7 +1,5 @@
 'use client';
 
-import { useId } from 'react';
-
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -33,7 +31,6 @@ export function VideoModalShell({
   initialVideoId,
 }: VideoModalShellProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
-  const titleId = useId();
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -50,10 +47,12 @@ export function VideoModalShell({
               />
             </DialogPrimitive.Overlay>
 
+            {/* aria-labelledby is left to Radix's default - it wires itself
+                up automatically to the DialogPrimitive.Title rendered inside
+                VideoExperience (variant="modal"). */}
             <DialogPrimitive.Content
               asChild
               forceMount
-              aria-labelledby={titleId}
               className='fixed inset-0 z-50 flex items-center justify-center lg:p-6'
             >
               <motion.div
@@ -75,7 +74,6 @@ export function VideoModalShell({
                   onClose={() => onOpenChange(false)}
                   initialVideoId={initialVideoId}
                   autoplayOnMount
-                  titleId={titleId}
                   className='h-full w-full lg:h-auto lg:w-auto'
                 />
               </motion.div>

@@ -35,7 +35,7 @@ export function VideoEndCard({
         <button
           type='button'
           onClick={onAdvance}
-          className='focus-visible:ring-ring group flex w-full max-w-[220px] flex-col items-center gap-2 rounded-2xl p-2 text-white transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:outline-hidden'
+          className='focus-visible:ring-ring group flex w-full max-w-[220px] cursor-pointer flex-col items-center gap-2 rounded-2xl p-2 text-white focus-visible:ring-2 focus-visible:outline-hidden'
         >
           <span className='relative aspect-[9/16] w-28 overflow-hidden rounded-xl shadow-lg ring-1 ring-white/20'>
             <Image
@@ -49,7 +49,9 @@ export function VideoEndCard({
           <span className='text-xs tracking-wide text-white/70 uppercase'>
             Up next
           </span>
-          <span className='text-base font-semibold'>{nextVideo.title}</span>
+          <span className='group-hover:text-lush-300 text-base font-semibold transition-colors'>
+            {nextVideo.title}
+          </span>
           <span className='text-sm text-white/70 tabular-nums'>
             {nextVideo.durationLabel}
           </span>

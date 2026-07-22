@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Play } from 'lucide-react';
+import { ArrowRight, Play } from 'lucide-react';
 
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
@@ -62,6 +62,12 @@ export default function AboutMeClient({
   // column) can drive it.
   const [activeVideoId, setActiveVideoId] = useState(videos[0].id);
 
+  // Bumped on every desktop "Watch" click to force playback to start, even
+  // when the clicked section's video is already the one showing (setting
+  // activeVideoId to the same id it already holds is a no-op re-render,
+  // so it wouldn't otherwise resume/start anything).
+  const [watchSignal, setWatchSignal] = useState(0);
+
   // Mobile: the modal is its own separate instance, opened on demand.
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
   const [mobileStartId, setMobileStartId] = useState(videos[0].id);
@@ -69,6 +75,11 @@ export default function AboutMeClient({
   const openMobilePreview = (videoId: VideoId) => {
     setMobileStartId(videoId);
     setMobileModalOpen(true);
+  };
+
+  const watchOnDesktop = (videoId: VideoId) => {
+    setActiveVideoId(videoId);
+    setWatchSignal((signal) => signal + 1);
   };
 
   return (
@@ -102,7 +113,13 @@ export default function AboutMeClient({
 
       <div
         className={cn(
-          isDesktop && 'grid grid-cols-[1fr_320px] items-start gap-14',
+          // The text column caps itself at max-w-2xl below, so give it
+          // exactly that much track width instead of 1fr - otherwise the
+          // second column (fixed at 320px) ends up hugging the right edge
+          // of a much wider viewport with a dead gap in between. The
+          // second column keeps the leftover space so the video can be
+          // centered within it instead.
+          isDesktop && 'grid grid-cols-[minmax(0,42rem)_1fr] items-start gap-14',
         )}
       >
         <div className='flex max-w-2xl flex-col gap-14'>
@@ -123,7 +140,7 @@ export default function AboutMeClient({
                   <button
                     type='button'
                     onClick={() => {
-                      if (isDesktop) setActiveVideoId(section.videoId!);
+                      if (isDesktop) watchOnDesktop(section.videoId!);
                       else openMobilePreview(section.videoId!);
                     }}
                   >
@@ -181,6 +198,7 @@ export default function AboutMeClient({
                 <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
                   Get in touch
                 </span>
+                <ArrowRight className='h-4 w-4 opacity-80 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100' />
               </Link>
             </div>
           </section>
@@ -191,6 +209,7 @@ export default function AboutMeClient({
             videos={videos}
             activeVideoId={activeVideoId}
             onActiveVideoChange={setActiveVideoId}
+            playSignal={watchSignal}
           />
         )}
       </div>

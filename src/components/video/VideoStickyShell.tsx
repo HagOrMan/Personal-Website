@@ -8,6 +8,8 @@ export type VideoStickyShellProps = {
   videos: PortfolioVideo[];
   activeVideoId?: VideoId;
   onActiveVideoChange?: (id: VideoId) => void;
+  /** Bump to force playback to start now, even if activeVideoId is already the target (e.g. a "Watch" chip for the currently-selected video). */
+  playSignal?: number;
 };
 
 /**
@@ -20,14 +22,20 @@ export function VideoStickyShell({
   videos,
   activeVideoId,
   onActiveVideoChange,
+  playSignal,
 }: VideoStickyShellProps) {
   return (
-    <div className='lg:sticky lg:top-24 lg:h-fit'>
+    // mx-auto + a max-width centers the card within whatever space its
+    // parent grid column leaves - the column itself is no longer sized to
+    // exactly fit the card (see AboutMeClient), so this keeps it from
+    // hugging the right edge of the page on wide viewports.
+    <div className='mx-auto w-full max-w-[320px] lg:sticky lg:top-24 lg:h-fit'>
       <VideoExperience
         videos={videos}
         variant='sticky'
         activeVideoId={activeVideoId}
         onActiveVideoChange={onActiveVideoChange}
+        playSignal={playSignal}
       />
     </div>
   );

@@ -82,10 +82,13 @@ export default function Home() {
   // Phase 2 (30% - 60%): Description fades in & Card expands
   // Simulate "expansion" by animating height and width
   const descriptionOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 1]);
+  // Mobile gets a taller final height than desktop: its card is narrower
+  // (see cardWidth below), so the same bio text wraps across more lines and
+  // needs more room, or it clips against the card's own overflow-hidden.
   const cardHeight = useTransform(
     scrollYProgress,
     [0, 0.3, 0.5],
-    ['200px', '300px', '450px'],
+    isDesktop ? ['200px', '300px', '450px'] : ['180px', '320px', '560px'],
   );
   // Start narrow (for name), expand to wider (for bio)
   // Desktop: Grows to 550px
@@ -186,7 +189,7 @@ export default function Home() {
              We hide overflow to ensure elements sliding in don't cause scrollbars.
              top-0 was changed to top-10 to help the scroll animation trigger immediately
           */}
-          <div className='sticky top-10 flex h-screen w-full flex-col items-center overflow-hidden p-4'>
+          <div className='sticky top-10 flex h-dvh w-full flex-col items-center overflow-hidden p-4'>
             {/* Container for ocean background at top of page */}
             <div className='absolute inset-0 z-0 -translate-y-6'>
               {/* <ElectricShockBackground /> */}
@@ -196,8 +199,11 @@ export default function Home() {
             {/* gradient to blend into page below */}
             <div className='from-background pointer-events-none absolute bottom-0 left-0 z-50 h-32 w-full bg-gradient-to-t to-transparent' />
 
-            {/* CONTENT CONTAINER */}
-            <div className='pointer-events-none relative z-10 mt-20 flex w-full max-w-7xl flex-col items-center lg:mt-30'>
+            {/* CONTENT CONTAINER
+                mt-12 on mobile (vs. mt-20 previously) reclaims vertical room
+                for the taller mobile card height above, so it fits within
+                the viewport instead of running off the bottom. */}
+            <div className='pointer-events-none relative z-10 mt-12 flex w-full max-w-7xl flex-col items-center lg:mt-30'>
               {/* Liquid glass card that starts invisible and appears as the text inside moves left on page. */}
               <LiquidGlassCard
                 alpha={glassOpacity}
