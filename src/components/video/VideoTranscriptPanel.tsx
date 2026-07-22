@@ -1,12 +1,18 @@
 'use client';
 
 import { Collapsible, CollapsibleContent } from '@/components/ui/Collapsible';
+import { cn } from '@/lib/utils';
 
 type VideoTranscriptPanelProps = {
   open: boolean;
   transcript: string;
   videoTitle: string;
   panelId: string;
+  /** Caps the panel at a fixed height with its own internal scroll - the
+   * default, for contexts (mobile modal, sticky panel) with no other
+   * scroll region to fall back on. The desktop modal already scrolls its
+   * whole content column, so it opts out to avoid a scroll-within-a-scroll. */
+  scrollable?: boolean;
 };
 
 /**
@@ -20,6 +26,7 @@ export function VideoTranscriptPanel({
   transcript,
   videoTitle,
   panelId,
+  scrollable = true,
 }: VideoTranscriptPanelProps) {
   return (
     <Collapsible open={open}>
@@ -30,7 +37,10 @@ export function VideoTranscriptPanel({
         <div
           role='region'
           aria-label={`Transcript for ${videoTitle}`}
-          className='scrollbar-hover text-foreground/80 max-h-48 overflow-y-auto rounded-lg bg-black/5 p-4 text-sm leading-relaxed break-words whitespace-pre-line dark:bg-white/5'
+          className={cn(
+            'text-foreground/80 rounded-lg bg-black/5 p-4 text-sm leading-relaxed break-words whitespace-pre-line dark:bg-white/5',
+            scrollable && 'scrollbar-hover max-h-48 overflow-y-auto',
+          )}
         >
           {transcript}
         </div>

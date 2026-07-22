@@ -281,6 +281,12 @@ export function VideoExperience({
       transcript={currentVideo.transcript}
       videoTitle={currentVideo.title}
       panelId={transcriptPanelId}
+      // The desktop modal's own scroll region (the scrollbar-hover wrapper
+      // below) already scrolls the whole column, including this panel - a
+      // second scrollbar in here would be a scroll-within-a-scroll. Mobile
+      // (overflow-hidden root, no fallback scroll) and the sticky panel
+      // (no scroll region at all) still need their own cap.
+      scrollable={!(variant === 'modal' && isDesktop)}
     />
   );
 
@@ -347,7 +353,14 @@ export function VideoExperience({
             scroll region only (not a second, independently-scrolling one
             for Contents) - two nested scrollbars fighting over the mouse
             wheel is worse than the rare case of scrolling the whole thing. */}
-        <div className='scrollbar-hover flex max-h-[85vh] w-full flex-col overflow-y-auto'>
+        <div
+          // scrollbar-gutter:stable reserves the scrollbar's width whether
+          // or not it's currently showing - without it, this column's
+          // content (and the panel's own width) shifts sideways by a few
+          // px whenever the scrollbar toggles on/off, e.g. opening a
+          // transcript long enough to cross the max-h-[85vh] cap.
+          className='scrollbar-hover flex max-h-[85vh] w-full flex-col overflow-y-auto [scrollbar-gutter:stable]'
+        >
           <div className='flex w-full gap-8'>
             <div className='flex w-80 flex-col gap-4'>
               {title}
@@ -381,13 +394,18 @@ export function VideoExperience({
             </div>
           </div>
 
-          {/* min-w-0 stops this flex-col item from growing past the row
-              above (and taking the whole modal with it) if the transcript
-              text has a long unbroken line - see also break-words on the
-              transcript's own text container. */}
+          {/* This panel's width is auto/shrink-to-fit (see the lg:w-auto +
+              max-w-3xl chain up through VideoModalShell), so without this
+              the transcript's own preferred width - driven by its longest
+              unwrapped line - feeds back into that shrink-to-fit
+              calculation and widens the whole modal to fit one long
+              sentence. w-0 makes this item contribute nothing to that
+              calculation; min-w-full then expands it back out to match the
+              row above once the modal's width is otherwise resolved - see
+              also break-words on the transcript's own text container. */}
           <div
             ref={transcriptRef}
-            className={cn('min-w-0', state.transcriptOpen && 'mt-4')}
+            className={cn('w-0 min-w-full', state.transcriptOpen && 'mt-4')}
           >
             {transcript}
           </div>

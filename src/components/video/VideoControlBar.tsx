@@ -107,6 +107,7 @@ export function VideoActionBar({
         type='button'
         onClick={onToggleMute}
         aria-label={isMuted ? 'Unmute' : 'Mute'}
+        title={isMuted ? 'Unmute' : 'Mute'}
         className={cn(iconButtonClasses, buttonSizeClass, 'ml-auto')}
       >
         {isMuted ? (
@@ -122,6 +123,7 @@ export function VideoActionBar({
         aria-expanded={transcriptOpen}
         aria-controls={transcriptPanelId}
         aria-label={transcriptOpen ? 'Hide transcript' : 'Show transcript'}
+        title={transcriptOpen ? 'Hide transcript' : 'Show transcript'}
         className={cn(
           iconButtonClasses,
           buttonSizeClass,
