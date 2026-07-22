@@ -16,3 +16,8 @@ export function useMediaQuery(query: string) {
 
   return matches;
 }
+
+/** True when the visitor has requested reduced motion at the OS/browser level. */
+export function usePrefersReducedMotion() {
+  return useMediaQuery('(prefers-reduced-motion: reduce)');
+}

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Play } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 // import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
@@ -14,10 +14,15 @@ import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
+import { VideoModalShell } from '@/components/video/VideoModalShell';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
+import { PORTFOLIO_VIDEOS } from '@/constant/videos';
 import { useHomeIconClick } from '@/context/HomeIconClickContext';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
+
+const heroVideoTriggerClasses =
+  'group cursor-pointer bg-lush-500/10 border-lush-600/20 text-lush-950 hover:bg-lush-500/20 hover:border-lush-600/30 dark:bg-lush-400/10 dark:border-lush-300/20 dark:text-lush-50 dark:hover:bg-lush-400/20 dark:hover:border-lush-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors';
 
 // Number of navbar-logo clicks (see HomeIconClickContext) before we take the
 // user to /ocean — they clicked the "ocean icon" enough times to go there.
@@ -29,6 +34,7 @@ export default function Home() {
   const containerRef = useRef(null);
   const router = useRouter();
   const { clickCount, lastClickId, resetClicks } = useHomeIconClick();
+  const [videoOpen, setVideoOpen] = useState(false);
 
   // Check if screen is Large (Desktop)
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -252,6 +258,23 @@ export default function Home() {
                         Connect with me
                       </span>
                     </Link>
+
+                    {/* "Hear it from me" trigger - shown here below ~1024px,
+                        where the photo (and its own copy of this button) is
+                        either hidden or too cramped underneath. */}
+                    <button
+                      type='button'
+                      onClick={() => setVideoOpen(true)}
+                      className={cn(heroVideoTriggerClasses, 'lg:hidden')}
+                    >
+                      <Play
+                        className='h-4 w-4 opacity-80 transition-opacity group-hover:opacity-100'
+                        fill='currentColor'
+                      />
+                      <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
+                        Hear it from me
+                      </span>
+                    </button>
                   </div>
                 </motion.div>
               </LiquidGlassCard>
@@ -277,6 +300,24 @@ export default function Home() {
                 {/* Replace with your actual Image component */}
                 <div className='h-full w-full rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 shadow-2xl lg:h-[400px] lg:w-[300px]' />
                 <div className='from-background absolute bottom-0 left-0 z-10 h-12 w-full bg-gradient-to-t to-transparent lg:hidden' />
+
+                {/* "Hear it from me" trigger - desktop only, sits under the photo. */}
+                <button
+                  type='button'
+                  onClick={() => setVideoOpen(true)}
+                  className={cn(
+                    heroVideoTriggerClasses,
+                    'pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 lg:flex',
+                  )}
+                >
+                  <Play
+                    className='h-4 w-4 opacity-80 transition-opacity group-hover:opacity-100'
+                    fill='currentColor'
+                  />
+                  <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
+                    Hear it from me
+                  </span>
+                </button>
               </motion.div>
             </div>
 
@@ -319,6 +360,12 @@ export default function Home() {
           </div>
         </section> */}
       </main>
+
+      <VideoModalShell
+        videos={PORTFOLIO_VIDEOS}
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+      />
     </div>
   );
 }

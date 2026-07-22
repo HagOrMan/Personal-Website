@@ -54,7 +54,10 @@ export function ContactForm() {
     >
       <form action={formAction} className='flex flex-col gap-5'>
         <div className='flex flex-col gap-1.5'>
-          <label htmlFor='contact-name' className='text-muted-foreground text-sm'>
+          <label
+            htmlFor='contact-name'
+            className='text-muted-foreground text-sm'
+          >
             Name
           </label>
           <input
@@ -92,7 +95,9 @@ export function ContactForm() {
             onChange={(e) => setEmail(e.target.value)}
           />
           {state?.fieldErrors?.email && (
-            <p className='text-destructive text-xs'>{state.fieldErrors.email}</p>
+            <p className='text-destructive text-xs'>
+              {state.fieldErrors.email}
+            </p>
           )}
         </div>
 
