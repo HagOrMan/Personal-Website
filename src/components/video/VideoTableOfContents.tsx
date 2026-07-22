@@ -32,7 +32,7 @@ export function VideoTableOfContents({
               aria-current={isCurrent ? 'true' : undefined}
               title={video.title}
               className={cn(
-                'focus-visible:ring-ring flex w-full items-center gap-3 rounded-lg text-left transition-colors focus-visible:ring-2 focus-visible:outline-hidden',
+                'focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg text-left transition-colors focus-visible:ring-2 focus-visible:outline-hidden',
                 density === 'list' ? 'p-3' : 'px-2.5 py-2',
                 isCurrent
                   ? 'bg-primary/10 text-foreground font-medium'

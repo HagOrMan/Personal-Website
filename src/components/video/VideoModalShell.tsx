@@ -1,5 +1,7 @@
 'use client';
 
+import { preconnect } from 'react-dom';
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -31,6 +33,20 @@ export function VideoModalShell({
   initialVideoId,
 }: VideoModalShellProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  // Warms the connection to the video host (DNS + TLS only - no bytes)
+  // as soon as this shell mounts, regardless of `open`. This alone doesn't
+  // fetch any video data (so it costs nothing for visitors who never open
+  // the modal), but it removes the connection-setup latency that's part of
+  // every cold first fetch. Actual byte prefetching only happens on
+  // deliberate hover/focus/touch intent - see primeVideoPlayback calls at
+  // each trigger button.
+  try {
+    preconnect(new URL(videos[0].src).origin);
+  } catch {
+    // videos[0].src isn't an absolute URL (e.g. NEXT_PUBLIC_R2_BASE_URL
+    // unset locally) - nothing to preconnect to.
+  }
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

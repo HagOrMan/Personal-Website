@@ -8,7 +8,11 @@ import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { useVideoExperience } from '@/components/video/hooks/useVideoExperience';
-import { VideoControlBar } from '@/components/video/VideoControlBar';
+import {
+  VideoActionBar,
+  VideoControlBar,
+  VideoSeekBar,
+} from '@/components/video/VideoControlBar';
 import { VideoEndCard } from '@/components/video/VideoEndCard';
 import { VideoTableOfContents } from '@/components/video/VideoTableOfContents';
 import { VideoTranscriptPanel } from '@/components/video/VideoTranscriptPanel';
@@ -56,6 +60,12 @@ export function VideoExperience({
   className,
 }: VideoExperienceProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  // Below this, the desktop modal relocates the action bar (play/prev/next/
+  // mute/transcript-toggle) into the Contents column and lets the
+  // transcript span the full width below both columns instead of living in
+  // the left column - reclaiming vertical room in a short window without
+  // changing anything about the roomier layout above the threshold.
+  const isShort = useMediaQuery('(max-height: 500px)');
   const prefersReducedMotion = usePrefersReducedMotion();
   const transcriptPanelId = useId();
 
@@ -97,9 +107,16 @@ export function VideoExperience({
   // the title + two-row controls + gaps + panel padding around it with the
   // transcript closed; opening the transcript eats into that budget, which
   // is exactly when the scroll fallback should kick in.
+  //
+  // Below the isShort threshold, the action bar and transcript both move
+  // out of the left column (see the isDesktop return below), so the
+  // left column only has to fit the title + seek bar - roughly 130px of
+  // chrome instead of 240px, letting the video claim the rest.
   const frameMaxHeightClass =
     variant === 'modal' && isDesktop
-      ? 'max-h-[clamp(400px,calc(100vh_-_240px),640px)] self-center'
+      ? isShort
+        ? 'max-h-[clamp(400px,calc(100vh_-_130px),640px)] self-center'
+        : 'max-h-[clamp(400px,calc(100vh_-_240px),640px)] self-center'
       : 'max-h-full';
 
   const frame = (
@@ -115,7 +132,7 @@ export function VideoExperience({
       // into frameMaxHeightClass for the desktop-modal case) opts out of
       // that stretch so width can shrink along with the clamped height.
       className={cn(
-        'relative aspect-[9/16] max-w-full overflow-hidden rounded-2xl bg-black',
+        'group relative aspect-[9/16] max-w-full cursor-pointer overflow-hidden rounded-2xl bg-black',
         frameMaxHeightClass,
       )}
       onClick={actions.togglePlay}
@@ -144,7 +161,7 @@ export function VideoExperience({
 
       {!state.isPlaying && !state.ended && (
         <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-          <span className='flex size-16 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm'>
+          <span className='flex size-16 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors group-hover:bg-black/55'>
             <Play className='size-7 translate-x-0.5' fill='currentColor' />
           </span>
         </div>
@@ -209,6 +226,35 @@ export function VideoExperience({
     />
   );
 
+  // Split apart from `controls` above only for the desktop-modal isShort
+  // layout, which relocates the action bar into the Contents column while
+  // leaving the seek bar under the video.
+  const seekBar = (
+    <VideoSeekBar
+      currentTime={state.currentTime}
+      duration={state.duration}
+      videoTitle={currentVideo.title}
+      onSeek={actions.seek}
+    />
+  );
+
+  const actionBar = (
+    <VideoActionBar
+      isPlaying={state.isPlaying}
+      isMuted={state.isMuted}
+      transcriptOpen={state.transcriptOpen}
+      transcriptPanelId={transcriptPanelId}
+      hasPrev={hasPrevVideo}
+      hasNext={Boolean(nextVideo)}
+      onTogglePlay={actions.togglePlay}
+      onToggleMute={actions.toggleMute}
+      onToggleTranscript={actions.toggleTranscript}
+      onPrev={actions.prev}
+      onNext={actions.next}
+      density='compact'
+    />
+  );
+
   const transcript = (
     <VideoTranscriptPanel
       open={state.transcriptOpen}
@@ -223,7 +269,7 @@ export function VideoExperience({
       type='button'
       onClick={onClose}
       aria-label='Close video experience'
-      className='focus-visible:ring-ring absolute top-4 right-4 z-50 inline-flex size-10 items-center justify-center rounded-full bg-background/80 text-foreground/80 backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:outline-hidden'
+      className='focus-visible:ring-ring absolute top-4 right-4 z-50 inline-flex size-10 cursor-pointer items-center justify-center rounded-full bg-background/80 text-foreground/80 backdrop-blur-sm transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
     >
       <X className='size-5' />
     </button>
@@ -261,7 +307,9 @@ export function VideoExperience({
   }
 
   // variant === 'modal', desktop: ToC fully visible alongside the frame,
-  // inside one opaque rounded container.
+  // inside one opaque rounded container. Below isShort, the action bar
+  // moves into this column (under Contents) and the transcript moves
+  // below both columns entirely - see frameMaxHeightClass above for why.
   if (isDesktop) {
     return (
       <div
@@ -273,26 +321,50 @@ export function VideoExperience({
         {closeButton}
         {/* The close button stays outside this scroll region (pinned to the
             panel corner) - everything else scrolls together on short
-            viewports instead of being hard-clipped top and bottom. */}
-        <div className='flex max-h-[85vh] w-full gap-8 overflow-y-auto'>
-          <div className='flex w-80 flex-col gap-4'>
-            {title}
-            {frame}
-            {controls}
-            {transcript}
+            viewports instead of being hard-clipped top and bottom. One
+            scroll region only (not a second, independently-scrolling one
+            for Contents) - two nested scrollbars fighting over the mouse
+            wheel is worse than the rare case of scrolling the whole thing. */}
+        <div className='flex max-h-[85vh] w-full flex-col overflow-y-auto'>
+          <div className='flex w-full gap-8'>
+            <div className='flex w-80 flex-col gap-4'>
+              {title}
+              {frame}
+              {isShort ? seekBar : controls}
+              {!isShort && transcript}
+            </div>
+            <div
+              className={cn(
+                'border-border/70 flex flex-col gap-2 border-l pl-6',
+                isShort ? 'w-64' : 'w-56',
+              )}
+            >
+              <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                Contents
+              </h3>
+              <VideoTableOfContents
+                videos={videos}
+                currentId={currentVideo.id}
+                onSelect={actions.goToId}
+                density='list'
+                className='overflow-y-auto'
+              />
+              {isShort && (
+                <div className='border-border/70 mt-2 flex flex-col gap-2 border-t pt-3'>
+                  <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                    Playback
+                  </h3>
+                  {actionBar}
+                </div>
+              )}
+            </div>
           </div>
-          <div className='border-border/70 flex w-56 flex-col gap-2 border-l pl-6'>
-            <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-              Contents
-            </h3>
-            <VideoTableOfContents
-              videos={videos}
-              currentId={currentVideo.id}
-              onSelect={actions.goToId}
-              density='list'
-              className='overflow-y-auto'
-            />
-          </div>
+
+          {isShort && (
+            <div className={cn(state.transcriptOpen && 'mt-4')}>
+              {transcript}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -353,7 +425,7 @@ export function VideoExperience({
             duration: prefersReducedMotion ? 0 : 0.3,
             ease: [0.22, 1, 0.36, 1],
           }}
-          className='focus-visible:ring-ring absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 bg-background shadow focus-visible:ring-2 focus-visible:outline-hidden'
+          className='focus-visible:ring-ring absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-lg border border-l-0 bg-background shadow transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
         >
           {state.tocOpen ? (
             <ChevronLeft className='size-4' />

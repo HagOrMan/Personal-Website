@@ -35,7 +35,7 @@ export function VideoEndCard({
         <button
           type='button'
           onClick={onAdvance}
-          className='focus-visible:ring-ring group flex w-full max-w-[220px] cursor-pointer flex-col items-center gap-2 rounded-2xl p-2 text-white focus-visible:ring-2 focus-visible:outline-hidden'
+          className='focus-visible:ring-ring group flex w-full max-w-[220px] cursor-pointer flex-col items-center gap-2 rounded-2xl p-2 text-white transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
         >
           <span className='relative aspect-[9/16] w-28 overflow-hidden rounded-xl shadow-lg ring-1 ring-white/20'>
             <Image
@@ -60,14 +60,14 @@ export function VideoEndCard({
 
       <div
         className={cn(
-          'flex items-center gap-3',
+          'flex w-full max-w-[220px] flex-col items-stretch gap-2',
           nextVideo ? 'text-white/80' : 'text-white',
         )}
       >
         <button
           type='button'
           onClick={onReplay}
-          className='focus-visible:ring-ring inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-hidden'
+          className='focus-visible:ring-ring inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
         >
           <RotateCcw className='size-4' />
           Replay &ldquo;{finishedVideoTitle}&rdquo;
@@ -77,7 +77,7 @@ export function VideoEndCard({
           <button
             type='button'
             onClick={onBackToStart}
-            className='focus-visible:ring-ring inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-hidden'
+            className='focus-visible:ring-ring inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-medium transition hover:bg-white/10 focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
           >
             <SkipBack className='size-4' />
             Back to start

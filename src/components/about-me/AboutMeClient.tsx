@@ -88,7 +88,7 @@ export default function AboutMeClient({
         <button
           type='button'
           onClick={() => openMobilePreview(videos[0].id)}
-          className='group focus-visible:ring-ring relative mb-12 flex aspect-[9/16] w-full max-w-[220px] items-center justify-center overflow-hidden rounded-2xl bg-black focus-visible:ring-2 focus-visible:outline-hidden'
+          className='group focus-visible:ring-ring relative mb-12 flex aspect-[9/16] w-full max-w-[220px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-black focus-visible:ring-2 focus-visible:outline-hidden'
         >
           <Image
             src={videos[0].poster}
