@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import Image from 'next/image';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
@@ -61,13 +61,15 @@ export function VideoExperience({
 }: VideoExperienceProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   // Below this, the desktop modal relocates the action bar (play/prev/next/
-  // mute/transcript-toggle) into the Contents column and lets the
-  // transcript span the full width below both columns instead of living in
-  // the left column - reclaiming vertical room in a short window without
-  // changing anything about the roomier layout above the threshold.
+  // mute/transcript-toggle) into the Contents column instead of the left
+  // column - reclaiming vertical room in a short window without changing
+  // anything about the roomier layout above the threshold. The transcript
+  // itself always spans the full width below both columns regardless of
+  // this threshold - see the isDesktop return below.
   const isShort = useMediaQuery('(max-height: 500px)');
   const prefersReducedMotion = usePrefersReducedMotion();
   const transcriptPanelId = useId();
+  const transcriptRef = useRef<HTMLDivElement>(null);
 
   // Only the sticky shell (desktop about-me) has page sections to scroll to;
   // the modal has no underlying page content behind it.
@@ -96,6 +98,24 @@ export function VideoExperience({
     state;
   const showPosterOverlay =
     !state.isPlaying && !state.ended && state.currentTime < 0.15;
+
+  // The desktop modal's scroll container doesn't reveal newly-opened content
+  // on its own - without this, opening the transcript while the modal is
+  // already scrolled to fit the viewport just adds height below the fold
+  // instead of bringing the panel into view. Delayed briefly so we scroll to
+  // the transcript's fully-expanded position rather than where the
+  // Collapsible's open animation starts (see --animate-collapsible-down).
+  useEffect(() => {
+    if (!isDesktop || !state.transcriptOpen) return;
+    const delay = prefersReducedMotion ? 0 : 220;
+    const timer = window.setTimeout(() => {
+      transcriptRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'nearest',
+      });
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [isDesktop, state.transcriptOpen, prefersReducedMotion]);
 
   // The desktop modal has no ancestor with a definite height (unlike the
   // mobile modal's h-full flex column), so a percentage max-height (100%)
@@ -299,7 +319,7 @@ export function VideoExperience({
             currentId={currentVideo.id}
             onSelect={actions.goToId}
             density='playlist'
-            className='max-h-56 overflow-y-auto'
+            className='scrollbar-hover max-h-56 overflow-y-auto'
           />
         </div>
       </div>
@@ -308,8 +328,10 @@ export function VideoExperience({
 
   // variant === 'modal', desktop: ToC fully visible alongside the frame,
   // inside one opaque rounded container. Below isShort, the action bar
-  // moves into this column (under Contents) and the transcript moves
-  // below both columns entirely - see frameMaxHeightClass above for why.
+  // moves into this column (under Contents). The transcript always spans
+  // below both columns instead of living in the 320px left column - so
+  // opening it can't be constrained by (or, via a long unwrapped line,
+  // stretch) whichever column the toggle button currently lives in.
   if (isDesktop) {
     return (
       <div
@@ -325,13 +347,12 @@ export function VideoExperience({
             scroll region only (not a second, independently-scrolling one
             for Contents) - two nested scrollbars fighting over the mouse
             wheel is worse than the rare case of scrolling the whole thing. */}
-        <div className='flex max-h-[85vh] w-full flex-col overflow-y-auto'>
+        <div className='scrollbar-hover flex max-h-[85vh] w-full flex-col overflow-y-auto'>
           <div className='flex w-full gap-8'>
             <div className='flex w-80 flex-col gap-4'>
               {title}
               {frame}
               {isShort ? seekBar : controls}
-              {!isShort && transcript}
             </div>
             <div
               className={cn(
@@ -347,7 +368,7 @@ export function VideoExperience({
                 currentId={currentVideo.id}
                 onSelect={actions.goToId}
                 density='list'
-                className='overflow-y-auto'
+                className='scrollbar-hover overflow-y-auto'
               />
               {isShort && (
                 <div className='border-border/70 mt-2 flex flex-col gap-2 border-t pt-3'>
@@ -360,11 +381,16 @@ export function VideoExperience({
             </div>
           </div>
 
-          {isShort && (
-            <div className={cn(state.transcriptOpen && 'mt-4')}>
-              {transcript}
-            </div>
-          )}
+          {/* min-w-0 stops this flex-col item from growing past the row
+              above (and taking the whole modal with it) if the transcript
+              text has a long unbroken line - see also break-words on the
+              transcript's own text container. */}
+          <div
+            ref={transcriptRef}
+            className={cn('min-w-0', state.transcriptOpen && 'mt-4')}
+          >
+            {transcript}
+          </div>
         </div>
       </div>
     );
@@ -409,7 +435,7 @@ export function VideoExperience({
                 actions.closeToc();
               }}
               density='list'
-              className='overflow-y-auto'
+              className='scrollbar-hover overflow-y-auto'
             />
           </div>
         </motion.div>

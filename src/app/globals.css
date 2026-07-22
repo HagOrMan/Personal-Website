@@ -502,6 +502,40 @@
 
   /* #endregion /**======== Page Layout Utilities =========== */
 
+  /* #region /**=========== Scrollbars =========== */
+
+  /**
+   * Keeps the track+thumb invisible until the container is hovered/focused,
+   * instead of the permanently-visible scrollbar Windows/Linux browsers
+   * render by default for any scrollable region (macOS's overlay scrollbars
+   * already disappear on their own, so this mainly targets the former).
+   */
+  .scrollbar-hover {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .scrollbar-hover:hover,
+  .scrollbar-hover:focus-within {
+    scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+  }
+  .scrollbar-hover::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-hover::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .scrollbar-hover:focus-within::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* #endregion /**======== Scrollbars =========== */
+
   /* #region /**=========== Blog Prose =========== */
   .blog-prose {
     max-width: 72ch;

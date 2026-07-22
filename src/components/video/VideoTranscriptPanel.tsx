@@ -30,7 +30,7 @@ export function VideoTranscriptPanel({
         <div
           role='region'
           aria-label={`Transcript for ${videoTitle}`}
-          className='text-foreground/80 max-h-48 overflow-y-auto rounded-lg bg-black/5 p-4 text-sm leading-relaxed whitespace-pre-line dark:bg-white/5'
+          className='scrollbar-hover text-foreground/80 max-h-48 overflow-y-auto rounded-lg bg-black/5 p-4 text-sm leading-relaxed break-words whitespace-pre-line dark:bg-white/5'
         >
           {transcript}
         </div>

@@ -29,7 +29,7 @@ export function VideoStickyShell({
     // parent grid column leaves - the column itself is no longer sized to
     // exactly fit the card (see AboutMeClient), so this keeps it from
     // hugging the right edge of the page on wide viewports.
-    <div className='mx-auto w-full max-w-[320px] lg:sticky lg:top-24 lg:h-fit'>
+    <div className='mx-auto w-full max-w-[320px] lg:sticky lg:top-10 lg:h-fit'>
       <VideoExperience
         videos={videos}
         variant='sticky'
