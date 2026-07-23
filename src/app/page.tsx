@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { ChevronDown, Play } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
@@ -209,7 +210,7 @@ export default function Home() {
                 alpha={glassOpacity}
                 style={{ x: xPosition, height: cardHeight, width: cardWidth }}
                 className='pointer-events-auto z-20 translate-x-0 lg:-translate-x-16'
-                contentClassName='relative row-start-2 flex flex-col items-start gap-6 overflow-hidden'
+                contentClassName='relative row-start-2 flex flex-col py-8 px-4 md:px-8 items-start gap-6 overflow-hidden'
               >
                 <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
                   Hey! I&apos;m Kyle
@@ -294,17 +295,31 @@ export default function Home() {
                   y: photoY,
                 }}
                 className={cn(
-                  'pointer-events-none z-30 hidden rounded-2xl border border-white/10 bg-black/20 p-2 backdrop-blur-md min-[450px]:block',
-                  // Mobile: Absolute Bottom Right, hanging off the edge
-                  'absolute right-2 -bottom-8 h-[135px] w-[170px]',
+                  'border-lush-400/20 bg-lush-700/10 pointer-events-none z-30 block overflow-hidden rounded-2xl border p-2 shadow-[0_0_24px_-8px_rgb(var(--tw-color-lush-500)/0.4)] backdrop-blur-md',
+                  // Smallest phones (< ~390px): scaled down
+                  'absolute right-2 bottom-0 h-[150px] w-[112px]',
+                  // Base (small phones), ~390px and up:: compact badge, bottom-right
+                  'min-[390px]:h-[180px] min-[390px]:w-[135px]',
+                  // ~450px and up: current mobile size: Absolute Bottom Right, hanging off the edge
+                  'min-[450px]:right-2 min-[450px]:-bottom-8 min-[450px]:h-[135px] min-[450px]:w-[170px]',
                   // Medium (Tablet): Larger, slightly different offset
                   'md:right-8 md:bottom-[-20px] md:mt-0 md:h-[220px] md:w-[260px] md:translate-x-0',
                   // Desktop: Absolute, Right Center, Full Size
-                  'lg:top-1/2 lg:right-20 lg:bottom-auto lg:mt-0 lg:block lg:h-auto lg:w-auto lg:-translate-y-1/2',
+                  'lg:top-1/2 lg:right-20 lg:bottom-auto lg:mt-0 lg:h-auto lg:w-auto lg:-translate-y-1/2',
                 )}
               >
                 {/* Replace with your actual Image component */}
-                <div className='h-full w-full rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 shadow-2xl lg:h-[400px] lg:w-[300px]' />
+                <div className='relative h-full w-full overflow-hidden rounded-xl shadow-2xl lg:h-[400px] lg:w-[300px]'>
+                  <Image
+                    src='/me/me-and-rocky.jpg'
+                    alt='Me and Rocky'
+                    fill
+                    // priority
+                    sizes='(min-width: 1024px) 300px, (min-width: 768px) 260px, 170px'
+                    quality={90}
+                    className='object-cover object-[center_75%]'
+                  />
+                </div>
                 <div className='from-background absolute bottom-0 left-0 z-10 h-12 w-full bg-gradient-to-t to-transparent lg:hidden' />
 
                 {/* "Hear it from me" trigger - desktop only, sits under the photo. */}
