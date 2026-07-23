@@ -281,12 +281,11 @@ export function VideoExperience({
       transcript={currentVideo.transcript}
       videoTitle={currentVideo.title}
       panelId={transcriptPanelId}
-      // The desktop modal's own scroll region (the scrollbar-hover wrapper
-      // below) already scrolls the whole column, including this panel - a
-      // second scrollbar in here would be a scroll-within-a-scroll. Mobile
-      // (overflow-hidden root, no fallback scroll) and the sticky panel
-      // (no scroll region at all) still need their own cap.
-      scrollable={!(variant === 'modal' && isDesktop)}
+      // Both desktop layouts now scroll their own outer region (the sticky
+      // card, the modal's content column) - a second nested scrollbar in
+      // here would fight the outer one for the mouse wheel. Only the mobile
+      // modal (no fallback scroll region of its own) still needs this cap.
+      scrollable={variant === 'modal' && !isDesktop}
     />
   );
 
@@ -295,7 +294,7 @@ export function VideoExperience({
       type='button'
       onClick={onClose}
       aria-label='Close video experience'
-      className='focus-visible:ring-ring absolute top-4 right-4 z-50 inline-flex size-10 cursor-pointer items-center justify-center rounded-full bg-background/80 text-foreground/80 backdrop-blur-sm transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
+      className='focus-visible:ring-ring bg-background/80 text-foreground/80 hover:bg-accent hover:text-foreground absolute top-4 right-4 z-50 inline-flex size-10 cursor-pointer items-center justify-center rounded-full backdrop-blur-sm transition focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
     >
       <X className='size-5' />
     </button>
@@ -308,26 +307,48 @@ export function VideoExperience({
           // border/50 (rather than the full-strength border color) keeps
           // this readable as a card edge without the harsh outline it had
           // in light mode, where --border sits far lighter than --card.
-          'bg-card border-border/50 flex w-full flex-col gap-4 rounded-2xl border p-4 sm:p-5',
+          // The lg:max-h/overflow pair is a fallback only, for viewports too
+          // short to fit even the video + controls + transcript stack - the
+          // row below is what normally keeps everything in view (see its
+          // own comment). Without some fallback here, the card is
+          // position:sticky rather than a scroll container, so any overflow
+          // would be unreachable until the page scrolls far enough for the
+          // card to un-stick near the bottom of the left column.
+          'bg-card border-border/50 scrollbar-hover flex w-full flex-col gap-4 overflow-y-auto rounded-2xl border p-4 sm:p-5 lg:max-h-[calc(100vh-5rem)]',
           className,
         )}
       >
         {title}
-        <div className='mx-auto w-full max-w-[280px]'>{frame}</div>
+        <div className='grid grid-cols-[13rem_1fr] gap-4'>
+          {frame}
+          <div
+            // Grid instead of flex here: with align-items:stretch (the grid
+            // default), a grid item's height is resolved directly by the
+            // grid algorithm rather than via a generated CSS percentage
+            // that has to separately re-resolve against the row - so
+            // min-h-0 alone is enough to let this column give up its
+            // content-based height floor and stretch/clip to match the
+            // video next to it, no h-0 + min-h-full trick needed (that
+            // trick relies on the row having a height flexbox considers
+            // "definite", which an intrinsically-sized row doesn't
+            // reliably count as - that's what was making this list render
+            // at zero height).
+            className='border-border/70 flex min-h-0 min-w-[200px] flex-col gap-2 border-l pl-4'
+          >
+            <h3 className='text-muted-foreground shrink-0 text-xs font-semibold tracking-wide uppercase'>
+              Up next
+            </h3>
+            <VideoTableOfContents
+              videos={videos}
+              currentId={currentVideo.id}
+              onSelect={actions.goToId}
+              density='playlist'
+              className='scrollbar-hover min-h-0 flex-1 overflow-y-auto'
+            />
+          </div>
+        </div>
         {controls}
         {transcript}
-        <div className='border-border/70 flex flex-col gap-2 border-t pt-3'>
-          <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
-            Up next
-          </h3>
-          <VideoTableOfContents
-            videos={videos}
-            currentId={currentVideo.id}
-            onSelect={actions.goToId}
-            density='playlist'
-            className='scrollbar-hover max-h-56 overflow-y-auto'
-          />
-        </div>
       </div>
     );
   }
@@ -361,19 +382,29 @@ export function VideoExperience({
           // transcript long enough to cross the max-h-[85vh] cap.
           className='scrollbar-hover flex max-h-[85vh] w-full flex-col overflow-y-auto [scrollbar-gutter:stable]'
         >
-          <div className='flex w-full gap-8'>
-            <div className='flex w-80 flex-col gap-4'>
+          <div
+            className={cn(
+              'grid gap-8',
+              isShort ? 'grid-cols-[20rem_16rem]' : 'grid-cols-[20rem_14rem]',
+            )}
+          >
+            <div className='flex flex-col gap-4'>
               {title}
               {frame}
               {isShort ? seekBar : controls}
             </div>
             <div
-              className={cn(
-                'border-border/70 flex flex-col gap-2 border-l pl-6',
-                isShort ? 'w-64' : 'w-56',
-              )}
+              // Grid (not flex) for the row above: with align-items:stretch
+              // (the grid default), a grid item's height is resolved
+              // directly by the grid algorithm rather than via a generated
+              // CSS percentage that has to separately re-resolve against
+              // the row - so min-h-0 alone lets this column give up its
+              // content-based height floor and match the video column
+              // instead of growing the row (and the video with it) taller
+              // to fit a long list.
+              className='border-border/70 flex min-h-0 min-w-0 flex-col gap-2 border-l pl-6'
             >
-              <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+              <h3 className='text-muted-foreground shrink-0 text-xs font-semibold tracking-wide uppercase'>
                 Contents
               </h3>
               <VideoTableOfContents
@@ -381,10 +412,10 @@ export function VideoExperience({
                 currentId={currentVideo.id}
                 onSelect={actions.goToId}
                 density='list'
-                className='scrollbar-hover overflow-y-auto'
+                className='scrollbar-hover min-h-0 flex-1 overflow-y-auto'
               />
               {isShort && (
-                <div className='border-border/70 mt-2 flex flex-col gap-2 border-t pt-3'>
+                <div className='border-border/70 mt-2 flex shrink-0 flex-col gap-2 border-t pt-3'>
                   <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Playback
                   </h3>
@@ -438,11 +469,16 @@ export function VideoExperience({
           }}
         >
           <div
-            className='h-full w-[220px] max-w-[80vw] shrink-0 rounded-r-2xl border-r bg-background/95 p-4 shadow-xl backdrop-blur-sm'
+            // flex-col + min-h-0/flex-1 on the list below: without this the
+            // drawer was a plain block, so a long video list just overflowed
+            // the h-full box - and since the motion.div wrapper around this
+            // clips with overflow-hidden (for the width slide-in animation),
+            // that overflow was invisible rather than scrollable.
+            className='bg-background/95 flex h-full w-[220px] max-w-[80vw] shrink-0 flex-col rounded-r-2xl border-r p-4 shadow-xl backdrop-blur-sm'
             inert={!state.tocOpen}
             aria-hidden={!state.tocOpen}
           >
-            <h3 className='text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase'>
+            <h3 className='text-muted-foreground mb-2 shrink-0 text-xs font-semibold tracking-wide uppercase'>
               Contents
             </h3>
             <VideoTableOfContents
@@ -453,7 +489,7 @@ export function VideoExperience({
                 actions.closeToc();
               }}
               density='list'
-              className='scrollbar-hover overflow-y-auto'
+              className='scrollbar-hover min-h-0 flex-1 overflow-y-auto'
             />
           </div>
         </motion.div>
@@ -469,7 +505,7 @@ export function VideoExperience({
             duration: prefersReducedMotion ? 0 : 0.3,
             ease: [0.22, 1, 0.36, 1],
           }}
-          className='focus-visible:ring-ring absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-lg border border-l-0 bg-background shadow transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
+          className='focus-visible:ring-ring bg-background absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-lg border border-l-0 shadow transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
         >
           {state.tocOpen ? (
             <ChevronLeft className='size-4' />
