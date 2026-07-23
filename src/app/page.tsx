@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
 import { ChevronDown, Play } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
