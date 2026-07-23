@@ -22,8 +22,11 @@ import { useHomeIconClick } from '@/context/HomeIconClickContext';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 
+// Solid fill (not the muted/tinted pill used for the GitHub/LinkedIn links)
+// - this is meant to read as the strongest CTA on the page, not another
+// social icon. --primary is already lush-500, so this stays on-palette.
 const heroVideoTriggerClasses =
-  'group cursor-pointer bg-lush-500/10 border-lush-600/20 text-lush-950 hover:bg-lush-500/20 hover:border-lush-600/30 dark:bg-lush-400/10 dark:border-lush-300/20 dark:text-lush-50 dark:hover:bg-lush-400/20 dark:hover:border-lush-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors';
+  'group bg-primary text-primary-foreground shadow-[0_4px_20px_-4px_rgb(var(--tw-color-lush-500)/0.5)] hover:bg-primary/95 hover:shadow-[0_4px_28px_-4px_rgb(var(--tw-color-lush-500)/0.7)] flex cursor-pointer items-center gap-3 rounded-full px-6 py-2.5 font-semibold transition-all active:scale-95';
 
 // Number of navbar-logo clicks (see HomeIconClickContext) before we take the
 // user to /ocean — they clicked the "ocean icon" enough times to go there.
@@ -266,7 +269,7 @@ export default function Home() {
                       </span>
                     </Link>
 
-                    {/* "Hear it from me" trigger - shown here below ~1024px,
+                    {/* "Get to know me" trigger - shown here below ~1024px,
                         where the photo (and its own copy of this button) is
                         either hidden or too cramped underneath. */}
                     <button
@@ -274,13 +277,8 @@ export default function Home() {
                       onClick={() => setVideoOpen(true)}
                       className={cn(heroVideoTriggerClasses, 'lg:hidden')}
                     >
-                      <Play
-                        className='h-4 w-4 opacity-80 transition-opacity group-hover:opacity-100'
-                        fill='currentColor'
-                      />
-                      <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
-                        Hear it from me
-                      </span>
+                      <Play className='h-4 w-4' fill='currentColor' />
+                      <span className='text-sm'>Get to know me</span>
                     </button>
                   </div>
                 </motion.div>
@@ -295,49 +293,52 @@ export default function Home() {
                   y: photoY,
                 }}
                 className={cn(
-                  'border-lush-400/20 bg-lush-700/10 pointer-events-none z-30 block overflow-hidden rounded-2xl border p-2 shadow-[0_0_24px_-8px_rgb(var(--tw-color-lush-500)/0.4)] backdrop-blur-md',
+                  // No overflow-hidden here (was needed only to clip the
+                  // mobile gradient's square corners to this wrapper's
+                  // rounded-2xl - that gradient now lives inside the inner
+                  // image container instead, which already clips to its own
+                  // rounded-xl). Without it, the desktop CTA button below
+                  // - positioned outside this box via top-full - was being
+                  // clipped away entirely instead of just hidden by lg:flex.
+                  'pointer-events-none z-30 block rounded-2xl',
                   // Smallest phones (< ~390px): scaled down
-                  'absolute right-2 bottom-0 h-[150px] w-[112px]',
+                  'absolute right-2 bottom-1 h-[150px] w-[112px]',
                   // Base (small phones), ~390px and up:: compact badge, bottom-right
                   'min-[390px]:h-[180px] min-[390px]:w-[135px]',
                   // ~450px and up: current mobile size: Absolute Bottom Right, hanging off the edge
-                  'min-[450px]:right-2 min-[450px]:-bottom-8 min-[450px]:h-[135px] min-[450px]:w-[170px]',
+                  'min-[450px]:right-2 min-[450px]:-bottom-8 min-[450px]:h-[189px] min-[450px]:w-[238px]',
                   // Medium (Tablet): Larger, slightly different offset
                   'md:right-8 md:bottom-[-20px] md:mt-0 md:h-[220px] md:w-[260px] md:translate-x-0',
                   // Desktop: Absolute, Right Center, Full Size
                   'lg:top-1/2 lg:right-20 lg:bottom-auto lg:mt-0 lg:h-auto lg:w-auto lg:-translate-y-1/2',
                 )}
               >
-                {/* Replace with your actual Image component */}
-                <div className='relative h-full w-full overflow-hidden rounded-xl shadow-2xl lg:h-[400px] lg:w-[300px]'>
-                  <Image
-                    src='/me/me-and-rocky.jpg'
-                    alt='Me and Rocky'
-                    fill
-                    // priority
-                    sizes='(min-width: 1024px) 300px, (min-width: 768px) 260px, 170px'
-                    quality={90}
-                    className='object-cover object-[center_75%]'
-                  />
+                {/* image with rounding, border, glow, blur, clipping */}
+                <div className='border-lush-400/20 bg-lush-700/10 h-full w-full overflow-hidden rounded-2xl border p-2 shadow-[0_0_24px_-8px_rgb(var(--tw-color-lush-500)/0.4)] backdrop-blur-md'>
+                  <div className='relative h-full w-full overflow-hidden rounded-xl shadow-2xl lg:h-[400px] lg:w-[300px]'>
+                    <Image
+                      src='/me/me-and-rocky.jpg'
+                      alt='Me and Rocky'
+                      fill
+                      sizes='(min-width: 1024px) 300px, (min-width: 768px) 260px, 170px'
+                      quality={90}
+                      className='object-cover object-[center_75%]'
+                    />
+                  </div>
+                  <div className='min-[450px]:from-background absolute bottom-0 left-0 z-10 h-12 w-full min-[450px]:bg-gradient-to-t min-[450px]:to-transparent lg:hidden' />
                 </div>
-                <div className='from-background absolute bottom-0 left-0 z-10 h-12 w-full bg-gradient-to-t to-transparent lg:hidden' />
 
-                {/* "Hear it from me" trigger - desktop only, sits under the photo. */}
+                {/* "Get to know me" trigger - desktop only, sits under the photo. */}
                 <button
                   type='button'
                   onClick={() => setVideoOpen(true)}
                   className={cn(
                     heroVideoTriggerClasses,
-                    'pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 lg:flex',
+                    'dark:hover:bg-lush-500 dark:bg-lush-600 pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 lg:flex dark:hover:shadow-[0_6px_24px_-2px_rgb(var(--tw-color-lush-400)/0.55)] dark:hover:[text-shadow:0_1px_3px_rgb(0_0_0/0.35)]',
                   )}
                 >
-                  <Play
-                    className='h-4 w-4 opacity-80 transition-opacity group-hover:opacity-100'
-                    fill='currentColor'
-                  />
-                  <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
-                    Hear it from me
-                  </span>
+                  <Play className='h-4 w-4' fill='currentColor' />
+                  <span className='text-sm'>Get to know me</span>
                 </button>
               </motion.div>
             </div>
@@ -364,6 +365,8 @@ export default function Home() {
             </motion.div>
           </div>
         </section>
+
+        <section className='mx-auto flex min-h-[100px] w-full max-w-5xl flex-col items-start justify-center p-10'></section>
 
         {/* Experience */}
         {/* <section className='mx-auto flex min-h-screen w-full max-w-5xl flex-col items-start justify-center p-10'>
