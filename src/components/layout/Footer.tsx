@@ -47,7 +47,7 @@ export default function Footer({ navbarItems }: NavbarProps) {
         </div>
 
         {/* Copyright or Optional Signature */}
-        <div className='text-foreground hidden md:block'>
+        <div className='text-foreground block'>
           © {new Date().getFullYear()} Kyle Hagerman
         </div>
 
