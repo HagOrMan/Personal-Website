@@ -333,6 +333,18 @@ export function VideoExperience({
             // "definite", which an intrinsically-sized row doesn't
             // reliably count as - that's what was making this list render
             // at zero height).
+            //
+            // min-w-[200px] (rather than min-w-0) is deliberate: it's a
+            // hard floor so titles always get real room instead of
+            // truncating down to a sliver whenever the card is squeezed.
+            // Both this and the frame's 13rem are non-shrinking, so the
+            // card's own min-content width is fixed at 13rem + 200px + the
+            // gap - VideoStickyShell's max-w has to be at least that wide
+            // (plus its own padding/border) or this row overflows the
+            // card. Don't "fix" an overflow here by making these shrink
+            // (minmax(0, ...)) - that just reintroduces uncontrolled
+            // shrinking (the video collapsing toward nothing, titles
+            // losing their floor); fix the container width instead.
             className='border-border/70 flex min-h-0 min-w-[200px] flex-col gap-2 border-l pl-4'
           >
             <h3 className='text-muted-foreground shrink-0 text-xs font-semibold tracking-wide uppercase'>

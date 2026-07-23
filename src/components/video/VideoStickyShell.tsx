@@ -29,7 +29,14 @@ export function VideoStickyShell({
     // parent grid column leaves - the column itself is no longer sized to
     // exactly fit the card (see AboutMeClient), so this keeps it from
     // hugging the right edge of the page on wide viewports.
-    <div className='mx-auto w-full max-w-[440px] lg:sticky lg:top-10 lg:h-fit'>
+    //
+    // 480px, not a rounder-looking 440px: the sticky card's internal grid
+    // (frame + "Up next") has two non-shrinking floors - the 13rem frame
+    // column and the ToC's min-w-[200px] - plus a 1rem gap and the card's
+    // own border/padding, which floors the card itself at ~466px. Going
+    // narrower than that reintroduces the row overflowing the card (a
+    // phantom x-scrollbar, hidden until hover by .scrollbar-hover).
+    <div className='mx-auto w-full max-w-[480px] lg:sticky lg:top-10 lg:h-fit'>
       <VideoExperience
         videos={videos}
         variant='sticky'
