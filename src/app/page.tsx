@@ -334,7 +334,7 @@ export default function Home() {
                   onClick={() => setVideoOpen(true)}
                   className={cn(
                     heroVideoTriggerClasses,
-                    'dark:hover:bg-lush-500 dark:bg-lush-600 pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 lg:flex dark:hover:shadow-[0_6px_24px_-2px_rgb(var(--tw-color-lush-400)/0.55)] dark:hover:[text-shadow:0_1px_3px_rgb(0_0_0/0.35)]',
+                    'dark:bg-lush-400 dark:text-lush-950 dark:hover:bg-lush-300 pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 hover:brightness-105 lg:flex dark:hover:shadow-[0_6px_24px_-2px_rgb(var(--tw-color-lush-400)/0.55)] dark:hover:brightness-100',
                   )}
                 >
                   <Play className='h-4 w-4' fill='currentColor' />
