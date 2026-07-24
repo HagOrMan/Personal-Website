@@ -7,5 +7,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/blog/:path*', '/blog-assets/:path*', '/login', '/auth/:path*'],
+  matcher: [
+    '/blog/:path*',
+    '/blog-assets/:path*',
+    '/login',
+    '/auth/:path*',
+    // Refreshes the owner's session so /stats (owner-only) doesn't 404 on an
+    // otherwise-refreshable but expired access token.
+    '/stats',
+  ],
 };

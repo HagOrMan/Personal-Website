@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
 
 import rehypeExternalLinks from 'rehype-external-links';
@@ -9,7 +10,8 @@ import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
-import { hasAccess } from '@/lib/blog/auth';
+import { recordViewAfterResponse } from '@/lib/blog/analytics';
+import { resolveAccess } from '@/lib/blog/auth';
 import { getPost } from '@/lib/blog/github';
 import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 
@@ -52,7 +54,22 @@ export default async function BlogPostPage({
   // (e.g. /blog/MyFirstPost), 308-redirect to the canonical slug.
   if (slug !== post.meta.slug) permanentRedirect(`/blog/${post.meta.slug}`);
 
-  const canAccess = await hasAccess(post.meta.slug, post.meta.locked);
+  const { isOwner, canAccess } = await resolveAccess(
+    post.meta.slug,
+    post.meta.locked,
+  );
+
+  // Fire-and-forget view analytics. Runs after the response via after(), fully
+  // error-swallowed, skipped for the owner and bots. `hadAccess` distinguishes
+  // "read the post" from "hit the password wall". Recorded here and NOT in the
+  // asset proxy, so a post with images still counts as a single view.
+  recordViewAfterResponse({
+    slug: post.meta.slug,
+    wasLocked: post.meta.locked,
+    hadAccess: canAccess,
+    isOwner,
+    headers: await headers(),
+  });
 
   if (!canAccess) {
     return (

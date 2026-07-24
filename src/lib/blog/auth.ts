@@ -87,7 +87,12 @@ export async function addUnlockedScope(scope: string): Promise<void> {
   });
 }
 
-async function isSupabaseOwner(): Promise<boolean> {
+/**
+ * True when the signed-in Supabase user is in the BLOG_OWNER_USER_IDS
+ * allowlist. This is the sole authorization source for the owner bypass, and
+ * is also reused to exclude the owner's own visits from view analytics.
+ */
+export async function isSupabaseOwner(): Promise<boolean> {
   const ownerIds = (process.env.BLOG_OWNER_USER_IDS ?? '')
     .split(',')
     .map((id) => id.trim())
@@ -102,15 +107,31 @@ async function isSupabaseOwner(): Promise<boolean> {
   return Boolean(user && ownerIds.includes(user.id));
 }
 
+/**
+ * Resolves both whether the request is from the owner and whether the viewer
+ * can see the post, in a single pass. Callers that also need the owner flag
+ * (e.g. to skip analytics) should use this instead of calling isSupabaseOwner()
+ * and hasAccess() separately - it hits auth.getUser() only once.
+ */
+export async function resolveAccess(
+  slug: string,
+  locked: boolean,
+): Promise<{ isOwner: boolean; canAccess: boolean }> {
+  const isOwner = await isSupabaseOwner();
+  if (!locked || isOwner) return { isOwner, canAccess: true };
+
+  const scopes = await getUnlockedScopes();
+  return {
+    isOwner,
+    canAccess: scopes.includes(MASTER_SCOPE) || scopes.includes(slug),
+  };
+}
+
 export async function hasAccess(
   slug: string,
   locked: boolean,
 ): Promise<boolean> {
-  if (!locked) return true;
-  if (await isSupabaseOwner()) return true;
-
-  const scopes = await getUnlockedScopes();
-  return scopes.includes(MASTER_SCOPE) || scopes.includes(slug);
+  return (await resolveAccess(slug, locked)).canAccess;
 }
 
 /** Hashes both sides with SHA-256 first so timingSafeEqual gets equal-length buffers. */
