@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import PageLayout from '@/components/layout/PageLayout';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
@@ -43,9 +44,10 @@ export default function RootLayout({
           <ThemeProviderCustom>
             {/* This custom theme provider will help resolve the theme to light or dark, since system is an option too but we want to know for sure which one it actually is */}
             <PageLayout>{children}</PageLayout>
-            <Analytics />
           </ThemeProviderCustom>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
