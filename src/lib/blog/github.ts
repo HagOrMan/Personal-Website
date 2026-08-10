@@ -188,17 +188,22 @@ function isParentNode(fm: PostFrontmatter): boolean {
 }
 
 /**
- * A source's default tags plus the post's own, deduped. Deliberately separate
+ * A post's own tags plus its source's defaults, deduped. Deliberately separate
  * from normalizeTags(), so a source default can never make a post look like a
  * parent node.
+ *
+ * Order matters: the blog index only shows a post's first few tags, and a
+ * source default is identical across every post from that source (every
+ * Tutorials post is tagged "tutorial"), so the post's own - more distinctive -
+ * tags go first.
  */
 function mergeTags(
   source: ContentSource,
   fm: PostFrontmatter,
 ): string[] | undefined {
   const merged = [
-    ...(source.defaultTags ?? []),
     ...(normalizeTags(fm.tags) ?? []),
+    ...(source.defaultTags ?? []),
   ];
   const unique = [...new Set(merged)];
   return unique.length > 0 ? unique : undefined;

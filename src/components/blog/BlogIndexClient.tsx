@@ -25,6 +25,11 @@ type View = 'newest' | 'folders';
 
 const UNGROUPED_LABEL = 'General';
 
+// Enough to tell posts apart while skimming without crowding the row on
+// mobile. Overflow is a plain "+N" - every tag is one tap away in the post
+// itself, and the filter row above already lists them all.
+const MAX_VISIBLE_TAGS = 3;
+
 function formatDate(value: string | Date): string {
   // timeZone 'UTC' keeps the displayed day matching what was authored.
   return new Date(value).toLocaleDateString('en-US', {
@@ -42,6 +47,8 @@ function PostListItem({
   post: PostMeta;
   forceBorder?: boolean;
 }) {
+  const tags = post.tags ?? [];
+
   return (
     <li
       className={cn(
@@ -84,6 +91,21 @@ function PostListItem({
         {post.date && (
           <span className='text-muted-foreground/70 text-xs'>
             {formatDate(post.date)}
+          </span>
+        )}
+
+        {/* Chips render as spans, so they stay valid inside this <a> and the
+            whole row remains one click target. */}
+        {tags.length > 0 && (
+          <span className='mt-1 flex flex-wrap items-center gap-1.5'>
+            {tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (
+              <Chip key={tag}>{tag}</Chip>
+            ))}
+            {tags.length > MAX_VISIBLE_TAGS && (
+              <span className='text-muted-foreground/70 text-xs'>
+                +{tags.length - MAX_VISIBLE_TAGS}
+              </span>
+            )}
           </span>
         )}
       </Link>
