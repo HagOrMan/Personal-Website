@@ -192,6 +192,29 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  :root {
+    /* Single definition of the new-tab cursor, shared by the rule below and
+     * the .cursor-newtab utility. */
+    --cursor-newtab:
+      url('/images/new-tab.png') 10 10,
+      pointer;
+  }
+
+  /**
+   * Any link that opens a new tab gets the new-tab cursor automatically, so it
+   * never has to be remembered per-link - this covers markdown links inside
+   * blog posts too, since rehype-external-links adds target="_blank" to every
+   * external link it finds.
+   *
+   * Deliberately in the base layer, not utilities: `a[target='_blank']` is
+   * specificity (0,1,1) and would otherwise beat a Tailwind `cursor-*` class
+   * (0,1,0) set on a specific link. From base, any explicit cursor utility
+   * still wins.
+   */
+  a[target='_blank'] {
+    cursor: var(--cursor-newtab);
+  }
 }
 
 @utility animated-underline {
@@ -438,10 +461,11 @@
     /* #endregion */
   }
 
+  /* Still useful for openers that aren't an <a target="_blank"> - a button
+   * that calls window.open(), for instance. Plain external links are already
+   * covered by the base-layer rule. */
   .cursor-newtab {
-    cursor:
-      url('/images/new-tab.png') 10 10,
-      pointer;
+    cursor: var(--cursor-newtab);
   }
 
   body {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 import { motion, Variants } from 'motion/react';
 
+import GitHubIcon from '@/components/icons/GithubIcon';
 import { Chip } from '@/components/ui/Chip';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +20,10 @@ type BlogPostHeaderProps = {
   date?: string | Date;
   /** Post tags. Optional. */
   tags?: string[];
+  /** GitHub URL for the source markdown, when it lives in a public repo. */
+  sourceUrl?: string;
+  /** Name of that repo, for the link text. Falls back to "GitHub". */
+  sourceLabel?: string;
   /** Extra classes for the outer <header>. */
   className?: string;
 };
@@ -60,6 +65,8 @@ export const BlogPostHeader = ({
   author = 'Kyle Hagerman',
   date,
   tags = [],
+  sourceUrl,
+  sourceLabel,
   className,
 }: BlogPostHeaderProps) => {
   return (
@@ -103,6 +110,23 @@ export const BlogPostHeader = ({
               >
                 {formatDate(date)}
               </time>
+            </>
+          )}
+
+          {sourceUrl && (
+            <>
+              <span aria-hidden className='text-muted-foreground/60'>
+                ·
+              </span>
+              <a
+                href={sourceUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-muted-foreground hover:text-primary inline-flex items-center gap-1 transition-colors'
+              >
+                <GitHubIcon className='size-3.5 shrink-0' useThemeForImgSource />
+                View on {sourceLabel ?? 'GitHub'}
+              </a>
             </>
           )}
         </span>

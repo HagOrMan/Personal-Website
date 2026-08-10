@@ -25,7 +25,10 @@ export async function GET(
   const canAccess = await hasAccess(slug, post.meta.locked);
   if (!canAccess) return new NextResponse(null, { status: 404 });
 
-  const asset = await getAsset(slug, segments);
+  // Assets are resolved from the source that owns the post, so a slug can
+  // never reach into a different repo. Sources with no assets directory
+  // (their files link straight to GitHub) return null here, i.e. 404.
+  const asset = await getAsset(post.source, slug, segments);
   if (!asset) return new NextResponse(null, { status: 404 });
 
   return new NextResponse(Buffer.from(asset.bytes), {

@@ -1,3 +1,4 @@
+import { type ComponentProps } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
@@ -5,6 +6,7 @@ import { notFound, permanentRedirect } from 'next/navigation';
 
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
@@ -12,12 +14,36 @@ import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
-import { getPost } from '@/lib/blog/github';
+import { getPost, type Post } from '@/lib/blog/github';
 import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 
 // Both /blog/my-first-post and /blog/MyFirstPost resolve; unknown slugs
 // render on-demand and get redirected below (or 404 if no file matches).
 export const dynamicParams = true;
+
+type RehypePlugins = ComponentProps<typeof ReactMarkdown>['rehypePlugins'];
+
+/**
+ * Raw HTML is allowed through (posts use <details>, <sup>, and friends), but
+ * only content from a trusted source is rendered unsanitized. A public source
+ * takes outside pull requests, and this site serves it from the same origin as
+ * the owner session and unlock cookies - so a merged contribution must not be
+ * able to run script here.
+ *
+ * Order matters: rehypeSanitize sits directly after rehypeRaw so injected HTML
+ * is cleaned before anything else looks at it, and rehypeSlug runs *after*
+ * sanitizing because the default schema clobbers author-supplied `id`s with a
+ * `user-content-` prefix. Slugging afterwards leaves heading ids untouched, so
+ * in-page anchors like [notes](#extra-notes) still land.
+ */
+function rehypePluginsFor(post: Post): RehypePlugins {
+  return [
+    rehypeRaw,
+    ...(post.source.trusted ? [] : [rehypeSanitize]),
+    rehypeSlug,
+    [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+  ];
+}
 
 // hasAccess() reads cookies() (directly, and via the Supabase server
 // client), which already opts this route into fully dynamic rendering - no
@@ -94,21 +120,20 @@ export default async function BlogPostPage({
           description={post.meta.description}
           tags={post.meta.tags}
           date={post.meta.date}
+          sourceUrl={post.meta.sourceUrl}
+          sourceLabel={post.meta.sourceLabel}
         />
 
         <article className='blog-prose'>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[
-              rehypeRaw,
-              rehypeSlug,
-              [
-                rehypeExternalLinks,
-                { target: '_blank', rel: ['noopener', 'noreferrer'] },
-              ],
-            ]}
+            rehypePlugins={rehypePluginsFor(post)}
           >
-            {rewriteContentPaths(post.content, post.meta.slug)}
+            {rewriteContentPaths(post.content, {
+              slug: post.meta.slug,
+              postPath: post.postPath,
+              source: post.source,
+            })}
           </ReactMarkdown>
         </article>
       </div>

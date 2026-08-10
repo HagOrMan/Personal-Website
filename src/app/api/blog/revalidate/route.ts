@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 
 import crypto from 'crypto';
 
-// Configure this on the private blog content repo:
+// Configure this on every content repo in src/lib/blog/sources.ts (the private
+// blog repo and each public source). They all share the one 'blog' cache tag,
+// so the same URL and secret work for all of them:
 //   Settings -> Webhooks -> Add webhook
 //     Payload URL: https://<your-site>/api/blog/revalidate
 //     Content type: application/json

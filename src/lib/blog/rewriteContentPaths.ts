@@ -1,4 +1,10 @@
 import { slugify } from '@/lib/blog/slug';
+import {
+  blobUrl,
+  type ContentSource,
+  isExcluded,
+  joinPath,
+} from '@/lib/blog/sources';
 
 // Rewrites relative markdown references so they resolve correctly when a
 // post is served from /blog/[slug]:
@@ -9,7 +15,22 @@ import { slugify } from '@/lib/blog/slug';
 //   [file](../assets/my-post/a.pdf) -> [file](/blog-assets/my-post/a.pdf)
 // Absolute URLs, root-relative paths, data URIs, and in-page anchors are
 // left untouched.
+//
+// Sources that keep no assets directory (the public tutorials repo) get a
+// different treatment for non-markdown references: rather than proxying them
+// through /blog-assets, they're pointed at the file on GitHub. Those files
+// are shell/bashrc snippets meant to be read and copied from the repo, and
+// the proxy would serve them as application/octet-stream (a download) since
+// they have no image/document MIME type.
 const MARKDOWN_REF_RE = /(!?)(\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g;
+
+export interface ContentContext {
+  /** Canonical slug of the post being rendered - keys its assets. */
+  slug: string;
+  /** The post's path within its source's postsDir, without the .md extension. */
+  postPath: string;
+  source: ContentSource;
+}
 
 function isRewritableUrl(url: string): boolean {
   if (
@@ -47,34 +68,107 @@ function toAssetUrl(url: string, slug: string): string {
   return `/blog-assets/${slug}/${relative}`;
 }
 
+// Any host works - only the resolved pathname is kept. `.invalid` is reserved
+// by RFC 2606 so this can never accidentally address something real.
+const RESOLVE_ORIGIN = 'https://resolve.invalid';
+
+/**
+ * Resolves a relative reference against the directory the post itself lives
+ * in, normalizing `./` and `../`, and returns a repo-root-relative path.
+ * URL does the normalization (and clamps `../` that would escape the root).
+ */
+function resolveRepoPath(url: string, baseDir: string): string {
+  try {
+    const { pathname } = new URL(
+      url,
+      `${RESOLVE_ORIGIN}/${baseDir ? `${baseDir}/` : ''}`,
+    );
+    return decodeURIComponent(pathname.replace(/^\//, ''));
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * A repo-root-relative path expressed relative to the source's postsDir, or
+ * null when it falls outside postsDir entirely (so it can't be a post).
+ */
+function relativeToPostsDir(
+  source: ContentSource,
+  repoPath: string,
+): string | null {
+  if (!source.postsDir) return repoPath;
+  const prefix = `${source.postsDir}/`;
+  return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : null;
+}
+
 /**
  * A link to another .md file becomes a link to that post. Slugs are always
  * derived from the file name alone, so any `../`/subfolder navigation in
  * the reference is irrelevant - Obsidian-style relative links between
  * posts in different subfolders land on the right URL.
+ *
+ * The exception is a link to a markdown file the source deliberately doesn't
+ * publish (a README, a contributions doc): that has no post to point at, so
+ * it goes to the file on GitHub instead of a guaranteed 404.
  */
-function toPostUrl(mdPath: string, hash: string): string {
-  const fileName = mdPath.split('/').pop()!;
+function toPostUrl(
+  ctx: ContentContext,
+  rawPath: string,
+  baseDir: string,
+  hash: string,
+): string {
+  const repoPath = resolveRepoPath(rawPath, baseDir);
+  const relPath = relativeToPostsDir(ctx.source, repoPath);
+  if (relPath !== null && isExcluded(ctx.source, relPath)) {
+    const external = blobUrl(ctx.source, repoPath);
+    if (external) return `${external}${hash}`;
+  }
+
+  const fileName = safeDecode(rawPath).split('/').pop()!;
   return `/blog/${slugify(fileName.slice(0, -'.md'.length))}${hash}`;
 }
 
-export function rewriteContentPaths(markdown: string, slug: string): string {
+/** Every non-markdown reference: an image, a PDF, a shell snippet. */
+function toFileUrl(
+  ctx: ContentContext,
+  rawPath: string,
+  baseDir: string,
+  hash: string,
+): string {
+  if (ctx.source.assetsDir) return `${toAssetUrl(rawPath, ctx.slug)}${hash}`;
+
+  const external = blobUrl(ctx.source, resolveRepoPath(rawPath, baseDir));
+  return `${external ?? rawPath}${hash}`;
+}
+
+export function rewriteContentPaths(
+  markdown: string,
+  ctx: ContentContext,
+): string {
+  // The post's own directory inside the repo, which every relative reference
+  // in its body resolves against.
+  const baseDir = joinPath(
+    ctx.source.postsDir,
+    ctx.postPath.split('/').slice(0, -1).join('/'),
+  );
+
   return markdown.replace(
     MARKDOWN_REF_RE,
-    (match, bang, prefix, url, suffix) => {
+    (match, bang: string, prefix: string, url: string, suffix: string) => {
       if (!isRewritableUrl(url)) return match;
 
       const hashIndex = url.indexOf('#');
       const hash = hashIndex === -1 ? '' : url.slice(hashIndex);
-      const mdPath = safeDecode(hashIndex === -1 ? url : url.slice(0, hashIndex));
+      const rawPath = hashIndex === -1 ? url : url.slice(0, hashIndex);
 
       // Regular (non-image) links to .md files are cross-post links; every
-      // other relative reference (images, PDFs, ...) goes through the
-      // asset proxy.
-      const target =
-        !bang && /\.md$/i.test(mdPath)
-          ? toPostUrl(mdPath, hash)
-          : toAssetUrl(url, slug);
+      // other relative reference (images, PDFs, shell snippets, ...) is a file.
+      const isPostLink = !bang && /\.md$/i.test(safeDecode(rawPath));
+      const target = isPostLink
+        ? toPostUrl(ctx, rawPath, baseDir, hash)
+        : toFileUrl(ctx, rawPath, baseDir, hash);
+
       return `${bang}${prefix}${target}${suffix}`;
     },
   );
