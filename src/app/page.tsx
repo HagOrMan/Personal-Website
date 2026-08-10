@@ -13,6 +13,7 @@ import { OceanScene } from '@/components/backgrounds/OceanParticles';
 import { HomeIconPopOverlay } from '@/components/home/HomeIconPopOverlay';
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
+import { ReferencesSection } from '@/components/references/ReferencesSection';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
 import { VideoModalShell } from '@/components/video/VideoModalShell';
@@ -366,7 +367,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className='mx-auto flex min-h-[100px] w-full max-w-5xl flex-col items-start justify-center p-10'></section>
+        {/* Recommendations */}
+        <ReferencesSection />
 
         {/* Experience */}
         {/* <section className='mx-auto flex min-h-screen w-full max-w-5xl flex-col items-start justify-center p-10'>
