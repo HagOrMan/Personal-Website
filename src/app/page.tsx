@@ -146,7 +146,7 @@ export default function Home() {
       // The container is 200vh. The animations finish around 60% (0.6) progress.
       // 60% of the scrollable area (which is roughly 100vh) is ~0.6 * window height.
       // Add a little buffer to ensure everything is fully visible.
-      const targetY = window.innerHeight * 0.75;
+      const targetY = window.innerHeight * 0.8;
 
       // Animate the scroll
       const controls = animate(0, targetY, {
