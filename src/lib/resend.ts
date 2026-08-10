@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
 
+import { requiredEnv } from '@/lib/env';
+
 import 'server-only';
 
 export const CONTACT_FROM = 'Contact <contact@kylehagerman.dev>';
@@ -13,9 +15,7 @@ let client: Resend | null = null;
  */
 export function getResendClient(): Resend {
   if (!client) {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) throw new Error('Missing required env var: RESEND_API_KEY');
-    client = new Resend(apiKey);
+    client = new Resend(requiredEnv('RESEND_API_KEY'));
   }
   return client;
 }

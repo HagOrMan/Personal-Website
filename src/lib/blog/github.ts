@@ -9,6 +9,7 @@ import {
   joinPath,
 } from '@/lib/blog/sources';
 import { withStaleFallback } from '@/lib/blog/staleCache';
+import { requiredEnv } from '@/lib/env';
 
 import 'server-only';
 
@@ -117,12 +118,6 @@ export interface Post {
 export interface AssetFile {
   bytes: Uint8Array;
   contentType: string;
-}
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required env var: ${name}`);
-  return value;
 }
 
 function contentsUrl(source: ContentSource, path: string): string {

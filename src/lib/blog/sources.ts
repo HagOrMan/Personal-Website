@@ -1,3 +1,5 @@
+import { requiredEnv } from '@/lib/env';
+
 import 'server-only';
 
 // Where blog content is read from.
@@ -54,12 +56,6 @@ export interface ContentSource {
   publicUrl?: string;
 }
 
-function env(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required env var: ${name}`);
-  return value;
-}
-
 /**
  * The public tutorials repo. Owner/repo are hardcoded rather than env-driven
  * because none of it is secret - it's the same information as the link that
@@ -93,8 +89,8 @@ export function contentSources(): ContentSource[] {
     {
       id: 'blog',
       label: 'Blog',
-      owner: env('BLOG_GITHUB_OWNER'),
-      repo: env('BLOG_GITHUB_REPO'),
+      owner: requiredEnv('BLOG_GITHUB_OWNER'),
+      repo: requiredEnv('BLOG_GITHUB_REPO'),
       branch: 'main',
       postsDir: 'posts',
       assetsDir: 'assets',

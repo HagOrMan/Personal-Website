@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 
 import crypto from 'crypto';
 
+import { requiredEnv } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
 
 import 'server-only';
@@ -16,14 +17,11 @@ interface UnlockPayload {
   exp: number; // epoch ms
 }
 
-function sessionSecret(): string {
-  const secret = process.env.BLOG_SESSION_SECRET;
-  if (!secret) throw new Error('Missing required env var: BLOG_SESSION_SECRET');
-  return secret;
-}
-
 function computeSignature(body: string): Buffer {
-  return crypto.createHmac('sha256', sessionSecret()).update(body).digest();
+  return crypto
+    .createHmac('sha256', requiredEnv('BLOG_SESSION_SECRET'))
+    .update(body)
+    .digest();
 }
 
 function sign(payload: UnlockPayload): string {

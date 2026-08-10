@@ -3,6 +3,8 @@ import { after } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+import { requiredEnv } from '@/lib/env';
+
 import 'server-only';
 
 // This module is the ONLY place the Supabase secret (service role) key is
@@ -28,14 +30,11 @@ let cachedClient: SupabaseClient | null = null;
 function analyticsClient(): SupabaseClient {
   if (cachedClient) return cachedClient;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url) throw new Error('Missing required env var: NEXT_PUBLIC_SUPABASE_URL');
-  if (!secretKey) throw new Error('Missing required env var: SUPABASE_SECRET_KEY');
-
-  cachedClient = createClient(url, secretKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  cachedClient = createClient(
+    requiredEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requiredEnv('SUPABASE_SECRET_KEY'),
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
   return cachedClient;
 }
 
