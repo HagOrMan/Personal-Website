@@ -61,7 +61,7 @@ export function ReferencesSection() {
         href={LinkedInRecommendationsLink}
         target='_blank'
         rel='noopener noreferrer'
-        className='text-muted-foreground hover:text-foreground cursor-newtab mt-8 inline-flex items-center gap-2 text-sm motion-safe:transition-colors'
+        className='text-breeze-900/80 hover:text-breeze-700 dark:text-breeze-300/75 dark:hover:text-breeze-300 cursor-newtab mt-8 inline-flex items-center gap-2 text-sm motion-safe:transition-colors'
       >
         <LinkedInIcon className='h-4 w-4' useThemeForImgSource />
         {linkLabel}

@@ -22,7 +22,7 @@ export function ReferenceCard({ reference, onReadFull }: ReferenceCardProps) {
       {/* The excerpt is the point of the card, so it's the largest text here.
           The ch cap keeps the line length readable when a single reference
           fills the whole grid row - the card stretches, the text doesn't. */}
-      <blockquote className='text-foreground/90 max-w-[65ch] text-lg leading-relaxed'>
+      <blockquote className='border-lush-600/40 dark:border-lush-400/40 text-foreground/90 max-w-[65ch] border-l-2 pl-5 text-lg leading-relaxed'>
         {reference.referenceShort}
       </blockquote>
 
