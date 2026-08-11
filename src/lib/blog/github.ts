@@ -78,6 +78,7 @@ interface PostFrontmatter {
   private?: boolean;
   tags?: string[];
   featured?: boolean | 'top';
+  toc?: boolean;
   [key: string]: unknown;
 }
 
@@ -94,6 +95,12 @@ export interface PostMeta {
   featured: boolean;
   /** `featured: top` - leads the featured section instead of being tucked under "view all". */
   featuredTop: boolean;
+  /**
+   * Whether the post wants a table of contents. On by default - `toc: false`
+   * opts out a post whose headings are reference anchors rather than sections,
+   * or one that already hand-rolls its own quick links.
+   */
+  toc: boolean;
   /** ContentSource id this post was read from. */
   source: string;
   /** Label of the repo the post lives in - only set when it's publicly browsable. */
@@ -156,7 +163,8 @@ function isFeaturedTop(fm: PostFrontmatter): boolean {
 // `featured` is deliberately NOT on this list: the worst it can do is put a
 // tutorial at the top of the index, which is loudly visible on the very next
 // page load, and blocking it would also stop the owner from ever featuring
-// their own tutorial.
+// their own tutorial. Same for `toc`: hiding a post's own table of contents is
+// purely presentational and only ever affects that one post.
 const CONTROL_FRONTMATTER = ['password', 'private'] as const;
 
 function applySourcePolicy(
@@ -255,6 +263,7 @@ function toPostMeta(
     locked: isLocked(fm),
     featured: isFeatured(fm),
     featuredTop: isFeaturedTop(fm),
+    toc: fm.toc !== false,
     source: source.id,
     sourceLabel: source.publicUrl ? source.label : undefined,
     sourceUrl: blobUrl(source, `${joinPath(source.postsDir, postPath)}.md`),
