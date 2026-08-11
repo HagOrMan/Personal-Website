@@ -1,18 +1,32 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent,
+  type RefObject,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, List } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/Sheet';
 import type { TocHeading } from '@/lib/blog/toc';
 import { cn } from '@/lib/utils';
 
 // Two presentations of the same list, because they live in different places in
-// the page: TocRail sits in the empty column beside the article on xl screens
-// and follows the reader, TocDisclosure sits inline above the article
-// everywhere narrower and stays collapsed until asked for. Anchors and smooth
-// scrolling come for free - rehypeSlug gives every heading an id and
-// .blog-prose already sets scroll-behavior and scroll-margin-top.
+// the page. TocRail sits in the empty column beside the article on xl screens
+// and follows the reader. TocCompact covers everything narrower: an inline
+// disclosure above the article, plus a handle on the right edge that takes
+// over once that disclosure has scrolled away. Anchors and smooth scrolling
+// come for free - rehypeSlug gives every heading an id and .blog-prose already
+// sets scroll-behavior and scroll-margin-top.
 
 type TocProps = {
   headings: TocHeading[];
@@ -23,6 +37,9 @@ type TocProps = {
 const ACTIVE_OFFSET = 96;
 
 const INDENT = ['', 'pl-3', 'pl-6'] as const;
+
+/** Matches SheetContent's `data-[state=closed]:duration-300`. */
+const SHEET_CLOSE_MS = 300;
 
 /**
  * The id of the last heading scrolled past, or null while the reader is still
@@ -91,7 +108,7 @@ function TocLink({
 }: {
   heading: TocHeading;
   isActive?: boolean;
-  onNavigate?: () => void;
+  onNavigate?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   return (
     <a
@@ -152,42 +169,155 @@ export function TocRail({ headings, className }: TocProps) {
 }
 
 /**
- * Mobile / narrow-desktop disclosure. A native <details> so it costs one line
- * of muted text when the reader doesn't want it, and needs no JS to open.
+ * True once `ref`'s element has left the viewport entirely, false again the
+ * moment any part of it returns. Using intersection rather than a scroll
+ * threshold is what keeps the handle from strobing when the reader jitters
+ * back and forth across the boundary.
  */
-export function TocDisclosure({ headings, className }: TocProps) {
+function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
+  const [past, setPast] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setPast(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return past;
+}
+
+/**
+ * Everything below xl: an inline disclosure above the article, and a handle
+ * pinned to the right edge that fades in once that disclosure scrolls out of
+ * sight.
+ *
+ * The two are separate elements rather than one morphing element on purpose.
+ * The inline block never leaves the flow, so nothing shifts under the reader
+ * at the hand-off, and a cross-fade doesn't have to fight scroll momentum the
+ * way an animated width/position change would. Having already met the full
+ * list inline is also what makes a bare handle legible later - it isn't a
+ * mystery icon, it's where the thing you already saw went.
+ */
+export function TocCompact({ headings, className }: TocProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const detached = useScrolledPast(detailsRef);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const activeId = useActiveHeading(headings);
 
   // Jumping to a section should leave the list closed behind you, rather than
   // pushing the section you just picked back down the page.
-  const close = () => {
+  const closeDetails = () => {
     if (detailsRef.current) detailsRef.current.open = false;
   };
 
+  // The sheet locks body scrolling while open and keeps the lock through its
+  // close animation, so letting the anchor navigate normally means the jump
+  // happens against a frozen document and is simply lost. Close first, scroll
+  // once the lock is gone. scrollIntoView still picks up .blog-prose's smooth
+  // behaviour and scroll-margin-top, and the pushed hash matches what a plain
+  // anchor click would have left in the URL.
+  const jumpAfterClose =
+    (id: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+      // Let cmd/ctrl/shift/middle clicks open a tab the way they normally
+      // would - between md and xl this is still a mouse-driven layout.
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.button !== 0
+      ) {
+        return;
+      }
+      event.preventDefault();
+      setSheetOpen(false);
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView();
+        history.pushState(null, '', `#${id}`);
+      }, SHEET_CLOSE_MS + 50);
+    };
+
   return (
-    <details
-      ref={detailsRef}
-      className={cn(
-        'border-border bg-muted/40 group rounded-lg border',
-        className,
-      )}
-    >
-      <summary className='text-muted-foreground hover:text-foreground focus-visible:ring-ring flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden [&::-webkit-details-marker]:hidden'>
-        On this page
-        <ChevronDown
-          aria-hidden
-          className='size-4 shrink-0 transition-transform group-open:rotate-180'
-        />
-      </summary>
-      <nav aria-label='Table of contents' className='px-4 pt-1 pb-3'>
-        <ul>
-          {headings.map((heading) => (
-            <li key={heading.id}>
-              <TocLink heading={heading} onNavigate={close} />
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </details>
+    <>
+      <details
+        ref={detailsRef}
+        className={cn(
+          'border-border bg-muted/40 group rounded-lg border',
+          className,
+        )}
+      >
+        <summary className='text-muted-foreground hover:text-foreground focus-visible:ring-ring flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden [&::-webkit-details-marker]:hidden'>
+          On this page
+          <ChevronDown
+            aria-hidden
+            className='size-4 shrink-0 transition-transform group-open:rotate-180'
+          />
+        </summary>
+        <nav aria-label='Table of contents' className='px-4 pt-1 pb-3'>
+          <ul>
+            {headings.map((heading) => (
+              <li key={heading.id}>
+                <TocLink heading={heading} onNavigate={closeDetails} />
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+
+      {/* Vertically centred rather than tucked under the navbar: both navbars
+          are sticky top-0 with a control at the right edge, so anything up
+          there would read as a third nav button. z-40 keeps it under them.
+          The wrapper is inert so it can't swallow taps while empty. */}
+      <div className='pointer-events-none fixed top-1/2 right-0 z-40 -translate-y-1/2 xl:hidden'>
+        <AnimatePresence>
+          {detached && (
+            <motion.button
+              type='button'
+              onClick={() => setSheetOpen(true)}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 12 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className='border-border bg-background/95 text-muted-foreground hover:text-foreground focus-visible:ring-ring pointer-events-auto cursor-pointer rounded-l-lg border border-r-0 p-2.5 shadow-md backdrop-blur transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+            >
+              <List aria-hidden className='size-4' />
+              <span className='sr-only'>Open table of contents</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side='right' aria-describedby={undefined}>
+          <SheetHeader className='pb-0'>
+            <SheetTitle className='text-sm tracking-wider uppercase'>
+              On this page
+            </SheetTitle>
+          </SheetHeader>
+          {/* Unlike the inline copy, this one is only ever seen mid-post, so
+              the active section is worth marking. */}
+          {/* No aria-label here - SheetTitle already names the dialog, and a
+              third "Table of contents" landmark would just be noise. */}
+          <nav className='scrollbar-hover min-h-0 flex-1 overflow-y-auto px-4 pb-4'>
+            <ul>
+              {headings.map((heading) => (
+                <li key={heading.id}>
+                  <TocLink
+                    heading={heading}
+                    isActive={heading.id === activeId}
+                    onNavigate={jumpAfterClose(heading.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

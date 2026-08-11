@@ -12,7 +12,7 @@ import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
-import { TocDisclosure, TocRail } from '@/components/blog/TableOfContents';
+import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
 import { getPost, type Post } from '@/lib/blog/github';
@@ -145,9 +145,7 @@ export default async function BlogPostPage({
             sourceLabel={post.meta.sourceLabel}
           />
 
-          {hasToc && (
-            <TocDisclosure headings={headings} className='mb-8 xl:hidden' />
-          )}
+          {hasToc && <TocCompact headings={headings} className='mb-8 xl:hidden' />}
 
           <article className='blog-prose'>
             <ReactMarkdown
