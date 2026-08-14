@@ -16,6 +16,7 @@ import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
 import { getPost, type Post } from '@/lib/blog/github';
+import { estimateReadTime } from '@/lib/blog/readTime';
 import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 import { extractTocHeadings } from '@/lib/blog/toc';
 import { cn } from '@/lib/utils';
@@ -141,6 +142,7 @@ export default async function BlogPostPage({
             description={post.meta.description}
             tags={post.meta.tags}
             date={post.meta.date}
+            readTimeMinutes={estimateReadTime(post.content)}
             sourceUrl={post.meta.sourceUrl}
             sourceLabel={post.meta.sourceLabel}
           />

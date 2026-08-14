@@ -18,6 +18,8 @@ type BlogPostHeaderProps = {
   author?: string;
   /** Publish date. Accepts a string or Date; unquoted YAML dates parse as Date. */
   date?: string | Date;
+  /** Estimated reading time in minutes. Optional. */
+  readTimeMinutes?: number;
   /** Post tags. Optional. */
   tags?: string[];
   /** GitHub URL for the source markdown, when it lives in a public repo. */
@@ -64,6 +66,7 @@ export const BlogPostHeader = ({
   description,
   author = 'Kyle Hagerman',
   date,
+  readTimeMinutes,
   tags = [],
   sourceUrl,
   sourceLabel,
@@ -113,6 +116,17 @@ export const BlogPostHeader = ({
             </>
           )}
 
+          {readTimeMinutes && (
+            <>
+              <span aria-hidden className='text-muted-foreground/40'>
+                ·
+              </span>
+              <span className='text-muted-foreground'>
+                {readTimeMinutes} minute read
+              </span>
+            </>
+          )}
+
           {sourceUrl && (
             <>
               <span aria-hidden className='text-muted-foreground/60'>
@@ -124,7 +138,10 @@ export const BlogPostHeader = ({
                 rel='noopener noreferrer'
                 className='text-muted-foreground hover:text-primary inline-flex items-center gap-1 transition-colors'
               >
-                <GitHubIcon className='size-3.5 shrink-0' useThemeForImgSource />
+                <GitHubIcon
+                  className='size-3.5 shrink-0'
+                  useThemeForImgSource
+                />
                 View on {sourceLabel ?? 'GitHub'}
               </a>
             </>
