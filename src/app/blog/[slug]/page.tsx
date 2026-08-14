@@ -11,8 +11,8 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
-import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
+import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
 import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
@@ -51,7 +51,10 @@ function rehypePluginsFor(post: Post): RehypePlugins {
     rehypeRaw,
     ...(post.source.trusted ? [] : [rehypeSanitize]),
     rehypeSlug,
-    [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
+    [
+      rehypeExternalLinks,
+      { target: '_blank', rel: ['noopener', 'noreferrer'] },
+    ],
   ];
 }
 
@@ -177,7 +180,9 @@ export default async function BlogPostPage({
             sourceLabel={post.meta.sourceLabel}
           />
 
-          {hasToc && <TocCompact headings={headings} className='mb-8 xl:hidden' />}
+          {hasToc && (
+            <TocCompact headings={headings} className='mb-8 xl:hidden' />
+          )}
 
           <article className='blog-prose'>
             <ReactMarkdown
@@ -191,11 +196,10 @@ export default async function BlogPostPage({
                 // `node` is react-markdown's hast node - it must be dropped
                 // rather than spread, or React warns about an unknown DOM
                 // attribute on every link in the post.
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 a: ({ href, children, node, ...props }) => {
                   const linkedSlug = internalPostSlug(href);
-                  const preview = linkedSlug
-                    ? previews[linkedSlug]
-                    : undefined;
+                  const preview = linkedSlug ? previews[linkedSlug] : undefined;
 
                   if (!preview) {
                     return (
