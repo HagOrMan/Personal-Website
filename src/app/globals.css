@@ -1,4 +1,46 @@
 @import 'tailwindcss';
+/**
+ * Supplies the enter/exit utilities the shadcn-derived components in
+ * components/ui are written against - `animate-in`, `fade-in-0`,
+ * `slide-in-from-right`, `zoom-in-95` and friends. Without it those class
+ * names compile to nothing and every Radix overlay (Sheet, DropdownMenu,
+ * Tooltip, HoverCard, NavigationMenu) appears and disappears instantly.
+ * Radix drives the exit itself: its Presence layer reads the computed
+ * animation and waits for `animationend` before unmounting.
+ *
+ * This is the Tailwind v4 successor to `tailwindcss-animate`, which is what
+ * the shadcn docs reference for v3.
+ */
+@import 'tw-animate-css';
+
+/**
+ * tw-animate-css ships no reduced-motion handling of its own, so every
+ * overlay above would slide and zoom at full travel even for visitors who
+ * asked their OS not to. The accommodation people actually need is less
+ * *movement*, not slower movement - so this collapses the travel to nothing
+ * and leaves a short opacity fade, which stays legible without the panel
+ * flying across the viewport.
+ *
+ * Scoped to the enter/exit utilities rather than a blanket
+ * `animation: none !important`: the latter would also kill the deliberate,
+ * non-vestibular loops in @theme (shimmer on skeletons, flicker), and Radix
+ * waits for `animationend` before unmounting, so removing the animation
+ * outright can strand an exiting overlay in the DOM.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .animate-out {
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+    --tw-enter-scale: 1;
+    --tw-exit-scale: 1;
+    --tw-enter-rotate: 0;
+    --tw-exit-rotate: 0;
+    animation-duration: 120ms !important;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 

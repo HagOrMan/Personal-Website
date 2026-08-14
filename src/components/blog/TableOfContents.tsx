@@ -12,6 +12,11 @@ import { ChevronDown, List } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/Collapsible';
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -38,8 +43,13 @@ const ACTIVE_OFFSET = 96;
 
 const INDENT = ['', 'pl-3', 'pl-6'] as const;
 
-/** Matches SheetContent's `data-[state=closed]:duration-300`. */
-const SHEET_CLOSE_MS = 300;
+/**
+ * Matches SheetContent's `data-[state=closed]:duration-200`, plus a frame of
+ * slack. Radix unmounts the sheet - and releases its scroll lock - only after
+ * that exit animation ends, so a jump fired any earlier scrolls a frozen
+ * document and is lost. Keep in step with that class.
+ */
+const SHEET_CLOSE_MS = 250;
 
 /**
  * The id of the last heading scrolled past, or null while the reader is still
@@ -173,6 +183,9 @@ export function TocRail({ headings, className }: TocProps) {
  * moment any part of it returns. Using intersection rather than a scroll
  * threshold is what keeps the handle from strobing when the reader jitters
  * back and forth across the boundary.
+ *
+ * Observes a plain wrapper rather than the collapsible itself, so expanding
+ * the list (which grows the element downward) can't change the answer.
  */
 function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
   const [past, setPast] = useState(false);
@@ -205,16 +218,11 @@ function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
  * mystery icon, it's where the thing you already saw went.
  */
 export function TocCompact({ headings, className }: TocProps) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
-  const detached = useScrolledPast(detailsRef);
+  const inlineRef = useRef<HTMLDivElement>(null);
+  const detached = useScrolledPast(inlineRef);
+  const [inlineOpen, setInlineOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const activeId = useActiveHeading(headings);
-
-  // Jumping to a section should leave the list closed behind you, rather than
-  // pushing the section you just picked back down the page.
-  const closeDetails = () => {
-    if (detailsRef.current) detailsRef.current.open = false;
-  };
 
   // The sheet locks body scrolling while open and keeps the lock through its
   // close animation, so letting the anchor navigate normally means the jump
@@ -239,35 +247,54 @@ export function TocCompact({ headings, className }: TocProps) {
       window.setTimeout(() => {
         document.getElementById(id)?.scrollIntoView();
         history.pushState(null, '', `#${id}`);
-      }, SHEET_CLOSE_MS + 50);
+      }, SHEET_CLOSE_MS);
     };
 
   return (
     <>
-      <details
-        ref={detailsRef}
-        className={cn(
-          'border-border bg-muted/40 group rounded-lg border',
-          className,
-        )}
-      >
-        <summary className='text-muted-foreground hover:text-foreground focus-visible:ring-ring flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden [&::-webkit-details-marker]:hidden'>
-          On this page
-          <ChevronDown
-            aria-hidden
-            className='size-4 shrink-0 transition-transform group-open:rotate-180'
-          />
-        </summary>
-        <nav aria-label='Table of contents' className='px-4 pt-1 pb-3'>
-          <ul>
-            {headings.map((heading) => (
-              <li key={heading.id}>
-                <TocLink heading={heading} onNavigate={closeDetails} />
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </details>
+      {/* A Radix Collapsible rather than a native <details>: <details> can't
+          animate its own open/close (the content is display:none until it
+          isn't), so it always snapped. Radix measures the panel and exposes
+          the height as a CSS var, which the collapsible-down/up keyframes in
+          globals.css animate against - the same pairing VideoTranscriptPanel
+          and BlogIndexClient already use. */}
+      <div ref={inlineRef} className={className}>
+        <Collapsible
+          open={inlineOpen}
+          onOpenChange={setInlineOpen}
+          className='border-border bg-muted/40 rounded-lg border'
+        >
+          <CollapsibleTrigger className='text-muted-foreground hover:text-foreground focus-visible:ring-ring flex w-full cursor-pointer items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden'>
+            On this page
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                'size-4 shrink-0 transition-transform duration-200',
+                inlineOpen && 'rotate-180',
+              )}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent className='data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden'>
+            <nav aria-label='Table of contents' className='px-4 pt-1 pb-3'>
+              <ul>
+                {headings.map((heading) => (
+                  <li key={heading.id}>
+                    {/* Deliberately does NOT collapse on click. This panel
+                        sits above the article, so collapsing it shortens the
+                        document above the target - and a smooth scroll fixes
+                        its destination when it starts, so the animating
+                        height would land the reader a panel's worth past the
+                        heading. The old <details> got away with this only
+                        because it closed instantly, before the jump. The
+                        panel is off-screen once you've arrived anyway. */}
+                    <TocLink heading={heading} />
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
 
       {/* Vertically centred rather than tucked under the navbar: both navbars
           are sticky top-0 with a control at the right edge, so anything up

@@ -136,6 +136,7 @@ export const HamburgerMenu = ({ navbarItems }: NavbarProps) => {
 
         <SheetContent
           side='left'
+          aria-describedby={undefined}
           className='w-[240px] overflow-y-scroll sm:w-[300px]'
         >
           <nav className='flex flex-col space-y-3 py-1 pl-4'>
