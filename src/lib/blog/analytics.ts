@@ -172,7 +172,14 @@ interface ViewRow {
 
 export interface PerPostStat {
   slug: string;
-  locked: boolean;
+  /**
+   * Whether any view in the window was recorded while the post was locked.
+   * This is post history, NOT current state: `was_locked` is a snapshot taken
+   * at view time, so this stays true after a post is unlocked, until those
+   * rows age out of the window. Read current lock state off the post's own
+   * metadata (PostMeta.locked) instead.
+   */
+  wasEverLocked: boolean;
   totalViews: number;
   uniqueViews: number;
   views7d: number;
@@ -193,11 +200,19 @@ export interface DailyPoint {
 }
 
 export interface CrossPostSession {
-  visitorHashShort: string;
+  /**
+   * Full daily visitor hash. Not identifying (salted, and the UTC date is
+   * part of the digest, so it cannot be correlated across days), but it is
+   * the join key between a recent view and the journey it belongs to - so it
+   * must be the whole digest, not a display-truncated prefix.
+   */
+  visitorHash: string;
   day: string; // YYYY-MM-DD (UTC)
   country: string | null;
   slugs: string[];
   views: number;
+  /** Most recent view in the journey; what the dashboard orders on. */
+  lastViewedAt: string;
 }
 
 export interface RecentView {
@@ -207,6 +222,8 @@ export interface RecentView {
   referrer: string | null;
   hadAccess: boolean;
   wasLocked: boolean;
+  /** Joins this view to its CrossPostSession, when the visitor had one. */
+  visitorHash: string;
 }
 
 export interface DashboardData {
@@ -291,7 +308,7 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
 
       return {
         slug,
-        locked: all.some((r) => r.was_locked),
+        wasEverLocked: all.some((r) => r.was_locked),
         totalViews: ranged.length,
         uniqueViews: ranged.filter((r) => r.is_unique_daily).length,
         views7d: all.filter((r) => new Date(r.viewed_at).getTime() >= cut7)
@@ -338,20 +355,36 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
   const crossPost: CrossPostSession[] = [...byVisitor.entries()]
     .map(([hash, visits]) => {
       const slugs = [...new Set(visits.map((v) => v.slug))];
-      const day = utcDayKey(
-        visits.reduce((min, v) => (v.viewed_at < min ? v.viewed_at : min), visits[0]!.viewed_at),
+      // A visitor_hash already encodes one UTC day, so every visit here is
+      // same-day and any row's date is the journey's date. The newest
+      // timestamp is what gives ordering finer resolution than that day.
+      const lastViewedAt = visits.reduce(
+        (max, v) => (v.viewed_at > max ? v.viewed_at : max),
+        visits[0]!.viewed_at,
       );
       const country = visits.find((v) => v.country)?.country ?? null;
-      return { visitorHashShort: hash.slice(0, 8), day, country, slugs, views: visits.length };
+      return {
+        visitorHash: hash,
+        day: utcDayKey(lastViewedAt),
+        country,
+        slugs,
+        views: visits.length,
+        lastViewedAt,
+      };
     })
     .filter((s) => s.slugs.length >= 2)
-    .sort((a, b) => b.slugs.length - a.slugs.length || b.views - a.views)
+    // Most recent journey first. Previously this led with the largest
+    // journey, which buried today's activity under whatever the biggest
+    // reader in the range had done weeks earlier.
+    .sort((a, b) => b.lastViewedAt.localeCompare(a.lastViewedAt))
     .slice(0, 50);
 
   // ---- Recent activity (latest 50, independent of the range) --------------
   const { data: recentData, error: recentError } = await client
     .from(TABLE)
-    .select('slug, viewed_at, country, referrer, had_access, was_locked')
+    .select(
+      'slug, viewed_at, country, referrer, had_access, was_locked, visitor_hash',
+    )
     .order('viewed_at', { ascending: false })
     .limit(50);
   if (recentError) throw recentError;
@@ -363,6 +396,7 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
     referrer: (r.referrer as string | null) ?? null,
     hadAccess: r.had_access as boolean,
     wasLocked: r.was_locked as boolean,
+    visitorHash: r.visitor_hash as string,
   }));
 
   return {

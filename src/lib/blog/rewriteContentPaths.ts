@@ -12,6 +12,7 @@ import {
 //   ![cover](./assets/cover.png)    -> ![cover](/blog-assets/my-post/cover.png)
 //   [next](../SomethingElse.md)     -> [next](/blog/something-else)
 //   [notes](Other%20Post.md#intro)  -> [notes](/blog/other-post#intro)
+//   [sibling](AnotherPost)          -> [sibling](/blog/another-post)
 //   [file](../assets/my-post/a.pdf) -> [file](/blog-assets/my-post/a.pdf)
 // Absolute URLs, root-relative paths, data URIs, and in-page anchors are
 // left untouched.
@@ -51,6 +52,29 @@ function safeDecode(value: string): string {
   } catch {
     return value;
   }
+}
+
+/**
+ * Whether a file name carries an extension. The dot may sit at position 0, so
+ * dotfiles (`.bashrc` and friends, real files in the tutorials repo) count as
+ * extensioned and are never mistaken for posts.
+ */
+function hasFileExtension(fileName: string): boolean {
+  return /\.[^./]+$/.test(fileName);
+}
+
+/**
+ * Whether a non-image relative reference points at another post.
+ *
+ * Two forms count. An explicit `.md` is the canonical one. An extensionless
+ * reference does too: every asset the proxy serves - image, PDF, snippet -
+ * has an extension, so a bare `[text](AnotherPost)` can only be a sibling
+ * post whose suffix wasn't typed. Without this, those fell through to the
+ * asset branch and resolved to /blog-assets/<slug>/AnotherPost.
+ */
+function isPostReference(decodedPath: string): boolean {
+  const fileName = decodedPath.split('/').pop() ?? '';
+  return /\.md$/i.test(fileName) || !hasFileExtension(fileName);
 }
 
 function toAssetUrl(url: string, slug: string): string {
@@ -119,14 +143,19 @@ function toPostUrl(
   hash: string,
 ): string {
   const repoPath = resolveRepoPath(rawPath, baseDir);
-  const relPath = relativeToPostsDir(ctx.source, repoPath);
+  // Exclusion patterns are written against the .md files that exist in the
+  // repo, so an extensionless reference has to be checked in that form.
+  const mdRepoPath = /\.md$/i.test(repoPath) ? repoPath : `${repoPath}.md`;
+  const relPath = relativeToPostsDir(ctx.source, mdRepoPath);
   if (relPath !== null && isExcluded(ctx.source, relPath)) {
-    const external = blobUrl(ctx.source, repoPath);
+    const external = blobUrl(ctx.source, mdRepoPath);
     if (external) return `${external}${hash}`;
   }
 
+  // Only strip the suffix when it's actually there - slicing a fixed three
+  // characters off an extensionless name would eat real ones.
   const fileName = safeDecode(rawPath).split('/').pop()!;
-  return `/blog/${slugify(fileName.slice(0, -'.md'.length))}${hash}`;
+  return `/blog/${slugify(fileName.replace(/\.md$/i, ''))}${hash}`;
 }
 
 /** Every non-markdown reference: an image, a PDF, a shell snippet. */
@@ -162,9 +191,10 @@ export function rewriteContentPaths(
       const hash = hashIndex === -1 ? '' : url.slice(hashIndex);
       const rawPath = hashIndex === -1 ? url : url.slice(0, hashIndex);
 
-      // Regular (non-image) links to .md files are cross-post links; every
-      // other relative reference (images, PDFs, shell snippets, ...) is a file.
-      const isPostLink = !bang && /\.md$/i.test(safeDecode(rawPath));
+      // Regular (non-image) links to markdown files are cross-post links;
+      // every other relative reference (images, PDFs, shell snippets, ...)
+      // is a file.
+      const isPostLink = !bang && isPostReference(safeDecode(rawPath));
       const target = isPostLink
         ? toPostUrl(ctx, rawPath, baseDir, hash)
         : toFileUrl(ctx, rawPath, baseDir, hash);

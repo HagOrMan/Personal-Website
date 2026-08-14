@@ -1,5 +1,7 @@
 import matter from 'gray-matter';
 
+import { extractExcerpt } from '@/lib/blog/excerpt';
+import { estimateReadTime } from '@/lib/blog/readTime';
 import { formatTitle, slugify } from '@/lib/blog/slug';
 import {
   blobUrl,
@@ -88,6 +90,15 @@ export interface PostMeta {
   title: string;
   date?: string;
   description?: string;
+  /**
+   * Plain-text opening snippet, used as the hover-preview summary for posts
+   * with no authored `description`. Always undefined for locked posts - the
+   * body is what the password is protecting, so none of it is derived into
+   * client-visible metadata.
+   */
+  excerpt?: string;
+  /** Estimated reading time, so previews can show it without the body. */
+  readTimeMinutes: number;
   tags?: string[];
   /** Human-readable subfolder label (e.g. "Event Reflections"), if nested. */
   folder?: string;
@@ -250,17 +261,22 @@ function toPostMeta(
   source: ContentSource,
   postPath: string,
   fm: PostFrontmatter,
+  content: string,
 ): PostMeta {
   const segments = postPath.split('/');
   const fileName = segments.pop()!;
+  const locked = isLocked(fm);
   return {
     slug: slugify(fileName),
     title: fm.title ?? formatTitle(fileName),
     date: fm.date,
     description: fm.description,
+    // Never derived for locked posts - see the field docs on PostMeta.
+    excerpt: locked ? undefined : extractExcerpt(content),
+    readTimeMinutes: estimateReadTime(content),
     tags: mergeTags(source, fm),
     folder: toFolderLabel(source, segments),
-    locked: isLocked(fm),
+    locked,
     featured: isFeatured(fm),
     featuredTop: isFeaturedTop(fm),
     toc: fm.toc !== false,
@@ -463,7 +479,7 @@ async function listSourcePosts(source: ContentSource): Promise<PostMeta[]> {
     postPaths.map(async (postPath) => {
       const file = await fetchPostFile(source, postPath);
       return file && !isParentNode(file.frontmatter)
-        ? toPostMeta(source, postPath, file.frontmatter)
+        ? toPostMeta(source, postPath, file.frontmatter, file.content)
         : null;
     }),
   );
@@ -537,7 +553,12 @@ export async function getPost(requestedSlug: string): Promise<Post | null> {
   const resolved = await resolvePost(requestedSlug);
   if (!resolved) return null;
   return {
-    meta: toPostMeta(resolved.source, resolved.postPath, resolved.frontmatter),
+    meta: toPostMeta(
+      resolved.source,
+      resolved.postPath,
+      resolved.frontmatter,
+      resolved.content,
+    ),
     content: resolved.content,
     source: resolved.source,
     postPath: resolved.postPath,

@@ -11,12 +11,18 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
+import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
-import { getPost, type Post } from '@/lib/blog/github';
-import { estimateReadTime } from '@/lib/blog/readTime';
+import { getPost, listPosts, type Post } from '@/lib/blog/github';
+import {
+  buildPreviewMap,
+  collectLinkedPostSlugs,
+  internalPostSlug,
+  type PostPreviewMap,
+} from '@/lib/blog/preview';
 import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 import { extractTocHeadings } from '@/lib/blog/toc';
 import { cn } from '@/lib/utils';
@@ -47,6 +53,20 @@ function rehypePluginsFor(post: Post): RehypePlugins {
     rehypeSlug,
     [rehypeExternalLinks, { target: '_blank', rel: ['noopener', 'noreferrer'] }],
   ];
+}
+
+/**
+ * Preview metadata for the posts this article links to, for the hover cards
+ * on cross-post links.
+ *
+ * Only loads the index when the article actually links somewhere - most posts
+ * link to no others, and those pay nothing. When it does load, listPosts()
+ * reads through the same tagged Data Cache entries getPost() already
+ * populated, so a warm cache costs no extra GitHub requests.
+ */
+async function linkedPostPreviews(content: string): Promise<PostPreviewMap> {
+  if (collectLinkedPostSlugs(content).length === 0) return {};
+  return buildPreviewMap(await listPosts());
 }
 
 // hasAccess() reads cookies() (directly, and via the Supabase server
@@ -124,6 +144,16 @@ export default async function BlogPostPage({
   const headings = post.meta.toc ? extractTocHeadings(post.content) : [];
   const hasToc = headings.length > 0;
 
+  // Rewrite first, then scan: path rewriting is what turns a relative link
+  // into its final /blog/... form, so scanning the rewritten copy is what
+  // guarantees the preview map covers every link the reader can actually see.
+  const content = rewriteContentPaths(post.content, {
+    slug: post.meta.slug,
+    postPath: post.postPath,
+    source: post.source,
+  });
+  const previews = await linkedPostPreviews(content);
+
   return (
     <main className='bg-background page-shell'>
       {/* Narrow: one centred column. From xl there's real room beside the
@@ -142,7 +172,7 @@ export default async function BlogPostPage({
             description={post.meta.description}
             tags={post.meta.tags}
             date={post.meta.date}
-            readTimeMinutes={estimateReadTime(post.content)}
+            readTimeMinutes={post.meta.readTimeMinutes}
             sourceUrl={post.meta.sourceUrl}
             sourceLabel={post.meta.sourceLabel}
           />
@@ -153,12 +183,37 @@ export default async function BlogPostPage({
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={rehypePluginsFor(post)}
+              components={{
+                // Links to other posts get a hover preview; everything else
+                // (external links, in-page anchors, asset links) renders
+                // exactly as before, keeping the target/rel that
+                // rehypeExternalLinks attached.
+                // `node` is react-markdown's hast node - it must be dropped
+                // rather than spread, or React warns about an unknown DOM
+                // attribute on every link in the post.
+                a: ({ href, children, node, ...props }) => {
+                  const linkedSlug = internalPostSlug(href);
+                  const preview = linkedSlug
+                    ? previews[linkedSlug]
+                    : undefined;
+
+                  if (!preview) {
+                    return (
+                      <a href={href} {...props}>
+                        {children}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <PostPreviewLink preview={preview} href={href}>
+                      {children}
+                    </PostPreviewLink>
+                  );
+                },
+              }}
             >
-              {rewriteContentPaths(post.content, {
-                slug: post.meta.slug,
-                postPath: post.postPath,
-                source: post.source,
-              })}
+              {content}
             </ReactMarkdown>
           </article>
         </div>
