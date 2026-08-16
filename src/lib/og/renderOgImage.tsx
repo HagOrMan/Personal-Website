@@ -1,17 +1,31 @@
 import { ImageResponse } from 'next/og';
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = 'image/png';
 
-// Read once at module scope (not fetched over the network — next/og's Satori
-// renderer wants a data: URI or absolute URL, and reading from disk avoids a
-// network round trip per image render).
-const LOGO_DATA_URI = `data:image/png;base64,${readFileSync(
-  join(process.cwd(), 'src/lib/og/logo.png'),
-).toString('base64')}`;
+// Lazily loaded and cached across warm invocations of the same serverless
+// instance. Resolved via `import.meta.url` (not `readFileSync(process.cwd())`
+// — that path wasn't picked up by Vercel's file tracer and 404'd in
+// production) so the bundler can statically trace and include the asset.
+// Deferred to first actual use rather than module scope: every page's
+// metadata resolution imports this module just to read the static
+// `alt`/`size` exports on its opengraph-image.tsx, and a module-scope read
+// here would fire as a side effect of that — which is exactly what crashed
+// every dynamically-rendered page (anything reading cookies()) once the file
+// wasn't found in the deployed bundle.
+let logoDataUriPromise: Promise<string> | null = null;
+
+function getLogoDataUri(): Promise<string> {
+  if (!logoDataUriPromise) {
+    logoDataUriPromise = fetch(new URL('./logo.png', import.meta.url))
+      .then((res) => res.arrayBuffer())
+      .then(
+        (buffer) =>
+          `data:image/png;base64,${Buffer.from(buffer).toString('base64')}`,
+      );
+  }
+  return logoDataUriPromise;
+}
 
 // Hardcoded from the `lush` / `breeze` / `nebula` palette and dark
 // `--background` in src/app/globals.css — Satori does not evaluate CSS
@@ -40,6 +54,8 @@ export async function renderOgImage({
   subtitle?: string;
   eyebrow?: string;
 }) {
+  const logoDataUri = await getLogoDataUri();
+
   return new ImageResponse(
     (
       <div
@@ -117,7 +133,7 @@ export async function renderOgImage({
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- Satori
               renders its own image pipeline; next/image doesn't apply here. */}
-          <img src={LOGO_DATA_URI} width={44} height={44} alt='' />
+          <img src={logoDataUri} width={44} height={44} alt='' />
           kylehagerman.dev
         </div>
       </div>
