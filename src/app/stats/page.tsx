@@ -26,6 +26,7 @@ import { shortHash } from '@/lib/blog/visitorHash';
 
 // Owner-only page: never advertise its existence to search engines.
 export const metadata: Metadata = {
+  title: 'Stats',
   robots: { index: false, follow: false },
 };
 

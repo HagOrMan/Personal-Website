@@ -89,9 +89,12 @@ function PostListItem({
           </span>
         )}
         {post.date && (
-          <span className='text-muted-foreground/70 text-xs'>
+          <time
+            dateTime={new Date(post.date).toISOString()}
+            className='text-muted-foreground/70 text-xs'
+          >
             {formatDate(post.date)}
-          </span>
+          </time>
         )}
 
         {/* Chips render as spans, so they stay valid inside this <a> and the

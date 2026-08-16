@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Projects - Piraten Kapern',
-  description: 'A Java game based on the game with the same name.',
-};
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = pageMetadata({
+  title: 'Piraten Kapern',
+  description:
+    'A Java implementation of the dice-and-card pirate game Piraten Kapern, with full rules and scoring.',
+  path: '/projects/piraten-kapern',
+});
 
 export default function PiratenKapernLayout({
   children,

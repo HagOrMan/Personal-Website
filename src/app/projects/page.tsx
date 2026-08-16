@@ -1,11 +1,14 @@
 import { WaveSpray } from '@/components/animated-fun/Wavespray';
 import { PageHeader } from '@/components/layout/PageHeader';
 import ProjectsClient from '@/components/projects/ProjectsClient';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { projects } from '@/constant/projects';
+import { buildProjectItemListJsonLd } from '@/lib/seo/jsonLd';
 
 export default function Projects() {
   return (
     <main className='bg-background page-shell'>
+      <JsonLd data={buildProjectItemListJsonLd(projects)} />
       <PageHeader
         title='Projects'
         description="Here are all the projects I've worked on and am proud to share!"

@@ -50,7 +50,7 @@ export function HomeIconPopOverlay({ triggerId }: HomeIconPopOverlayProps) {
           onAnimationComplete={() => removePop(id)}
         >
           <Image
-            src='/svg/favicon.svg'
+            src='/icons/icon-192.png'
             alt=''
             width={64}
             height={64}

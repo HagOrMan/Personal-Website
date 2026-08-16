@@ -14,6 +14,7 @@ import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
 import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
 import { resolveAccess } from '@/lib/blog/auth';
 import { getPost, listPosts, type Post } from '@/lib/blog/github';
@@ -25,6 +26,8 @@ import {
 } from '@/lib/blog/preview';
 import { rewriteContentPaths } from '@/lib/blog/rewriteContentPaths';
 import { extractTocHeadings } from '@/lib/blog/toc';
+import { absoluteUrl, SITE } from '@/lib/seo';
+import { buildBlogPostingJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 import { cn } from '@/lib/utils';
 
 // Both /blog/my-first-post and /blog/MyFirstPost resolve; unknown slugs
@@ -86,11 +89,39 @@ export async function generateMetadata({
   const post = await getPost(slug);
   if (!post) return {};
 
+  // Unchanged behaviour: a locked post exposes its title and nothing else.
   if (post.meta.locked) {
     return { title: post.meta.title, robots: { index: false, follow: false } };
   }
 
-  return { title: post.meta.title, description: post.meta.description };
+  const url = absoluteUrl(`/blog/${post.meta.slug}`);
+  // excerpt is a plain-text opening snippet already computed in PostMeta —
+  // better than emitting no description at all.
+  const description = post.meta.description ?? post.meta.excerpt;
+
+  return {
+    title: post.meta.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      url,
+      title: post.meta.title,
+      description,
+      siteName: SITE.name,
+      locale: SITE.locale,
+      publishedTime: post.meta.date
+        ? new Date(post.meta.date).toISOString()
+        : undefined,
+      authors: [SITE.author],
+      tags: post.meta.tags,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.meta.title,
+      description,
+    },
+  };
 }
 
 export default async function BlogPostPage({
@@ -159,6 +190,20 @@ export default async function BlogPostPage({
 
   return (
     <main className='bg-background page-shell'>
+      {/* Locked posts never get BlogPosting/Breadcrumb JSON-LD — same rule as
+          the OG image and generateMetadata above. */}
+      {!post.meta.locked && (
+        <>
+          <JsonLd data={buildBlogPostingJsonLd(post.meta)} />
+          <JsonLd
+            data={buildBreadcrumbJsonLd([
+              { name: 'Home', path: '/' },
+              { name: 'Blog', path: '/blog' },
+              { name: post.meta.title, path: `/blog/${post.meta.slug}` },
+            ])}
+          />
+        </>
+      )}
       {/* Narrow: one centred column. From xl there's real room beside the
           72ch measure, so the rail takes it and the pair centres together. */}
       <div

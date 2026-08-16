@@ -1,11 +1,14 @@
 import AboutMeClient from '@/components/about-me/AboutMeClient';
 import { WaveSpray } from '@/components/animated-fun/Wavespray';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { PORTFOLIO_VIDEOS } from '@/constant/videos';
+import { buildProfilePageJsonLd } from '@/lib/seo/jsonLd';
 
 export default function AboutMe() {
   return (
     <main className='bg-background page-shell'>
+      <JsonLd data={buildProfilePageJsonLd()} />
       <PageHeader
         title='About Me'
         description='Get to know me through the page below - or hear it straight from me on video.'

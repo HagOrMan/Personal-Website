@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = pageMetadata({
   title: 'Resume',
   description:
-    'Want to see my resume? This website should be enough, but you can ask politely for it',
-};
+    'Request access to my full resume, or browse my experience, projects, and skills right here on the site.',
+  path: '/resume',
+});
 
 export default function ResumeLayout({
   children,

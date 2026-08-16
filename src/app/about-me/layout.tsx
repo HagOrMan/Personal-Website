@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = pageMetadata({
   title: 'About Me',
-  description: 'A deep dive into my background, skills, and passion.',
-};
+  description:
+    'A deep dive into my background, skills, and passion, including some videos to get to know me better.',
+  path: '/about-me',
+});
 
 export default function AboutLayout({
   children,

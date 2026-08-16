@@ -83,10 +83,15 @@ export const Navbar = ({ navbarItems }: NavbarProps) => {
       onPointerLeave={() => setValue('')}
     >
       {/* Website logo but to navigate home */}
-      <Link href='/' className='flex items-center' onClick={handleLogoClick}>
+      <Link
+        href='/'
+        className='flex items-center'
+        onClick={handleLogoClick}
+        aria-label='Kyle Hagerman — Home'
+      >
         <Image
-          src='/svg/favicon.svg'
-          alt='Logo'
+          src='/icons/icon-192.png'
+          alt=''
           width={32}
           height={32}
           className='mx-2'

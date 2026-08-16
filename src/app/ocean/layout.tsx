@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = pageMetadata({
   title: 'Ocean',
-  description: 'A page to admire the ocean view',
-};
+  description: 'A full-screen page to admire the ocean view.',
+  path: '/ocean',
+});
 
 export default function OceanLayout({
   children,

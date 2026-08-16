@@ -3,13 +3,16 @@ import { Suspense } from 'react';
 import { Rss } from 'lucide-react';
 
 import { BlogIndexClient } from '@/components/blog/BlogIndexClient';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { listPosts } from '@/lib/blog/github';
+import { buildBlogJsonLd } from '@/lib/seo/jsonLd';
 
 export default async function BlogPage() {
   const posts = await listPosts();
 
   return (
     <main className='bg-background page-shell'>
+      <JsonLd data={buildBlogJsonLd()} />
       <div className='mx-auto flex w-full max-w-[72ch] flex-col gap-8'>
         <div className='flex items-center justify-between gap-4'>
           <h1 className='text-foreground text-4xl font-bold tracking-tight md:text-5xl'>

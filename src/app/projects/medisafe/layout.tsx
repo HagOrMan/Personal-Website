@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Projects - MediSafe',
+import { pageMetadata } from '@/lib/seo';
+
+export const metadata: Metadata = pageMetadata({
+  title: 'MediSafe',
   description:
-    'An medication tracker app for warning users of negative drug interactions in their medications.',
-};
+    'A hackathon-winning medication tracker that warns users about negative drug interactions across their prescriptions.',
+  path: '/projects/medisafe',
+});
 
 export default function MediSafeLayout({
   children,

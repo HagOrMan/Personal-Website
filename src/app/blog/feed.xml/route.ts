@@ -1,4 +1,5 @@
 import { listPosts, type PostMeta } from '@/lib/blog/github';
+import { SITE_URL } from '@/lib/seo';
 
 // Summary RSS feed for the blog. This route handler calls the same
 // listPosts() as the index page, so it rides on the identical Data Cache
@@ -9,7 +10,8 @@ import { listPosts, type PostMeta } from '@/lib/blog/github';
 // site for the full post).
 
 const FEED_TITLE = "Kyle's Corner — Blog";
-const FEED_DESCRIPTION = 'Thoughts, articles, and things I find interesting.';
+const FEED_DESCRIPTION =
+  'Thoughts, educational tutorials, and things I find interesting.';
 
 function escapeXml(value: string): string {
   return value
@@ -18,21 +20,6 @@ function escapeXml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
-}
-
-/**
- * The absolute origin the feed's URLs are built from. Prefer an explicit
- * NEXT_PUBLIC_SITE_URL (canonical, stable across deploys); otherwise fall
- * back to the host the request actually arrived on.
- */
-function getBaseUrl(request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured.replace(/\/+$/, '');
-
-  const host =
-    request.headers.get('x-forwarded-host') ?? request.headers.get('host');
-  const proto = request.headers.get('x-forwarded-proto') ?? 'https';
-  return host ? `${proto}://${host}` : '';
 }
 
 /** RFC-822 date for <pubDate>, or undefined when the post has no valid date. */
@@ -54,15 +41,17 @@ function renderItem(post: PostMeta, baseUrl: string): string {
     post.description
       ? `      <description>${escapeXml(post.description)}</description>`
       : null,
-    ...(post.tags ?? []).map((tag) => `      <category>${escapeXml(tag)}</category>`),
+    ...(post.tags ?? []).map(
+      (tag) => `      <category>${escapeXml(tag)}</category>`,
+    ),
     '    </item>',
   ]
     .filter((line): line is string => line !== null)
     .join('\n');
 }
 
-export async function GET(request: Request) {
-  const baseUrl = getBaseUrl(request);
+export async function GET() {
+  const baseUrl = SITE_URL;
   const posts = (await listPosts()).filter((post) => !post.locked);
 
   const items = posts.map((post) => renderItem(post, baseUrl)).join('\n');

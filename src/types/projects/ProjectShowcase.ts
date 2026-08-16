@@ -15,6 +15,7 @@ export type TProjectShowcase = {
   name: string;
   description: string;
   displayAsset?: string; // path to asset to display above name
+  href?: string; // path to the project's detail page
   tags?: ProjectTag[];
 };
 
