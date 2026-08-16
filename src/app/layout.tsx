@@ -5,11 +5,11 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import PageLayout from '@/components/layout/PageLayout';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import { ThemeProvider as ThemeProviderCustom } from '@/context/ThemeContext';
-import { JsonLd } from '@/components/seo/JsonLd';
-import { buildPersonJsonLd, buildWebSiteJsonLd } from '@/lib/seo/jsonLd';
 import { SITE, SITE_URL } from '@/lib/seo';
+import { buildPersonJsonLd, buildWebSiteJsonLd } from '@/lib/seo/jsonLd';
 
 import './globals.css';
 

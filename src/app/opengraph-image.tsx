@@ -3,7 +3,6 @@ import {
   OG_SIZE,
   renderOgImage,
 } from '@/lib/og/renderOgImage';
-
 import { SITE } from '@/lib/seo';
 
 export const alt = SITE.name;
