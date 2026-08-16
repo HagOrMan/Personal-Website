@@ -79,7 +79,7 @@ export async function renderOgImage({
               overflow: 'hidden',
               fontSize: 64,
               fontWeight: 700,
-              lineHeight: 1.15,
+              lineHeight: 1.3,
               color: COLORS.foreground,
               maxWidth: 980,
             }}

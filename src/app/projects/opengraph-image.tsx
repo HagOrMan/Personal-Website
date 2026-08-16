@@ -10,7 +10,7 @@ export const contentType = OG_CONTENT_TYPE;
 
 export default async function Image() {
   return renderOgImage({
-    eyebrow: 'kylehagerman.dev',
+    eyebrow: "Kyle's Corner",
     title: 'Projects',
     subtitle: "See all the cool projects I've worked on!",
   });
