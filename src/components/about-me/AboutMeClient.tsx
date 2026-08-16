@@ -33,7 +33,7 @@ const SECTIONS: AboutMeSection[] = [
   {
     id: 'intro',
     title: 'A Bit About Me',
-    body: "I'm Kyle, a Software and Biomedical Engineering student at McMaster University. I love challenges and being involved in my community, like my current position building solutions to help the engineering student body in the engineering society.",
+    body: "I'm Kyle, a Software and Biomedical Engineering student at McMaster University. I love challenges and being involved in my community, like my current position building solutions to help the engineering student body in the McMaster Engineering Society.",
     videoId: 'about-me',
   },
   {
