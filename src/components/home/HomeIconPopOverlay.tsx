@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { motion } from 'motion/react';
@@ -17,9 +17,15 @@ type HomeIconPopOverlayProps = {
  */
 export function HomeIconPopOverlay({ triggerId }: HomeIconPopOverlayProps) {
   const [pops, setPops] = useState<number[]>([]);
+  // Tracks the triggerId already turned into a pop, so a remount that
+  // inherits a stale (already-animated) id from context - or a dev
+  // StrictMode double-invoke of this effect - doesn't spawn a duplicate
+  // pop with the same key.
+  const lastHandledId = useRef(triggerId);
 
   useEffect(() => {
-    if (triggerId === 0) return;
+    if (triggerId === 0 || triggerId === lastHandledId.current) return;
+    lastHandledId.current = triggerId;
     setPops((current) => [...current, triggerId]);
   }, [triggerId]);
 
