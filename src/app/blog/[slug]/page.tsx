@@ -13,6 +13,7 @@ import remarkGfm from 'remark-gfm';
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
+import { ScrollToHash } from '@/components/blog/ScrollToHash';
 import { TocCompact, TocRail } from '@/components/blog/TableOfContents';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { recordViewAfterResponse } from '@/lib/blog/analytics';
@@ -228,6 +229,11 @@ export default async function BlogPostPage({
           {hasToc && (
             <TocCompact headings={headings} className='mb-8 xl:hidden' />
           )}
+
+          {/* Inside the streamed branch, so it hydrates with the headings
+              below already in the DOM. See the component for why the
+              browser's own fragment scroll misses them. */}
+          <ScrollToHash />
 
           <article className='blog-prose'>
             <ReactMarkdown
