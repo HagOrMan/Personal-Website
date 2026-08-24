@@ -1,51 +1,67 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 
 interface ThemeContextType {
+  /**
+   * Always a concrete 'light' | 'dark' - never 'system'.
+   *
+   * Deliberately 'light' on the server *and* on the first client render, so the
+   * two agree and hydration stays clean. It flips to the real value in the
+   * commit after mount. Consumers that would visibly flash on that flip should
+   * branch on `isThemeReady` instead of rendering theme-dependent output
+   * straight away.
+   */
   resolvedTheme: 'light' | 'dark';
+  /**
+   * False until the real theme is known on the client. Branch on this to hold
+   * back anything whose light-mode default would be visibly wrong for a
+   * dark-mode visitor - fade in once it is true rather than letting the output
+   * pop from one palette to the other.
+   */
+  isThemeReady: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * This theme provider was made to deal with `useTheme` from `next-themes` returning 'light', 'dark', or 'system'
- * In order for some custom logic to occur (which checks if it's light or dark), we need to resolve 'system' to the actual theme the user has
- * This context helps provide that information to any components who need to know it.
+ * Resolves next-themes' three-way preference ('light' | 'dark' | 'system') down
+ * to the concrete theme actually in effect, for the components that need it as
+ * a value rather than as a CSS class - Three.js palettes and the icons whose
+ * image source swaps with the theme.
+ *
+ * This does NOT gate its children on mount. Blocking the tree until mounted is
+ * what left the whole site server-rendering an empty shell; the value is gated
+ * instead, so pages still SSR in full. See src/components/ui/ThemeProvider.tsx
+ * for the longer note.
+ *
+ * next-themes already resolves 'system' against `prefers-color-scheme` and
+ * keeps that in sync when the OS setting changes, so this reads its
+ * `resolvedTheme` rather than running a second matchMedia listener of its own.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme } = useTheme();
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const { resolvedTheme } = useTheme();
 
-  // Every time this provider mounts, we want it to check what the theme is based on the media query `prefers-color-scheme`, and resolve `system` to `light` or `dark`
+  // next-themes populates resolvedTheme in an effect, so it is undefined on the
+  // server. Tracking mount explicitly keeps the first client render identical
+  // to the server's regardless of how next-themes seeds its state internally.
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    // Resolves theme to light or dark if it is system, else just set theme to whatever it is.
-    const checkSystemTheme = () => {
-      if (theme === 'system') {
-        const darkModeMediaQuery = window.matchMedia(
-          '(prefers-color-scheme: dark)',
-        );
-        setResolvedTheme(darkModeMediaQuery.matches ? 'dark' : 'light');
-      } else {
-        setResolvedTheme(theme as 'light' | 'dark');
-      }
+    setMounted(true);
+  }, []);
+
+  const value = useMemo<ThemeContextType>(() => {
+    const isReady =
+      mounted && (resolvedTheme === 'light' || resolvedTheme === 'dark');
+    return {
+      resolvedTheme: isReady ? resolvedTheme : 'light',
+      isThemeReady: isReady,
     };
-
-    checkSystemTheme();
-
-    // Listen for changes in system theme (if we didn't do this, other components couldn't use the resolved theme for when the theme changes)
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => checkSystemTheme();
-    mediaQuery.addEventListener('change', handleChange);
-
-    return () => mediaQuery.removeEventListener('change', handleChange); // clean up the event listener
-  }, [theme]);
+  }, [mounted, resolvedTheme]);
 
   return (
-    <ThemeContext.Provider value={{ resolvedTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 
