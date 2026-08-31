@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 import {
   motion,
@@ -11,43 +12,16 @@ import {
   useTransform,
 } from 'motion/react';
 
+import {
+  ACCENT_VARS,
+  type AccentKey,
+  getAccent,
+} from '@/lib/projects/accents';
+import { projectHref } from '@/lib/projects/paths';
 import { cn } from '@/lib/utils';
 import { TProjectShowcaseCard } from '@/types/projects/ProjectShowcase';
 
 import { Skeleton } from '../ui/Skeleton';
-
-type AccentKey = 'lush' | 'breeze' | 'nebula';
-
-const ACCENTS: AccentKey[] = ['lush', 'breeze', 'nebula'];
-
-const ACCENT_VARS: Record<AccentKey, { border: string; glow: string }> = {
-  lush: {
-    border: 'var(--accent-lush-border)',
-    glow: 'var(--accent-lush-glow)',
-  },
-  breeze: {
-    border: 'var(--accent-breeze-border)',
-    glow: 'var(--accent-breeze-glow)',
-  },
-  nebula: {
-    border: 'var(--accent-nebula-border)',
-    glow: 'var(--accent-nebula-glow)',
-  },
-};
-
-/**
- * Returns an accent for the given index that:
- *  - never repeats horizontally inside a 3-card row, and
- *  - shifts its starting offset each row so we mostly avoid
- *    the same color stacking directly above/below.
- *
- * Sequence: lush, breeze, nebula, breeze, nebula, lush, nebula, lush, breeze, ...
- */
-const getAccent = (index: number): AccentKey => {
-  const row = Math.floor(index / ACCENTS.length);
-  const col = index % ACCENTS.length;
-  return ACCENTS[(row + col) % ACCENTS.length];
-};
 
 interface ProjectShowcaseCardProps extends TProjectShowcaseCard {
   /**
@@ -136,9 +110,11 @@ export const ProjectShowcaseCard = ({
         boxShadow: ambientGlow,
       }}
       className={cn(
-        'group relative w-[18rem] overflow-hidden rounded-xl border md:w-[24rem] lg:w-[26rem] xl:w-[30rem]',
+        // Sized by the grid track, not by the card — see AnimatedProjectGrid.
+        'group relative flex h-full w-full flex-col overflow-hidden rounded-xl border',
         'transition-shadow duration-300',
         'hover:shadow-lg',
+        'has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2',
         className,
       )}
     >
@@ -164,16 +140,17 @@ export const ProjectShowcaseCard = ({
 
       {/* Image with parallax-lite scale on hover */}
       <div className='relative aspect-video w-full overflow-hidden'>
-        {project.displayAsset ? (
+        {project.thumbnail ? (
           <motion.div
             className='absolute inset-0'
             whileHover={{ scale: 1.04 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <Image
-              src={project.displayAsset}
-              alt={project.name}
+              src={project.thumbnail}
+              alt=''
               fill
+              sizes='(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
               className='object-cover'
             />
           </motion.div>
@@ -193,10 +170,19 @@ export const ProjectShowcaseCard = ({
         />
       </div>
 
-      {/* Content */}
-      <div className='relative z-10 px-4 pt-3 pb-4'>
+      {/* Content. Deliberately not `relative`: the name's stretched ::after
+          has to resolve against the card, not against this block. It's a flex
+          child, so z-10 still applies without positioning. */}
+      <div className='z-10 px-4 pt-3 pb-4'>
         <h2 className='text-foreground text-lg font-semibold'>
-          {project.name}
+          {/* Stretched link: the ::after covers the card, so the whole thing
+              is one click target named after the project. */}
+          <Link
+            href={projectHref(project)}
+            className='group-hover:text-primary transition-colors after:absolute after:inset-0 after:content-[""] focus-visible:outline-hidden'
+          >
+            {project.name}
+          </Link>
         </h2>
         <span className='text-muted-foreground text-sm'>
           {project.description}

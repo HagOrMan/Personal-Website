@@ -31,12 +31,14 @@ export function ProjectVariantPicker({ value, onChange, className }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          'group inline-flex items-center gap-2 rounded-full',
+          'group inline-flex cursor-pointer items-center gap-2 rounded-full',
           'border-border/60 bg-background/60 border backdrop-blur-md',
           'px-4 py-2 text-sm font-medium',
           'shadow-sm transition-all duration-200',
           'hover:border-border hover:bg-accent/40 hover:shadow-md',
-          'focus:outline-none',
+          // A visible ring rather than the bare outline-none this used to
+          // carry — keyboard users had no way to tell where they were.
+          'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-hidden',
           'data-[state=open]:border-foreground/30 data-[state=open]:shadow-md',
           className,
         )}

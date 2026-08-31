@@ -1,5 +1,6 @@
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import type { PostMeta } from '@/lib/blog/github';
+import { projectHref } from '@/lib/projects/paths';
 import type { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
 import { absoluteUrl, SITE, SITE_URL } from '../seo';
@@ -71,14 +72,12 @@ export function buildProjectItemListJsonLd(projects: TProjectShowcase[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: projects
-      .filter((project) => project.href)
-      .map((project, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: project.name,
-        url: absoluteUrl(project.href!),
-      })),
+    itemListElement: projects.map((project, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: project.name,
+      url: absoluteUrl(projectHref(project)),
+    })),
   };
 }
 

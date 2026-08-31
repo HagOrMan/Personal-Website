@@ -10,6 +10,7 @@
 import type { ComponentType } from 'react';
 
 import { ProjectShowcaseCard } from '@/components/containers/ProjectShowcaseCard';
+import { ProjectSpotlightCard } from '@/components/containers/ProjectSpotlightCard';
 import { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
 // The only props the parent (the page) supplies.
@@ -39,7 +40,15 @@ function defineVariant<P extends ProjectCardCommonProps>(
   return v as ProjectCardVariant<any>;
 }
 
+// The first entry is the default the page opens on.
 export const PROJECT_CARD_VARIANTS: ProjectCardVariant<any>[] = [
+  defineVariant({
+    id: 'spotlight',
+    name: 'Spotlight',
+    description: 'Preview loop, skills, year, and links',
+    Component: ProjectSpotlightCard,
+    extraProps: {},
+  }),
   defineVariant({
     id: 'alternating',
     name: 'Alternating',

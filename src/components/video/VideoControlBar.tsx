@@ -4,12 +4,14 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  Pause,
-  Play,
   Volume2,
   VolumeX,
 } from 'lucide-react';
 
+import {
+  PlayPauseButton,
+  videoIconButtonClasses,
+} from '@/components/video/PlayPauseButton';
 import { cn, formatTime } from '@/lib/utils';
 
 type VideoActionBarProps = {
@@ -40,8 +42,8 @@ type VideoSeekBarProps = {
 
 type VideoControlBarProps = VideoActionBarProps & VideoSeekBarProps;
 
-const iconButtonClasses =
-  'focus-visible:ring-ring inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground/80 transition hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:outline-hidden active:scale-95 disabled:pointer-events-none disabled:opacity-30';
+// Shared with the project cards' preview loops - see PlayPauseButton.
+const iconButtonClasses = videoIconButtonClasses;
 
 /**
  * Just the prev/play/next/mute/transcript-toggle row - split out from the
@@ -80,18 +82,12 @@ export function VideoActionBar({
         <ChevronLeft className={iconSizeClass} />
       </button>
 
-      <button
-        type='button'
-        onClick={onTogglePlay}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-        className={cn(iconButtonClasses, buttonSizeClass)}
-      >
-        {isPlaying ? (
-          <Pause className={iconSizeClass} fill='currentColor' />
-        ) : (
-          <Play className={iconSizeClass} fill='currentColor' />
-        )}
-      </button>
+      <PlayPauseButton
+        isPlaying={isPlaying}
+        onToggle={onTogglePlay}
+        className={buttonSizeClass}
+        iconClassName={iconSizeClass}
+      />
 
       <button
         type='button'

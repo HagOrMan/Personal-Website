@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 
+import { projects } from '@/constant/projects';
 import { listPosts } from '@/lib/blog/github';
+import { projectHref } from '@/lib/projects/paths';
 import { absoluteUrl } from '@/lib/seo';
 
 const STATIC_ROUTES: Array<{
@@ -15,29 +17,25 @@ const STATIC_ROUTES: Array<{
   { path: '/experience', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/contact', priority: 0.7, changeFrequency: 'yearly' },
   { path: '/resume', priority: 0.6, changeFrequency: 'yearly' },
-  {
-    path: '/projects/hatch-booking-system',
-    priority: 0.6,
-    changeFrequency: 'yearly',
-  },
-  { path: '/projects/island-builder', priority: 0.5, changeFrequency: 'yearly' },
-  { path: '/projects/medisafe', priority: 0.5, changeFrequency: 'yearly' },
-  { path: '/projects/monpoke', priority: 0.5, changeFrequency: 'yearly' },
-  {
-    path: '/projects/piraten-kapern',
-    priority: 0.5,
-    changeFrequency: 'yearly',
-  },
-  { path: '/projects/infinity-chess', priority: 0.5, changeFrequency: 'yearly' },
+  // Project detail pages come from constant/projects.ts — see PROJECT_ROUTES.
   { path: '/ocean', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
+/** Derived, so adding a project can't leave the sitemap behind. */
+const PROJECT_ROUTES = projects.map((project) => ({
+  path: projectHref(project),
+  priority: project.featured ? 0.6 : 0.5,
+  changeFrequency: 'yearly' as const,
+}));
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticEntries = STATIC_ROUTES.map(({ path, ...rest }) => ({
-    url: absoluteUrl(path),
-    lastModified: new Date(),
-    ...rest,
-  }));
+  const staticEntries = [...STATIC_ROUTES, ...PROJECT_ROUTES].map(
+    ({ path, ...rest }) => ({
+      url: absoluteUrl(path),
+      lastModified: new Date(),
+      ...rest,
+    }),
+  );
 
   try {
     const posts = await listPosts();

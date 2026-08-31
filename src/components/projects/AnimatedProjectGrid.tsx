@@ -12,7 +12,15 @@ import PopCard from '../containers/PopCard';
 
 type Props = {
   variantId: string;
+  /** Every project, in sort order — filtered-out cards stay mounted. */
   projects: TProjectShowcase[];
+  /**
+   * Which slugs are on screen right now. Anything else renders as
+   * `display: none`: filtering is instant by design, and keeping the cards
+   * mounted means no enter animation replays and the pop choreography's
+   * bookkeeping never has to survive a changing list.
+   */
+  shownSlugs: Set<string>;
   /**
    * How the pops are choreographed:
    * - 'checkerboard': two alternating waves — every other card pops first
@@ -27,10 +35,12 @@ const POP_DURATION = 0.4; // seconds per card (shake + pop)
 const WAVE_OFFSET = 0.3; // seconds between checkerboard waves
 const STAGGER = 0.04; // per-card stagger within a wave / for center mode
 const POPCORN_SPREAD = 0.35; // max random delay for popcorn mode
+const SWAP_TIMEOUT_BUFFER = 200; // ms of slack on the backstop timer
 
 /**
- * Measures how many children of a flex-wrap container fit on the first row.
- * Re-measures on resize so the checkerboard stays correct at any width.
+ * Reads the resolved column count straight off the grid, which is both
+ * cheaper and steadier than measuring children — `display: none` cards have
+ * no box to measure.
  */
 function useColumnCount(ref: React.RefObject<HTMLElement | null>) {
   const [columns, setColumns] = React.useState(1);
@@ -40,15 +50,10 @@ function useColumnCount(ref: React.RefObject<HTMLElement | null>) {
     if (!el) return;
 
     const measure = () => {
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length === 0) return;
-      const firstRowTop = children[0].offsetTop;
-      let count = 0;
-      for (const child of children) {
-        if (Math.abs(child.offsetTop - firstRowTop) > 1) break;
-        count++;
-      }
-      setColumns(Math.max(1, count));
+      const tracks = getComputedStyle(el)
+        .gridTemplateColumns.split(' ')
+        .filter(Boolean);
+      setColumns(Math.max(1, tracks.length));
     };
 
     measure();
@@ -63,6 +68,7 @@ function useColumnCount(ref: React.RefObject<HTMLElement | null>) {
 export function AnimatedProjectGrid({
   variantId,
   projects,
+  shownSlugs,
   mode = 'checkerboard',
 }: Props) {
   const [displayedId, setDisplayedId] = React.useState(variantId);
@@ -81,21 +87,15 @@ export function AnimatedProjectGrid({
   const targetId = React.useRef(variantId);
   targetId.current = variantId;
 
-  React.useEffect(() => {
-    if (variantId === displayedId) return;
-    poppedCount.current = 0;
-    setPopcornDelays(projects.map(() => Math.random() * POPCORN_SPREAD));
-    setVisible(false); // every PopCard starts its choreographed shake + pop
-  }, [variantId, displayedId, projects]);
-
-  const handlePopped = React.useCallback(() => {
-    poppedCount.current += 1;
-    if (poppedCount.current === projects.length) {
-      // All cards have popped — swap the variant and bring them back in.
-      setDisplayedId(targetId.current);
-      setVisible(true);
-    }
-  }, [projects.length]);
+  // Only cards on screen take part in the choreography, and they're numbered
+  // by their visible position so the waves and the accent rotation both read
+  // correctly however the grid is filtered.
+  let cursor = 0;
+  const entries = projects.map((project) => {
+    const shown = shownSlugs.has(project.slug);
+    return { project, shown, index: shown ? cursor++ : 0 };
+  });
+  const shownCount = cursor;
 
   const getDelay = (index: number): number => {
     if (mode === 'popcorn') {
@@ -112,9 +112,70 @@ export function AnimatedProjectGrid({
     }
 
     // 'center': the original center-outward ripple.
-    const center = (projects.length - 1) / 2;
+    const center = (shownCount - 1) / 2;
     return Math.abs(index - center) * STAGGER;
   };
+
+  const maxDelay = entries.reduce(
+    (longest, entry) =>
+      entry.shown ? Math.max(longest, getDelay(entry.index)) : longest,
+    0,
+  );
+
+  // Read inside the swap effect, which must not re-run when filtering changes
+  // these numbers mid-animation.
+  const shownCountRef = React.useRef(shownCount);
+  shownCountRef.current = shownCount;
+  const maxDelayRef = React.useRef(maxDelay);
+  maxDelayRef.current = maxDelay;
+
+  const swapTarget = React.useRef(0);
+  const swapTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const finishSwap = React.useCallback(() => {
+    if (swapTimeout.current) {
+      clearTimeout(swapTimeout.current);
+      swapTimeout.current = null;
+    }
+    setDisplayedId(targetId.current);
+    setVisible(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (variantId === displayedId) return;
+
+    poppedCount.current = 0;
+    swapTarget.current = shownCountRef.current;
+    setPopcornDelays(projects.map(() => Math.random() * POPCORN_SPREAD));
+    setVisible(false); // every PopCard starts its choreographed shake + pop
+
+    // Filters can hide a card mid-pop, and a hidden card never reports back.
+    // The timer guarantees the grid comes back rather than staying popped.
+    if (swapTarget.current === 0) {
+      finishSwap();
+      return;
+    }
+
+    swapTimeout.current = setTimeout(
+      finishSwap,
+      (maxDelayRef.current + POP_DURATION) * 1000 + SWAP_TIMEOUT_BUFFER,
+    );
+
+    return () => {
+      if (swapTimeout.current) {
+        clearTimeout(swapTimeout.current);
+        swapTimeout.current = null;
+      }
+    };
+  }, [variantId, displayedId, projects, finishSwap]);
+
+  const handlePopped = React.useCallback(() => {
+    poppedCount.current += 1;
+    if (poppedCount.current >= swapTarget.current) {
+      // All cards have popped — swap the variant and bring them back in.
+      finishSwap();
+    }
+  }, [finishSwap]);
 
   const active =
     PROJECT_CARD_VARIANTS.find((v) => v.id === displayedId) ??
@@ -123,21 +184,27 @@ export function AnimatedProjectGrid({
   const { Component, extraProps = {} } = active;
 
   return (
-    <div ref={gridRef} className='flex flex-wrap justify-center gap-4'>
-      {projects.map((project, index) => (
+    <div
+      ref={gridRef}
+      className='mx-auto grid w-full max-w-[80rem] grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3'
+    >
+      {entries.map(({ project, shown, index }) => (
         <PopCard
-          // key must be stable across variant swaps — if it changed,
-          // the PopCard would unmount and the exit could never play.
-          key={index}
-          show={visible}
+          // Keyed by slug so a card keeps its identity (and its DOM node)
+          // through filtering, sorting and variant swaps alike.
+          key={project.slug}
+          className={shown ? undefined : 'hidden'}
+          // Hidden cards sit out the choreography entirely: they stay in the
+          // 'visible' state, so revealing one is instant.
+          show={shown ? visible : true}
           duration={POP_DURATION}
-          delay={getDelay(index)}
-          enterDelay={index * 0.02}
+          delay={shown ? getDelay(index) : 0}
+          enterDelay={shown ? index * 0.02 : 0}
           // Critical for staggered grids: popped cards keep holding
           // their space so the layout never reflows mid-choreography
           // (otherwise later-popping cards get shoved into new rows).
           keepSpace
-          onPopped={handlePopped}
+          onPopped={shown ? handlePopped : undefined}
         >
           <Component project={project} index={index} {...extraProps} />
         </PopCard>
