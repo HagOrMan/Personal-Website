@@ -48,8 +48,9 @@ team of five"`). It never drives a filter, so it's allowed to be interesting.
 vocabulary verbatim:
 
 ```
-Flask, Java, JavaScript, Next.js, PostgreSQL, Pygame, Python, React,
-Supabase, Tailwind CSS, Three.js, TypeScript
+Flask, Flutter, JTS Topology Suite, Java, JavaScript, Log4j2, Maven,
+MongoDB, Next.js, NextAuth, Pygame, Python, React, Supabase, Tailwind CSS,
+Three.js, TypeScript
 ```
 
 The list is short on purpose — it only holds things I've actually built with,

@@ -24,6 +24,7 @@ const LINK_META: Record<
 > = {
   github: { label: 'on GitHub', Icon: Github },
   demo: { label: 'Try it', Icon: ExternalLink },
+  article: { label: 'write-up', Icon: FileText },
   download: { label: 'download', Icon: Download },
 };
 

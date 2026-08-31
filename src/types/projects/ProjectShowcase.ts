@@ -43,20 +43,33 @@ export const TAG_ORDER = Object.keys(TAG_META) as ProjectTag[];
  * exact string, so a typo would silently become a filter option that matches
  * nothing — typing `tools` against this list turns that into a compile error.
  *
- * Everything here is something I've actually built with: either a project
- * below uses it, or this website does. Add an entry when a real project needs
- * it, not in advance — a vocabulary full of things I've never touched is a
- * list of guesses waiting to be miscopied into a card.
+ * Most of this is something I've actually built with: either a project below
+ * uses it, or this website does. The rest is staged ahead of the projects that
+ * will claim it, which is safe because collectTools() builds the dropdown from
+ * what projects actually declare — an entry nothing uses renders no chip and
+ * costs nothing until it's real.
  */
 export const TOOLS = [
+  'Angular',
+  'Docker',
+  'Express',
   'Flask',
+  'Flutter',
+  'JTS Topology Suite',
   'Java',
   'JavaScript',
-  'Next.js',
+  'Log4j2',
+  'Maven',
   'MongoDB',
+  'Next.js',
+  'NextAuth',
+  'Node.js',
+  'Playwright',
   'Pygame',
   'Python',
   'React',
+  'SQL',
+  'Selenium',
   'Supabase',
   'Tailwind CSS',
   'Three.js',
@@ -79,7 +92,7 @@ export type ProjectTool = (typeof TOOLS)[number];
  */
 export type ProjectYear = number | `${number}-${number}` | `${number}-present`;
 
-export type ProjectLinkKind = 'github' | 'demo' | 'download';
+export type ProjectLinkKind = 'github' | 'demo' | 'article' | 'download';
 
 export type ProjectLink = {
   kind: ProjectLinkKind;

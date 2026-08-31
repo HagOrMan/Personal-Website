@@ -22,76 +22,141 @@ export function previewVideoSrc(slug: string): string {
 /*
  * ─────────────────────────────────────────────────────────────────────────────
  * `year` takes 2019, '2023-2026', or '2024-present' for anything still going.
+ * Every year below is the shape git history actually shows — see
+ * guides/project-metadata.md for how they were derived.
  *
- * `links` are all empty because no repo/demo URLs are recorded anywhere here.
+ * Authored order is the tiebreak for projects that end in the same year, so
+ * moving an entry here changes the page. Sorting happens at the bottom.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 const PROJECT_LIST: TProjectShowcase[] = [
   {
+    // Lives inside the MES site's repo — it's the publishable slice of that
+    // codebase. The site around it is its own entry, directly below.
     slug: 'hatch-booking-system',
     name: 'Hatch Booking System',
-    skills: 'React, TypeScript, MongoDB, leading a team',
-    tools: ['React', 'TypeScript', 'MongoDB'],
-    description: 'Custom booking system used by McMaster Engineering!',
-    year: 2024,
+    skills: 'Next.js, TypeScript, MongoDB, NextAuth, leading a team',
+    tools: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Tailwind CSS',
+      'MongoDB',
+      'NextAuth',
+    ],
+    description:
+      'A custom room booking system that McMaster engineering students use to reserve study space on campus.',
+    year: '2024-present',
     tags: ['at-scale', 'community', 'fullstack'],
     featured: true,
-    links: [],
+    links: [
+      {
+        kind: 'github',
+        href: 'https://github.com/McMaster-Engineering-Society/MES-Website-App-Router',
+      },
+      { kind: 'demo', href: 'https://macengsociety.ca/hatch-booking' },
+    ],
+  },
+  {
+    // Same repo as Hatch, scoped to the site itself rather than the booking
+    // feature — hence the frontend/design tools and no MongoDB or NextAuth.
+    slug: 'mes-website',
+    name: 'MES Website',
+    skills: 'Next.js, TypeScript, design',
+    tools: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS'],
+    description:
+      'The McMaster Engineering Society site, rebuilt from Wix into Next.js: info pages plus club and event portals.',
+    // Ties with Hatch on both bounds, so the authored order above is what
+    // separates them on the page.
+    year: '2024-present',
+    tags: ['at-scale', 'community'],
+    featured: false,
+    links: [
+      {
+        kind: 'github',
+        href: 'https://github.com/McMaster-Engineering-Society/MES-Website-App-Router',
+      },
+      { kind: 'demo', href: 'https://macengsociety.ca' },
+    ],
   },
   {
     slug: 'island-builder',
     name: 'Island Builder',
-    skills: 'Java, procedural generation',
-    tools: ['Java'],
-    description: 'Create islands with different biomes and connected cities!',
-    year: 2022,
+    skills: 'Java, procedural generation, Dijkstra pathfinding',
+    tools: ['Java', 'Maven', 'JTS Topology Suite'],
+    description:
+      'Generates procedural islands with biomes, rivers, and lakes, then maps road networks connecting their cities.',
+    year: 2023,
     tags: ['no-ai', 'personal'],
-    featured: true,
-    links: [],
+    featured: false,
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/Island_Builder' },
+    ],
   },
   {
     slug: 'medisafe',
-    name: 'MediSafe',
-    skills: 'Python, Flask, REST APIs',
-    tools: ['Python', 'Flask'],
-    description: 'Never take conflicting prescriptions again with Medisafe!',
+    name: 'MediSafe | Top 3 Finalist',
+    skills: 'Flutter, Flask, Java web scraping, team of four in a weekend',
+    tools: ['Flutter', 'Python', 'Flask', 'Java'],
+    description:
+      "Scan a medication's barcode with your phone and see which drugs it dangerously interacts with.",
     year: 2023,
-    tags: ['hackathon-winner', 'personal'],
+    tags: ['no-ai', 'hackathon-winner'],
     featured: true,
-    links: [],
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/Medisafe' },
+      // A recorded GDSC presentation rather than a live demo, hence the label
+      // override — the default 'Try it' would promise something clickable.
+      {
+        kind: 'demo',
+        href: 'https://youtu.be/Iw4qVYG9r40',
+        label: 'Watch it',
+      },
+      {
+        kind: 'article',
+        href: 'https://devpost.com/software/pocket-drugs',
+      },
+    ],
   },
   {
     slug: 'monpoke',
     name: 'MonPoke',
-    skills: 'Python, Pygame',
+    skills: 'Python, Pygame, trajectory and collision math',
     tools: ['Python', 'Pygame'],
-    description: 'Catch your favourite MonPokes using python and pygame',
-    year: 2020,
-    tags: ['personal'],
-    featured: false,
-    links: [],
+    description:
+      'Throw pokeballs at wild pokemon to catch them, then browse your collection in a full pokedex.',
+    year: '2021-2022',
+    tags: ['personal', 'no-ai'],
+    featured: true,
+    links: [{ kind: 'github', href: 'https://github.com/HagOrMan/MonPoke' }],
   },
   {
     slug: 'piraten-kapern',
     name: 'Piraten Kapern',
-    skills: 'Java, object-oriented design',
-    tools: ['Java'],
-    description: 'A fun implementation of a game with the same name using Java',
-    year: 2021,
-    tags: ['personal'],
+    skills: 'Java, strategy-pattern simulation design',
+    tools: ['Java', 'Maven', 'Log4j2'],
+    description:
+      'Simulates 42 games of the dice board game Piraten Kapern between two bot players and reports win rates.',
+    year: 2023,
+    tags: ['no-ai', 'personal'],
     featured: false,
-    links: [],
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/Piraten-Kapern' },
+    ],
   },
   {
     slug: 'infinity-chess',
     name: 'Infinity Chess',
-    skills: 'Python, Pygame',
+    skills: 'Python, Pygame, chess rules written from scratch',
     tools: ['Python', 'Pygame'],
-    description: 'A Chess variant where pieces can wrap around the walls',
-    year: 2019,
-    tags: ['personal'],
-    featured: false,
-    links: [],
+    description:
+      "Two-player chess where the board's left and right edges wrap around, so pieces attack through the walls.",
+    year: 2021,
+    tags: ['personal', 'no-ai'],
+    featured: true,
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/infinity-chess' },
+    ],
   },
 ];
 
