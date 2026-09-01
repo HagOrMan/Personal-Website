@@ -65,7 +65,6 @@ export const LiquidGlassCard = ({
   const activeAlpha = typeof alpha === 'number' ? alphaMV : alpha;
 
   // Create Transforms for the numeric values needed inside the CSS strings
-  const blurPx = useTransform(activeAlpha, (v) => maxBlur * v);
   const lushOpacity = useTransform(activeAlpha, (v) => 15 * v);
   const breezeOpacity = useTransform(activeAlpha, (v) => 10 * v);
   const borderOpacity = useTransform(activeAlpha, (v) => 20 * v);
@@ -94,8 +93,20 @@ export const LiquidGlassCard = ({
   // Deep shadow to separate the glass from the particle waves behind it
   const boxShadow = useMotionTemplate`0 8px 32px 0 rgba(0,0,0,${shadowOpacity})`;
 
-  // The Frost/Blur Effect. Scale the blur radius so it disappears at alpha 0
-  const backdropFilter = useMotionTemplate`blur(${blurPx}px)`;
+  // The Frost/Blur Effect. Scale the blur radius so it disappears at alpha 0.
+  //
+  // Two things here beyond the obvious, both invisible to look at:
+  //  - `none` rather than `blur(0px)` while the card is still hidden. A
+  //    backdrop-filter of any value makes this element a backdrop root, and the
+  //    browser then has to snapshot and re-blur everything behind it whenever
+  //    that changes - and what's behind it on the home page is a WebGL canvas.
+  //    There's nothing to frost yet, so don't ask for a backdrop at all.
+  //  - Whole pixels. Every distinct radius is a separate blur pass with its own
+  //    kernel, and a scroll-driven float produced a new one on every frame.
+  //    Sub-pixel differences in blur radius aren't perceptible.
+  const backdropFilter = useTransform(activeAlpha, (v) =>
+    v <= 0.001 ? 'none' : `blur(${Math.round(maxBlur * v)}px)`,
+  );
 
   // Specular Highlight: from-white/5 to-transparent
   const highlightBg = useMotionTemplate`radial-gradient(

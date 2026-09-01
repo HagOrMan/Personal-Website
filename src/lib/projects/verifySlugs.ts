@@ -1,9 +1,9 @@
-import 'server-only';
-
 import fs from 'node:fs';
 import path from 'node:path';
 
 import type { TProjectShowcase } from '@/types/projects/ProjectShowcase';
+
+import 'server-only';
 
 /**
  * Every slug in constant/projects.ts must have a real /projects/[slug] route.

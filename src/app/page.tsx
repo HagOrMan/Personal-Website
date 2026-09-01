@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { preconnect } from 'react-dom';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,19 +11,38 @@ import { ChevronDown, Play } from 'lucide-react';
 import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 // import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
-import { OceanScene } from '@/components/backgrounds/OceanParticles';
 import { HomeIconPopOverlay } from '@/components/home/HomeIconPopOverlay';
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { ReferencesSection } from '@/components/references/ReferencesSection';
 import { GlitchTextCycle } from '@/components/text/GlitchTextCycle';
 import { LiquidGlassCard } from '@/components/ui/LiquidGlassCard';
-import { VideoModalShell } from '@/components/video/VideoModalShell';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import { PORTFOLIO_VIDEOS } from '@/constant/videos';
 import { useHomeIconClick } from '@/context/HomeIconClickContext';
-import { useMediaQuery } from '@/lib/screenUtils';
+import { useMediaQuery, usePrefersReducedMotion } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
+
+// The ocean is ~100 KiB of three + react-three-fiber for what is, on this
+// page, a decorative background. Splitting it keeps that off the critical
+// path entirely, and OceanScene already fades itself in once its canvas is
+// ready - so arriving a beat later is invisible.
+const OceanScene = dynamic(
+  () =>
+    import('@/components/backgrounds/OceanParticles').then((m) => m.OceanScene),
+  { ssr: false },
+);
+
+// Same reasoning for the video modal: Radix Dialog plus the whole
+// VideoExperience tree used to ship on every visit even though `videoOpen`
+// starts false and most visitors never open it. It now mounts on first open,
+// with `primeVideo` warming the chunk on hover/focus so the tap that opens it
+// isn't waiting on a download.
+const VideoModalShell = dynamic(
+  () =>
+    import('@/components/video/VideoModalShell').then((m) => m.VideoModalShell),
+  { ssr: false },
+);
 
 // Solid fill (not the muted/tinted pill used for the GitHub/LinkedIn links)
 // - this is meant to read as the strongest CTA on the page, not another
@@ -29,26 +50,137 @@ import { cn } from '@/lib/utils';
 const heroVideoTriggerClasses =
   'group bg-primary text-primary-foreground shadow-[0_4px_20px_-4px_rgb(var(--tw-color-lush-500)/0.5)] hover:bg-primary/95 hover:shadow-[0_4px_28px_-4px_rgb(var(--tw-color-lush-500)/0.7)] flex cursor-pointer items-center gap-3 rounded-full px-6 py-2.5 font-semibold transition-all active:scale-95';
 
+// Hoisted so the array identity is stable across renders. GlitchTextCycle
+// resets its visible word whenever `words` changes identity, and an inline
+// literal handed it a brand new array on every re-render of this page - which
+// snapped the cycle back to "Developer" while its internal index kept
+// counting, so the two drifted apart.
+const HERO_GLITCH_WORDS = ['Developer', 'Innovator', 'Creator'];
+
 // Number of navbar-logo clicks (see HomeIconClickContext) before we take the
 // user to /ocean — they clicked the "ocean icon" enough times to go there.
 const CLICKS_TO_OCEAN = 3;
 // Give the final pop animation time to play before navigating away.
 const OCEAN_REDIRECT_DELAY_MS = 900;
 
+// --- Auto-scroll tuning ---
+// The delay used to be 2000ms. Because the bio paragraph below is the page's
+// LCP element and starts at opacity 0 until the scroll animation reveals it,
+// that delay *was* the LCP: Lighthouse measured a 5.4s "element render delay"
+// for text that had been sitting in the DOM the whole time.
+const AUTO_SCROLL_START_DELAY_MS = 500;
+const AUTO_SCROLL_DURATION_S = 3;
+// Mirrors the `start 40px` in the useScroll offset below.
+const SCROLL_TRACK_TOP_OFFSET_PX = 40;
+// How far along the scroll track the auto-scroll lands, in the same 0-1
+// progress space the animations below read from. The photo finishes fading in
+// at 0.7 on mobile (0.6 on desktop), so this clears the fade with margin.
+// The old `window.innerHeight * 0.8` fell short on phones: `vh` units resolve
+// against the *large* viewport while `innerHeight` is the smaller visible one,
+// so 0.8 viewport-heights covered noticeably less of a 200vh track than
+// intended and left the photo still part-transparent when the scroll stopped.
+const AUTO_SCROLL_TARGET_PROGRESS = 0.85;
+
 export default function Home() {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const { clickCount, lastClickId, resetClicks } = useHomeIconClick();
   const [videoOpen, setVideoOpen] = useState(false);
+  // Once true it stays true, so the modal's exit animation still has a
+  // component to play out on after it closes.
+  const [videoMounted, setVideoMounted] = useState(false);
 
   // Check if screen is Large (Desktop)
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // The server has no viewport, so `isDesktop` is false through SSR and the
+  // first client render - which meant the card's resting size was serialised
+  // into the HTML at the mobile `75vw`, and a desktop visitor watched a
+  // ~1080px-wide card (text hard against its left edge) snap to 300px once the
+  // media query resolved. Until this flips, the resting size comes from the
+  // classes on the card instead, which the browser resolves at the correct
+  // breakpoint before any JS runs. `isDesktop` resolves in the same effect
+  // flush as this, so there's no intermediate render at the wrong size.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  // Warm the modal's chunk and the media origin's DNS/TLS on deliberate
+  // intent. Both are cheap to repeat - the bundler caches the import promise
+  // and React dedupes the preconnect - so this can hang off every trigger.
+  // The preconnect used to fire from inside VideoModalShell on mount, which on
+  // this page meant every visitor opened a socket to a host most of them never
+  // hit; Lighthouse flagged it as an unused preconnect.
+  const primeVideo = useCallback(() => {
+    void import('@/components/video/VideoModalShell');
+    try {
+      preconnect(new URL(PORTFOLIO_VIDEOS[0].src).origin);
+    } catch {
+      // src isn't an absolute URL (NEXT_PUBLIC_R2_BASE_URL unset locally) -
+      // nothing to warm.
+    }
+  }, []);
+
+  const openVideo = useCallback(() => {
+    setVideoMounted(true);
+    setVideoOpen(true);
+  }, []);
+
+  // Where a given point on the scroll track sits as a document scroll offset -
+  // the inverse of the useScroll offset below, so callers can work in the same
+  // 0-1 progress space the animations do rather than in viewport-height
+  // guesses. Derived from the track's real geometry, which is what makes it
+  // hold on phones where `vh` units and `innerHeight` disagree.
+  //   progress 0 -> track top sits SCROLL_TRACK_TOP_OFFSET_PX below the viewport top
+  //   progress 1 -> track bottom sits at the viewport bottom (the hero's end)
+  // Null when the track isn't mounted yet, which callers treat as "do nothing".
+  //
+  // Declared above the effects that use it: a `const` referenced from a
+  // dependency array is read during render, so a later declaration would be a
+  // temporal-dead-zone ReferenceError rather than a lint nit.
+  const getScrollForProgress = useCallback((progress: number) => {
+    const track = containerRef.current;
+    if (!track) return null;
+
+    const rect = track.getBoundingClientRect();
+    const trackTop = rect.top + window.scrollY;
+    const start = trackTop - SCROLL_TRACK_TOP_OFFSET_PX;
+    const range = rect.height - window.innerHeight + SCROLL_TRACK_TOP_OFFSET_PX;
+    const maxScroll =
+      document.documentElement.scrollHeight - window.innerHeight;
+
+    return Math.max(0, Math.min(start + progress * range, maxScroll));
+  }, []);
 
   // Start every fresh visit to the homepage with a clean click count/URL,
   // in case the provider carried a stale count over from a previous visit.
   useEffect(() => {
     resetClicks();
-    window.history.replaceState(null, '', '/');
+
+    // The current state, not null. Next stores its router tree on the history
+    // entry (`__NA` + `__PRIVATE_NEXTJS_INTERNALS_TREE`), and its popstate
+    // handler bails out entirely on an entry whose state is null - Back
+    // changes the URL and re-renders nothing. Next patches
+    // history.replaceState to carry those keys forward, but it installs that
+    // patch in the AppRouter's own effect, and child effects run before
+    // parent ones - so this call, on mount, gets the native replaceState and
+    // really would destroy them.
+    window.history.replaceState(window.history.state, '', '/');
+
+    // The hero is a scripted intro that plays from the top, so the browser
+    // restoring a previous scroll offset would drop the visitor at the end of
+    // an animation they never saw. Opt out while this page is mounted, and
+    // hand the setting back on the way out so the rest of the site keeps
+    // normal back/forward restoration.
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+
+    return () => {
+      window.history.scrollRestoration = previousRestoration;
+    };
   }, [resetClicks]);
 
   // Reflect the click count in the URL, then head to /ocean once the user
@@ -141,47 +273,68 @@ export default function Home() {
 
   // --- Auto scroll logic to have the main content appear without requiring the user to scroll themselves ---
   useEffect(() => {
-    // Wait 2 seconds before starting
-    const startTimeout = setTimeout(() => {
-      // Calculate how far to scroll.
-      // The container is 200vh. The animations finish around 60% (0.6) progress.
-      // 60% of the scrollable area (which is roughly 100vh) is ~0.6 * window height.
-      // Add a little buffer to ensure everything is fully visible.
-      const targetY = window.innerHeight * 0.8;
+    if (prefersReducedMotion) {
+      // Same end state, none of the travel: the hero arrives already revealed
+      // rather than being scrolled there over three seconds.
+      const frame = requestAnimationFrame(() => {
+        const target = getScrollForProgress(AUTO_SCROLL_TARGET_PROGRESS);
+        if (target !== null) window.scrollTo(0, target);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
 
-      // Animate the scroll
-      const controls = animate(0, targetY, {
-        duration: 3, // Slow scroll (3 seconds)
+    let controls: { stop: () => void } | null = null;
+    let cancelled = false;
+
+    // User Interrupt Logic (The "Emergency Brake"). If the user tries to scroll manually, stop the auto-scroll
+    //
+    // Attached immediately rather than when the animation starts, and the
+    // `cancelled` flag covers the delay window too: someone who scrolls before
+    // the intro begins has already said they don't want to be driven, so it
+    // should bow out entirely instead of starting up underneath them. Clearing
+    // the timeout itself is left to the cleanup below, which keeps
+    // `startTimeout` a single-assignment const.
+    const stopAutoScroll = () => {
+      cancelled = true;
+      controls?.stop();
+      window.removeEventListener('wheel', stopAutoScroll);
+      window.removeEventListener('touchstart', stopAutoScroll);
+    };
+
+    window.addEventListener('wheel', stopAutoScroll, { passive: true });
+    window.addEventListener('touchstart', stopAutoScroll, { passive: true });
+
+    const startTimeout = setTimeout(() => {
+      if (cancelled) return;
+
+      const target = getScrollForProgress(AUTO_SCROLL_TARGET_PROGRESS);
+      if (target === null) return;
+
+      // From 0, not from the live scroll position: any manual scroll before
+      // now would have cancelled this outright, and the mount effect has
+      // already put us at the top for every case that reaches here.
+      controls = animate(0, target, {
+        duration: AUTO_SCROLL_DURATION_S,
         ease: 'easeInOut',
         onUpdate: (value) => {
-          window.scrollTo(0, value);
+          // Whole pixels - `animate` emits floats, and a fractional scrollY
+          // makes sub-pixel rounding land differently frame to frame for
+          // anything positioned off the scroll offset. At ~4px of travel per
+          // frame this costs nothing in smoothness.
+          window.scrollTo(0, Math.round(value));
         },
+        onComplete: stopAutoScroll,
       });
+    }, AUTO_SCROLL_START_DELAY_MS);
 
-      // User Interrupt Logic (The "Emergency Brake"). If the user tries to scroll manually, stop the auto-scroll
-      const handleUserInteraction = () => {
-        controls.stop();
-        window.removeEventListener('wheel', handleUserInteraction);
-        window.removeEventListener('touchstart', handleUserInteraction);
-      };
-
-      window.addEventListener('wheel', handleUserInteraction, {
-        passive: true,
-      });
-      window.addEventListener('touchstart', handleUserInteraction, {
-        passive: true,
-      });
-
-      // Cleanup function to remove listeners if component unmounts
-      return () => {
-        controls.stop();
-        window.removeEventListener('wheel', handleUserInteraction);
-        window.removeEventListener('touchstart', handleUserInteraction);
-      };
-    }, 2000);
-
-    return () => clearTimeout(startTimeout);
-  }, []);
+    // This cleanup used to be returned from inside the setTimeout callback,
+    // where React never saw it - the listeners and a running animation
+    // outlived the component.
+    return () => {
+      clearTimeout(startTimeout);
+      stopAutoScroll();
+    };
+  }, [getScrollForProgress, prefersReducedMotion]);
 
   return (
     <div className='bg-background min-h-screen w-full font-(family-name:--font-geist-sans)'>
@@ -212,15 +365,29 @@ export default function Home() {
               {/* Liquid glass card that starts invisible and appears as the text inside moves left on page. */}
               <LiquidGlassCard
                 alpha={glassOpacity}
-                style={{ x: xPosition, height: cardHeight, width: cardWidth }}
-                className='pointer-events-auto z-20 translate-x-0 lg:-translate-x-16'
+                // Motion only takes the size over once the breakpoint is known
+                // (see `hydrated`). The h-/w- classes below are the same values
+                // as the first stop of cardHeight/cardWidth, so the handover is
+                // a no-op to look at - keep the two in step if either changes.
+                style={{
+                  x: xPosition,
+                  ...(hydrated ? { height: cardHeight, width: cardWidth } : {}),
+                }}
+                className='pointer-events-auto z-20 h-[180px] w-[75vw] translate-x-0 lg:h-[200px] lg:w-[300px] lg:-translate-x-16'
                 contentClassName='relative row-start-2 flex flex-col py-8 px-4 md:px-8 items-start gap-6 overflow-hidden'
               >
-                <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide'>
+                {/* nowrap because the card's width animates: on narrow phones
+                    the content box starts around 240px, which is right on this
+                    heading's wrap threshold at text-4xl, so "Kyle" flipped
+                    between line one and line two as the width crossed back and
+                    forth - reading as a vertical shake for the whole run of the
+                    animation. The content div already clips, so on very narrow
+                    screens the tail is revealed as the card grows instead. */}
+                <h1 className='text-primary-rgb-700 text-4xl font-bold tracking-wide whitespace-nowrap'>
                   Hey! I&apos;m Kyle
                 </h1>
                 <GlitchTextCycle
-                  words={['Developer', 'Innovator', 'Creator']}
+                  words={HERO_GLITCH_WORDS}
                   className='text-primary-rgb-600'
                 />
 
@@ -275,7 +442,9 @@ export default function Home() {
                         either hidden or too cramped underneath. */}
                     <button
                       type='button'
-                      onClick={() => setVideoOpen(true)}
+                      onClick={openVideo}
+                      onPointerEnter={primeVideo}
+                      onFocus={primeVideo}
                       className={cn(heroVideoTriggerClasses, 'lg:hidden')}
                     >
                       <Play className='h-4 w-4' fill='currentColor' />
@@ -321,8 +490,18 @@ export default function Home() {
                       src='/me/me-and-rocky.jpg'
                       alt='Me and Rocky'
                       fill
-                      sizes='(min-width: 1024px) 300px, (min-width: 768px) 260px, 170px'
-                      quality={90}
+                      // Matched to the box actually rendered at each
+                      // breakpoint, minus the 16px the wrapper's p-2 takes off
+                      // the outer width. The old blanket 170px made phones
+                      // fetch the 384w candidate for a box needing ~120 CSS px.
+                      sizes='(min-width: 1024px) 300px, (min-width: 768px) 244px, (min-width: 450px) 222px, (min-width: 390px) 120px, 96px'
+                      // 90 was indistinguishable from 75 at these sizes and
+                      // cost ~47 KiB for the privilege.
+                      quality={75}
+                      // In the initial viewport (just transparent until the
+                      // scroll reveals it), so there's nothing to gain from
+                      // lazy-loading it and a visible pop-in to lose.
+                      priority
                       className='object-cover object-[center_75%]'
                     />
                   </div>
@@ -332,7 +511,9 @@ export default function Home() {
                 {/* "Get to know me" trigger - desktop only, sits under the photo. */}
                 <button
                   type='button'
-                  onClick={() => setVideoOpen(true)}
+                  onClick={openVideo}
+                  onPointerEnter={primeVideo}
+                  onFocus={primeVideo}
                   className={cn(
                     heroVideoTriggerClasses,
                     'dark:bg-lush-400 dark:text-lush-950 dark:hover:bg-lush-300 pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 hover:brightness-105 lg:flex dark:hover:shadow-[0_6px_24px_-2px_rgb(var(--tw-color-lush-400)/0.55)] dark:hover:brightness-100',
@@ -387,11 +568,13 @@ export default function Home() {
         </section> */}
       </main>
 
-      <VideoModalShell
-        videos={PORTFOLIO_VIDEOS}
-        open={videoOpen}
-        onOpenChange={setVideoOpen}
-      />
+      {videoMounted && (
+        <VideoModalShell
+          videos={PORTFOLIO_VIDEOS}
+          open={videoOpen}
+          onOpenChange={setVideoOpen}
+        />
+      )}
     </div>
   );
 }

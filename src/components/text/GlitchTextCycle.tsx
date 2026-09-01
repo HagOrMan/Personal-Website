@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useIsOnScreen } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 
 type TGlitchTextCycle = {
@@ -35,6 +36,13 @@ export const GlitchTextCycle = ({
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const glitchIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cycling forever costs a burst of ~20 re-renders every `duration` ms for
+  // as long as this is mounted - including while it's scrolled well off the
+  // page or the tab is in the background. Nobody is reading a glitch they
+  // can't see, so don't schedule one.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onScreen = useIsOnScreen(containerRef);
 
   const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?~`';
 
@@ -110,24 +118,42 @@ export const GlitchTextCycle = ({
   }, [glitchDuration]);
 
   useEffect(() => {
-    if (words.length > 1) {
+    if (words.length > 1 && onScreen) {
       intervalRef.current = setInterval(() => {
         startGlitch();
       }, duration);
 
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        if (glitchIntervalRef.current) clearInterval(glitchIntervalRef.current);
+
+        if (glitchIntervalRef.current) {
+          clearInterval(glitchIntervalRef.current);
+          glitchIntervalRef.current = null;
+
+          // Torn down mid-scramble (usually: scrolled out of view partway
+          // through a transition). Settle back onto a real word, otherwise
+          // the text would be frozen on glitch characters the next time it
+          // comes back into view - startGlitch only ever tidies up on its
+          // own final step.
+          setDisplayText(wordsRef.current[currentIndexRef.current]);
+          setGlitchText('');
+          setIsGlitching(false);
+        }
       };
     }
-  }, [duration, startGlitch, words.length]);
+  }, [duration, onScreen, startGlitch, words.length]);
 
+  // A genuinely new word list restarts the cycle from its first entry. The
+  // index has to come back with it - otherwise the next glitch transitions
+  // away from whichever word the stale index happened to point at, which is
+  // not the one on screen.
   useEffect(() => {
+    currentIndexRef.current = 0;
     setDisplayText(words[0]);
   }, [words]);
 
   return (
-    <div className={cn('relative inline-block', className)}>
+    <div ref={containerRef} className={cn('relative inline-block', className)}>
       {/* Main text */}
       <span
         className={cn(

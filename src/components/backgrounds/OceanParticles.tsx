@@ -1,14 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 
-import { OrbitControls, shaderMaterial } from '@react-three/drei';
-import { Canvas, extend, ThreeEvent, useFrame } from '@react-three/fiber';
+import { shaderMaterial } from '@react-three/drei';
+import {
+  Canvas,
+  extend,
+  invalidate,
+  ThreeEvent,
+  useFrame,
+} from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useResolvedTheme } from '@/context/ThemeContext';
+import { useIsOnScreen, usePrefersReducedMotion } from '@/lib/screenUtils';
 import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
 import { cn } from '@/lib/utils';
+
+/**
+ * Deep-imported and lazy rather than pulled from the drei barrel: OrbitControls
+ * drags in three-stdlib's implementation, which is dead weight until someone
+ * actually drags the ocean. R3F supports Suspense inside <Canvas>, so the
+ * particles paint immediately and orbiting starts working a moment later.
+ */
+const OrbitControls = lazy(() =>
+  import('@react-three/drei/core/OrbitControls').then((m) => ({
+    default: m.OrbitControls,
+  })),
+);
 
 const defaultLushColour = 'rgb(0, 209, 176)';
 const defaultBreezeColour = 'rgb(9, 172, 238)';
@@ -18,6 +37,14 @@ const defaultAlphaBoost = 1.5;
 const defaultWaveSpeed = 0.75;
 const defaultWaveElevation = 0.6;
 const defaultWaveFrequency = 1.5;
+
+// Particle grid density, expressed as planeGeometry segment counts. Desktop
+// keeps the original 256x128 (33,153 points). Phones get a quarter of the
+// geometry: at a 6px point size on a ~400px-wide screen the two are very hard
+// to tell apart, and this is the single biggest lever on mobile fill rate.
+const DESKTOP_SEGMENTS: [number, number] = [256, 128];
+const MOBILE_SEGMENTS: [number, number] = [128, 64];
+const MOBILE_QUERY = '(max-width: 1023px)';
 
 type OceanParticleType = THREE.ShaderMaterial & {
   uTimeOffset: number;
@@ -148,7 +175,17 @@ const WaveShaderMaterial = shaderMaterial(
 // Allow React-Three-Fiber to use the custom material as <waveShaderMaterial />
 extend({ WaveShaderMaterial });
 
-const WaveParticles = () => {
+type WaveParticlesProps = {
+  /**
+   * True when this scene only ever gets a single frame (reduced motion - see
+   * the frameloop in OceanScene). Every easing factor collapses to 1 so that
+   * one frame lands on the final colour/physics values instead of 5% of the
+   * way there.
+   */
+  snap: boolean;
+};
+
+const WaveParticles = ({ snap }: WaveParticlesProps) => {
   const materialRef = useRef<OceanParticleType>(null);
 
   const { resolvedTheme } = useResolvedTheme();
@@ -161,6 +198,16 @@ const WaveParticles = () => {
   // State to control blending mode
   const [blendingMode, setBlendingMode] = useState<THREE.Blending>(
     THREE.AdditiveBlending,
+  );
+
+  // Resolved once at mount rather than through useMediaQuery: changing this
+  // later would rebuild the entire vertex buffer, and OceanScene is loaded
+  // client-only (see the dynamic import on the home page) so there's no
+  // hydration mismatch to dodge by starting from a default.
+  const [segments] = useState<[number, number]>(() =>
+    typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
+      ? MOBILE_SEGMENTS
+      : DESKTOP_SEGMENTS,
   );
 
   // Initialize targets with defaults
@@ -218,6 +265,12 @@ const WaveParticles = () => {
     if (materialRef.current) {
       materialRef.current.needsUpdate = true;
     }
+
+    // These targets live in refs, so React never re-renders and R3F never
+    // learns anything changed. Under frameloop='demand' that would strand a
+    // theme switch on the old colours - ask for the one frame that applies
+    // them. A no-op under 'always'.
+    invalidate();
   }, [resolvedTheme]);
 
   // Hook to animate the uTime uniform every frame
@@ -225,18 +278,19 @@ const WaveParticles = () => {
     if (materialRef.current) {
       const mat = materialRef.current;
 
+      // When only one frame is coming, every easing factor has to be 1 or the
+      // scene freezes partway to its targets.
+      const ease = (current: number, target: number, factor: number) =>
+        THREE.MathUtils.lerp(current, target, snap ? 1 : factor);
+
       // Lerp Physics (slow to let the physics gradually change)
-      mat.uWaveSpeed = THREE.MathUtils.lerp(
-        mat.uWaveSpeed,
-        targetSpeed.current,
-        0.025,
-      );
-      mat.uWaveElevation = THREE.MathUtils.lerp(
+      mat.uWaveSpeed = ease(mat.uWaveSpeed, targetSpeed.current, 0.025);
+      mat.uWaveElevation = ease(
         mat.uWaveElevation,
         targetElevation.current,
         0.03,
       );
-      mat.uWaveFrequency = THREE.MathUtils.lerp(
+      mat.uWaveFrequency = ease(
         mat.uWaveFrequency,
         targetFrequency.current,
         0.05,
@@ -250,8 +304,8 @@ const WaveParticles = () => {
 
       // Smoothly transition colors (Lerp)
       // This prevents the background from snapping instantly when you toggle the theme
-      mat.uColorStart.lerp(targetStart.current, 0.05);
-      mat.uColorEnd.lerp(targetEnd.current, 0.05);
+      mat.uColorStart.lerp(targetStart.current, snap ? 1 : 0.05);
+      mat.uColorEnd.lerp(targetEnd.current, snap ? 1 : 0.05);
 
       // If the scene is currently transparent (null), snap immediately to the target
       // This prevents a lerp from "black" or "white" -> it just matches the CSS instantly
@@ -259,16 +313,15 @@ const WaveParticles = () => {
         state.scene.background = targetBg.current.clone();
       } else if (targetBg.current !== null) {
         // If we already have a color, lerp it (handles light/dark mode switches smoothly)
-        (state.scene.background as THREE.Color).lerp(targetBg.current, 0.1);
+        (state.scene.background as THREE.Color).lerp(
+          targetBg.current,
+          snap ? 1 : 0.1,
+        );
       }
 
       // Smooth lerp for alpha thickness
       // This allows the particles to "thicken up" smoothly when switching to light mode
-      mat.uAlphaBoost = THREE.MathUtils.lerp(
-        mat.uAlphaBoost,
-        targetAlphaBoost.current,
-        0.05,
-      );
+      mat.uAlphaBoost = ease(mat.uAlphaBoost, targetAlphaBoost.current, 0.05);
     }
   });
 
@@ -285,7 +338,7 @@ const WaveParticles = () => {
         args: [width, height, segmentsX, segmentsY] 
         Higher segments = more particles = denser fog/waves
       */}
-        <planeGeometry args={[12, 12, 256, 128]} />
+        <planeGeometry args={[12, 12, segments[0], segments[1]]} />
         <waveShaderMaterial
           ref={materialRef}
           key={blendingMode} // Forces re-rendering since Three.js doesn't like to swap blending modes
@@ -320,8 +373,26 @@ export const OceanScene = () => {
   // State to track when the scene is ready to be shown. Fixes issue where particles took milliseconds to load and appeared abruptly on screen, looks much smoother
   const [isReady, setIsReady] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onScreen = useIsOnScreen(containerRef);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // The loop itself has to stop - returning early from useFrame would not have
+  // helped, because R3F still calls gl.render() every tick and drawing tens of
+  // thousands of additively blended points *is* the cost.
+  //
+  //   never  - scrolled past, or the tab is backgrounded: no frames at all
+  //   demand - reduced motion: one static frame, no ongoing animation
+  //   always - visible, and motion is welcome: the ocean as designed
+  const frameloop = !onScreen
+    ? 'never'
+    : prefersReducedMotion
+      ? 'demand'
+      : 'always';
+
   return (
     <div
+      ref={containerRef}
       // Slowly pops into display once the Canvas is ready
       className={cn(
         'h-full w-full transition-opacity duration-1000 ease-in-out',
@@ -332,15 +403,18 @@ export const OceanScene = () => {
         className='touch-pan-y select-none'
         camera={{ position: [0, 2, 4], fov: 60 }}
         gl={{ alpha: true }} // allows empty background
+        frameloop={frameloop}
         onCreated={() => setIsReady(true)}
       >
         {/* OrbitControls lets you rotate the view with mouse */}
-        <OrbitControls
-          enableZoom={false}
-          minPolarAngle={Math.PI / 3}
-          maxPolarAngle={Math.PI / 2.2}
-        />
-        <WaveParticles />
+        <Suspense fallback={null}>
+          <OrbitControls
+            enableZoom={false}
+            minPolarAngle={Math.PI / 3}
+            maxPolarAngle={Math.PI / 2.2}
+          />
+        </Suspense>
+        <WaveParticles snap={prefersReducedMotion} />
       </Canvas>
     </div>
   );
