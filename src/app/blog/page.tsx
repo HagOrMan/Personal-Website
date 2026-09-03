@@ -1,5 +1,3 @@
-import { Suspense } from 'react';
-
 import { Rss } from 'lucide-react';
 
 import { BlogIndexClient } from '@/components/blog/BlogIndexClient';
@@ -35,11 +33,10 @@ export default async function BlogPage() {
             No posts yet — check back soon.
           </p>
         ) : (
-          // useSearchParams() inside BlogIndexClient needs a Suspense
-          // boundary when this page is prerendered.
-          <Suspense>
-            <BlogIndexClient posts={posts} />
-          </Suspense>
+          // No Suspense boundary: BlogIndexClient reads the ?tag= filter after
+          // mount instead of during render, so the whole list prerenders into
+          // the static HTML rather than bailing out to the client.
+          <BlogIndexClient posts={posts} />
         )}
       </div>
     </main>
