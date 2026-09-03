@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 import { ChevronDown, Lock, Star } from 'lucide-react';
 
@@ -117,14 +116,24 @@ function PostListItem({
 }
 
 export function BlogIndexClient({ posts }: { posts: PostMeta[] }) {
-  const searchParams = useSearchParams();
   const [view, setView] = useState<View>('newest');
   const [showAllFeatured, setShowAllFeatured] = useState(false);
-  // Tag links in article headers point at /blog?tag=x, so the filter
-  // starts from the URL and stays in it (shareable, survives refresh).
-  const [selectedTag, setSelectedTag] = useState<string | null>(() =>
-    searchParams.get('tag'),
-  );
+  // Tag links in article headers point at /blog?tag=x, so the filter starts
+  // from the URL and stays in it (shareable, survives refresh).
+  //
+  // Read after mount rather than through useSearchParams(): that hook reads
+  // the URL during render, which forces everything inside the page's Suspense
+  // boundary out of the prerender (BAILOUT_TO_CLIENT_SIDE_RENDERING) and left
+  // the shipped HTML with no post markup at all - about two seconds of LCP
+  // for every visitor, filtered or not. The cost is one frame of unfiltered
+  // list on a ?tag= deep link. It has to be an effect and not a lazy useState
+  // initialiser; reading window during render is a hydration mismatch.
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tag = new URLSearchParams(window.location.search).get('tag');
+    if (tag) setSelectedTag(tag);
+  }, []);
 
   function selectTag(tag: string | null) {
     setSelectedTag(tag);
