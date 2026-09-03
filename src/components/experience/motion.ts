@@ -107,13 +107,24 @@ export function entryItemVariants(
 /* --------------------------------------------------------------- Media -- */
 
 /**
- * Where the media settles. A tilted corporate logo reads as a mistake, so
- * logos land nearly straight; a tilted photo reads as a print left on a desk,
- * so photos keep a visible lean.
+ * How far each kind of media swings in, and where it settles.
+ *
+ * The two are sized very differently now, and the same numbers don't suit
+ * both. A logo is a ~96px square tucked against the card's outer edge: it can
+ * take a big arc and a real lean without touching anything. A photo spans the
+ * card's full width, so the logo's 32px of travel would carry it out past the
+ * card's border on the way in, and its resting lean would read as a crooked
+ * screenshot rather than a print left on a desk. Both are damped down.
+ *
+ * `restTilt` is the piece to reach for first if the lean isn't to taste - a
+ * UI screenshot arguably wants 0, while a photo of people can carry more.
  */
-export const MEDIA_REST_TILT: Record<ExperienceMedia['kind'], number> = {
-  logo: 0.75,
-  photo: 2.5,
+export const MEDIA_MOTION: Record<
+  ExperienceMedia['kind'],
+  { travel: number; entryTilt: number; restTilt: number }
+> = {
+  logo: { travel: 32, entryTilt: 9, restTilt: 0.75 },
+  photo: { travel: 20, entryTilt: 4, restTilt: 1.5 },
 };
 
 /**
@@ -131,13 +142,19 @@ export function mediaVariants(
   kind: ExperienceMedia['kind'],
 ): Variants {
   const dir = outwardDirection(side);
+  const { travel, entryTilt, restTilt } = MEDIA_MOTION[kind];
 
   return {
-    hidden: { opacity: 0, x: 32 * dir, rotate: 9 * dir, scale: 0.94 },
+    hidden: {
+      opacity: 0,
+      x: travel * dir,
+      rotate: entryTilt * dir,
+      scale: 0.94,
+    },
     visible: {
       opacity: 1,
       x: 0,
-      rotate: MEDIA_REST_TILT[kind] * dir,
+      rotate: restTilt * dir,
       scale: 1,
       transition: reduced
         ? { duration: 0 }

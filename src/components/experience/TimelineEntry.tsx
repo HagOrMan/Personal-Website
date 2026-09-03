@@ -38,25 +38,41 @@ import { TimelineNode } from './TimelineRail';
 export function TimelineEntry({
   experience,
   side,
+  lit,
 }: {
   experience: Experience;
   side: TimelineSide;
+  /**
+   * Whether the rail's fill has reached this entry's node. Owned by Timeline,
+   * which is the only component that can compare a node's position against
+   * the fill's progress - the two would otherwise be independent animations
+   * that happen to run at similar times.
+   */
+  lit: boolean;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const reduced = useReducedMotion() ?? false;
   const inView = useInView(ref, { amount: ENTRY_IN_VIEW_AMOUNT, once: true });
 
   // With motion off there's no reveal to wait for, so the entry is simply
-  // there - including its node, which would otherwise sit unfilled forever
-  // if the observer never fired.
+  // there rather than waiting on an observer it doesn't need.
   const revealed = reduced || inView;
 
   const range = formatRange(experience.start, experience.end);
   const item = entryItemVariants(reduced, side);
 
   const onRight = side === 'right';
-  // Which grid column the text and the media take at `md`. The media always
-  // lands on the outer edge - the side away from the rail.
+
+  /**
+   * A logo is small enough to sit beside the title on the card's outer edge.
+   * A photo isn't - it takes the full width of the card and stacks, because
+   * a side column crops it and squeezes the text into whatever's left.
+   */
+  const mediaBesideTitle = experience.media.kind === 'logo';
+
+  // Only the title row is ever split into columns. Everything below it - the
+  // summary, the stack, and the expanded detail - spans the whole card, so
+  // its width is never dictated by a logo sitting well above it.
   const textColumn = onRight ? 'md:col-start-1' : 'md:col-start-2';
   const mediaColumn = onRight ? 'md:col-start-2' : 'md:col-start-1';
 
@@ -83,7 +99,7 @@ export function TimelineEntry({
         onRight ? CARD_INSET_RIGHT_CLASS : CARD_INSET_LEFT_CLASS,
       )}
     >
-      <TimelineNode kind={experience.kind} active={revealed} reduced={reduced} />
+      <TimelineNode kind={experience.kind} reached={lit} reduced={reduced} />
 
       {/* Rail-to-card connector. Desktop only - on mobile the card is close
           enough to the rail that a stub would read as clutter. */}
@@ -100,14 +116,20 @@ export function TimelineEntry({
       <article
         className={cn(
           'bg-card text-card-foreground border-border grid grid-cols-1 gap-x-6 gap-y-4 rounded-xl border p-5 shadow-sm md:p-6',
-          onRight
-            ? 'md:grid-cols-[minmax(0,1fr)_auto]'
-            : 'md:grid-cols-[auto_minmax(0,1fr)]',
+          mediaBesideTitle &&
+            (onRight
+              ? 'md:grid-cols-[minmax(0,1fr)_auto]'
+              : 'md:grid-cols-[auto_minmax(0,1fr)]'),
         )}
       >
         {/* Date + title. A plain grid cell holding two motion children -
             variants reach them through context, not through the DOM tree. */}
-        <div className={cn('min-w-0', textColumn, 'md:row-start-1')}>
+        <div
+          className={cn(
+            'min-w-0 md:row-start-1',
+            mediaBesideTitle && textColumn,
+          )}
+        >
           <motion.p
             variants={item}
             custom={0}
@@ -152,13 +174,16 @@ export function TimelineEntry({
           </motion.div>
         </div>
 
-        {/* Media. Spans both text rows at md so it can sit alongside the whole
-            card; on mobile it's just the second block, above the summary. */}
+        {/* Media. A logo pulls up beside the title on the outer edge; a photo
+            stays a full-width block of its own. Either way it sits between
+            the title and the summary in source order, which is the reading
+            order on mobile. */}
         <div
-          className={cn(
-            mediaColumn,
-            'md:row-span-2 md:row-start-1 md:self-start',
-          )}
+          className={
+            mediaBesideTitle
+              ? cn(mediaColumn, 'md:row-start-1 md:self-start')
+              : 'md:col-span-full md:row-start-2'
+          }
         >
           <ExperienceMedia
             media={experience.media}
@@ -168,10 +193,15 @@ export function TimelineEntry({
           />
         </div>
 
+        {/* Full card width, always. col-span-full is what keeps the summary
+            and the expanded detail from being boxed in by the logo's column. */}
         <motion.div
           variants={item}
           custom={2}
-          className={cn('min-w-0', textColumn, 'md:row-start-2')}
+          className={cn(
+            'min-w-0 md:col-span-full',
+            mediaBesideTitle ? 'md:row-start-2' : 'md:row-start-3',
+          )}
         >
           <p className='text-foreground/80 text-base leading-relaxed break-words'>
             {experience.summary}

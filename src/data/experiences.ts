@@ -17,7 +17,21 @@ export type ExperienceKind = 'coop' | 'volunteering';
 
 export type ExperienceMedia =
   | { kind: 'logo'; src: string; alt: string }
-  | { kind: 'photo'; src: string; alt: string; caption?: string };
+  | {
+      kind: 'photo';
+      src: string;
+      alt: string;
+      caption?: string;
+      /**
+       * Intrinsic pixel size. Give both and the image renders at its true
+       * aspect ratio - nothing cropped, no letterbox bars, and the right
+       * amount of space reserved before it loads. Leave them off and it
+       * falls back to a 16:9 box with the image contained inside it, which
+       * is safe but will letterbox anything that isn't 16:9.
+       */
+      width?: number;
+      height?: number;
+    };
 
 export interface Experience {
   /** Stable slug. Becomes the DOM id, so it's also the deep link: /experience#scotiabank */
@@ -127,6 +141,10 @@ export const experiences: Experience[] = [
       src: '/experiences/booking-portal.png',
       alt: 'The custom booking portal from a user perspective',
       caption: 'Our custom booking portal, as seen by the students',
+      // The file's real pixels - it's 2.26:1, far wider than any fixed frame
+      // would have allowed, so it renders at its own ratio instead.
+      width: 1280,
+      height: 566,
     },
     href: 'https://macengsociety.ca',
   },
