@@ -77,6 +77,7 @@ export const KIND_LABELS: Record<ExperienceKind, string> = {
 };
 
 export const experiences: Experience[] = [
+  // ----------------------------- Coop -----------------------------
   {
     id: 'scotiabank',
     kind: 'coop',
@@ -126,6 +127,51 @@ export const experiences: Experience[] = [
     },
     href: 'https://gradient-ascent.com/',
   },
+  {
+    id: 'fedex',
+    kind: 'coop',
+    org: 'FedEx',
+    role: 'Associate Programmer Analyst',
+    location: 'Mississauga, ON',
+    start: '2022-05',
+    end: '2022-08',
+    summary:
+      'Worked with Business Intelligence Analysts for ETL processes and scripting.',
+    details: [
+      'Reworked an existing data pipeline in Azure to use a new source, validated the new data, optimized the process, and created documentation from scratch on the pipeline.',
+      'Assisted in data reporting activities using TIBCO Spotfire and Power BI, creating dashboards and data feeds tied to vaccine reporting.',
+      'Assisted in data extraction, data warehouse and data lake development using Microsoft Azure, creating new data pipelines for a predictive analysis project.',
+    ],
+    stack: ['SQL', 'Microsoft Azure', 'Power BI', 'Data Pipelines'],
+    logo: {
+      src: '/logos/fedex.png',
+      alt: 'FedEx logo',
+    },
+    href: 'https://www.fedex.com/en-ca/home.html',
+  },
+  {
+    id: 'mcmaster-ta-discrete-math',
+    kind: 'coop',
+    org: 'McMaster University',
+    role: 'Discrete Mathematics TA',
+    location: 'Hamilton, ON',
+    start: '2024-01',
+    end: '2024-04',
+    summary:
+      'Worked as a grading TA for the Software Engineering Discrete Mathematics II course (SFWRENG 2FA3).',
+    details: [
+      'Graded discrete mathematics assigments and provided comprehensive feedback and points for improvement.',
+      'Promptly handled all assignment inquiries within one day to ensure students always had support.',
+    ],
+    stack: ['Communication', 'Feedback'],
+    logo: {
+      src: '/logos/mcmaster-engineering.png',
+      alt: 'McMaster Engineering logo',
+    },
+    href: 'https://www.mcmaster.ca/',
+  },
+
+  // ----------------------------- Volunteering -----------------------------
   {
     id: 'mcmaster-engineering-society',
     kind: 'volunteering',
@@ -194,26 +240,58 @@ export const experiences: Experience[] = [
     href: 'https://macengsociety.ca',
   },
   {
-    id: 'fedex',
-    kind: 'coop',
-    org: 'FedEx',
-    role: 'Associate Programmer Analyst',
-    location: 'Mississauga, ON',
-    start: '2022-05',
-    end: '2022-08',
+    id: 'ontario-engineering-competition-2025',
+    kind: 'volunteering',
+    org: 'Ontario Engineering Competition 2025',
+    role: 'Programming Competition Lead',
+    location: 'Hamilton, ON',
+    start: '2024-05',
+    end: '2025-01',
     summary:
-      'Worked with Business Intelligence Analysts for ETL processes and scripting.',
+      'Co-led the Programming Competition at the Ontario Engineering Competition, a provincial event drawing school-level winners from across Ontario, running an 8-month planning cycle from problem design through judging day.',
     details: [
-      'Reworked an existing data pipeline in Azure to use a new source, validated the new data, optimized the process, and created documentation from scratch on the pipeline.',
-      'Assisted in data reporting activities using TIBCO Spotfire and Power BI, creating dashboards and data feeds tied to vaccine reporting.',
-      'Assisted in data extraction, data warehouse and data lake development using Microsoft Azure, creating new data pipelines for a predictive analysis project.',
+      'Designed the competition problem around the "Solutions that Last" theme, deliberately scoping it open-ended: anchored teams in disaster warning and response for direction while leaving the domain broad enough that solutions had to be original rather than pattern-matched to a known answer.',
+      'Paired the outline with stated design rationale and required qualities so teams understood what a lasting system needed without being steered toward one product.',
+      'Built the judging rubric with my co-lead, weighting real-world applicability, design justification, and readability over raw code volume, then briefed 3 judges on scoring intent and resolved calibration questions live during grading to keep scoring consistent across teams.',
+      'Ran day-of logistics for the track across 20 teams, prepping each group before entry, enforcing presentation and Q&A timing, and rotating judging blocks so every panel had grading time between teams. Every block ran on schedule start to finish.',
     ],
-    stack: ['SQL', 'Microsoft Azure', 'Power BI', 'Data Pipelines'],
+    stack: ['Organization', 'Coordination', 'Problem-scoping'],
     logo: {
-      src: '/logos/fedex.png',
-      alt: 'FedEx logo',
+      src: '/logos/oec-2025.png',
+      alt: 'Ontario Engineering Competition 2025 logo',
     },
-    href: 'https://www.fedex.com/en-ca/home.html',
+    photo: {
+      src: '/experiences/oec-winners.webp',
+      alt: 'Myself, my co-lead, and one of the winning teams at the competition',
+      caption: 'My co-lead and I with a finalist team at the competition!',
+      width: 1080,
+      height: 798,
+    },
+    href: 'https://www.eng.mcmaster.ca/news/solutions-that-last-the-focus-of-mcmaster-student-hosted-ontario-engineering-competition/',
+  },
+  {
+    id: 'hdsb-hackathon-judge-2023',
+    kind: 'volunteering',
+    org: 'Halton District School Board',
+    role: 'HDSB Hacks Judge',
+    start: '2023-03',
+    end: '2023-04',
+    summary: `I had the incredible opportunity to volunteer as a hackathon judge for HDSB's first ever high school hackathon!`,
+    details: [
+      'Reviewed a dozen projects for finalists and gave personalized feedback for each one.',
+      'Involved in coordinating with hackathon planners to assign category winners, from best hardware/software hack to education or sustainability hack.',
+    ],
+    logo: {
+      src: '/logos/hdsb.png',
+      alt: 'Halton District School Board logo',
+    },
+    photo: {
+      src: '/experiences/hdsb-hacks-2023-infograph.webp',
+      alt: 'Infographic for HDSB hacks',
+      width: 1200,
+      height: 1200,
+    },
+    href: 'https://linktr.ee/hdsbhackathon2023',
   },
 ];
 
