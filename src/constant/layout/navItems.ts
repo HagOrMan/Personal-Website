@@ -58,10 +58,10 @@ export const navbarItems: NavbarItem[] = [
   //     },
   //   ],
   // },
-  // {
-  //   title: 'Experience',
-  //   link: '/experience',
-  // },
+  {
+    title: 'Experience',
+    link: '/experience',
+  },
   {
     title: 'About Me',
     link: '/about-me',
