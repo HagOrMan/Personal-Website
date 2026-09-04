@@ -321,22 +321,45 @@ export const PHOTO_ANCHOR_CLASS = 'md:relative md:-mx-6 md:px-6';
 export const PHOTO_MAX_H = 'min(24rem,40vh)';
 
 /**
- * Which edge a capped photo hugs: the one facing the rail, always.
+ * How far a *capped* photo stands off the rail, once it's narrow enough to
+ * have the room. A full-width one keeps its edge exactly where it is.
+ *
+ * Deliberately the same 1.5rem as the card's own `md:p-6`, so the gesture
+ * rhymes with something already on screen rather than being a fourth
+ * arbitrary number in the geometry.
+ *
+ * PhotoPlate spends it through `--photo-inset`, which is
+ * `min(this, the slack the cap left over)` - so it's a ceiling, not a fixed
+ * offset. That "min" is what keeps the two cases from fighting: a photo the
+ * cap never touches has no slack, gets no inset, and stays flush.
+ */
+export const PHOTO_RAIL_GAP = '1.5rem';
+
+/**
+ * Which edge a photo hangs off, and how far off it stands.
  *
  * A photo is normally exactly as wide as the card opposite it, and the two are
  * inset the same 2.5rem from the rail's centre line, so their inner edges sit
  * symmetric about it. That symmetry is the layout's one strong horizontal
- * relationship, and PHOTO_MAX_H breaks it the moment it bites: the photo gets
- * narrower, and centring the slack would split it across both edges and pull
- * the inner one away from the rail. Against a card that hasn't moved, the card
- * then reads as shifted outwards.
+ * relationship, and it has to survive PHOTO_MAX_H shrinking the picture. So
+ * the slack goes to the *outer* edge, which lines up with nothing and can
+ * absorb it invisibly, and the inner edge is the one held fixed.
  *
- * So the slack all goes to the outer edge, which lines up with nothing and
- * can absorb it invisibly. `side` is the photo's own half, so a photo in the
- * left half hugs right.
+ * Held fixed but not flush. A capped photo is a smaller object in the same
+ * column, and an edge that reads as alignment at full width reads as crowding
+ * once there's empty space behind it - so it also takes PHOTO_RAIL_GAP off the
+ * rail side. Splitting the slack evenly instead would make the offset a
+ * function of how hard the cap bit, which is a function of window height:
+ * every photo standing off the rail by a different amount, and the same photo
+ * moving when the window resized.
+ *
+ * `side` is the photo's own half, so a photo in the left half hangs off its
+ * right edge.
  */
 export const photoInnerEdgeClass = (side: TimelineSide) =>
-  side === 'left' ? 'md:ml-auto' : 'md:mr-auto';
+  side === 'left'
+    ? 'md:ml-auto md:mr-(--photo-inset)'
+    : 'md:mr-auto md:ml-(--photo-inset)';
 
 /**
  * Where a photo sits from `md` up: the half of the timeline the card isn't

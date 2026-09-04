@@ -15,6 +15,7 @@ import {
   photoVariants,
   photoInnerEdgeClass,
   PHOTO_MAX_H,
+  PHOTO_RAIL_GAP,
   type TimelineSide,
 } from './motion';
 
@@ -152,6 +153,14 @@ export function PhotoPlate({
       style={
         {
           '--photo-cap': `calc(${PHOTO_MAX_H} * ${ratio.toFixed(4)})`,
+          // The rail-side offset, and the whole reason this is arithmetic
+          // rather than a plain margin: `100%` is the half's width and the cap
+          // is the picture's, so their difference is the slack the cap left.
+          // Take the gap or the slack, whichever is smaller, and a photo that
+          // was never capped gets nothing and stays flush with the card. The
+          // max() floors it at zero for the case where the cap is the larger
+          // of the two and the subtraction goes negative.
+          '--photo-inset': `min(${PHOTO_RAIL_GAP}, max(0px, calc(100% - var(--photo-cap))))`,
         } as CSSProperties
       }
       className={cn(
