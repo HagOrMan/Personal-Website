@@ -1,7 +1,5 @@
 import type { Transition, UseScrollOptions, Variants } from 'motion/react';
 
-import type { ExperienceMedia } from '@/data/experiences';
-
 /**
  * Every tunable the timeline's motion depends on, in one file. The rest of
  * the subtree imports from here rather than hard-coding durations, so the
@@ -12,14 +10,15 @@ import type { ExperienceMedia } from '@/data/experiences';
 export const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
- * Which way "away from the rail" points. Cards on the right of the rail lean
- * and travel right; cards on the left mirror it.
+ * Which way "away from the rail" points, for whichever half of the timeline
+ * the thing occupies. Note that a card and its photo sit on opposite halves,
+ * so they get opposite sides - and lean opposite ways.
  *
  * Below `md` every card sits right of the rail regardless of its index, so an
  * odd-index entry animates as if it were on the left there. At 16px of travel
- * and a couple of degrees of tilt that reads as variation, not as a bug - and
- * it's the price of resolving `side` in Tailwind rather than by measuring the
- * viewport in JS at mount.
+ * that reads as variation rather than as a bug - and it's the price of
+ * resolving `side` in Tailwind rather than by measuring the viewport in JS at
+ * mount.
  */
 export type TimelineSide = 'left' | 'right';
 export const outwardDirection = (side: TimelineSide) =>
@@ -107,54 +106,44 @@ export function entryItemVariants(
 /* --------------------------------------------------------------- Media -- */
 
 /**
- * How far each kind of media swings in, and where it settles.
+ * Nothing here sets a resting tilt any more, and both gestures land square.
  *
- * The two are sized very differently now, and the same numbers don't suit
- * both. A logo is a ~96px square tucked against the card's outer edge: it can
- * take a big arc and a real lean without touching anything. A photo spans the
- * card's full width, so the logo's 32px of travel would carry it out past the
- * card's border on the way in, and its resting lean would read as a crooked
- * screenshot rather than a print left on a desk. Both are damped down.
+ * A tilt only reads as deliberate on something that isn't sitting inside a
+ * straight-edged box - against a card's own border, a couple of degrees just
+ * looks like a rendering fault. The logo never leaves the card, so it lands
+ * flat, full stop. The photo does leave it on desktop, and its resting lean
+ * is applied there in CSS (see `photoRestTiltClass`) so it can exist at `md`
+ * and up and be absent below, where the photo is back inside the card.
  *
- * `restTilt` is the piece to reach for first if the lean isn't to taste - a
- * UI screenshot arguably wants 0, while a photo of people can carry more.
+ * Tailwind v4's rotate-* utilities compile to the standalone `rotate`
+ * property while motion writes `transform`, so the two compose instead of
+ * overwriting each other - which is what makes that split possible at all.
  */
-export const MEDIA_MOTION: Record<
-  ExperienceMedia['kind'],
-  { travel: number; entryTilt: number; restTilt: number }
-> = {
-  logo: { travel: 32, entryTilt: 9, restTilt: 0.75 },
-  photo: { travel: 20, entryTilt: 4, restTilt: 1.5 },
-};
 
 /**
- * The page's one bold gesture: the media swings in from outside the card and
- * settles at its resting tilt. Everything else on the page stays quiet.
+ * The logo swings in from the card's outer edge, horizontally.
  *
- * Same rule as the entry variants - `reduced` cuts the transition to zero
- * rather than reshaping `hidden`, so the SSR'd style never depends on a
- * setting the server can't see. The resting tilt survives either way: that's
- * a static property of how the media is meant to sit, not motion.
+ * Modest on purpose. The travel is a fixed pixel figure while the mark is
+ * 40px on mobile and 96px from md, so anything larger reads as a proportionate
+ * arc on a desktop card and as the whole corner lurching about on a phone.
  */
-export function mediaVariants(
-  reduced: boolean,
-  side: TimelineSide,
-  kind: ExperienceMedia['kind'],
-): Variants {
+export const LOGO_TRAVEL = 24;
+export const LOGO_ENTRY_TILT = 7;
+
+export function logoVariants(reduced: boolean, side: TimelineSide): Variants {
   const dir = outwardDirection(side);
-  const { travel, entryTilt, restTilt } = MEDIA_MOTION[kind];
 
   return {
     hidden: {
       opacity: 0,
-      x: travel * dir,
-      rotate: entryTilt * dir,
+      x: LOGO_TRAVEL * dir,
+      rotate: LOGO_ENTRY_TILT * dir,
       scale: 0.94,
     },
     visible: {
       opacity: 1,
       x: 0,
-      rotate: restTilt * dir,
+      rotate: 0,
       scale: 1,
       transition: reduced
         ? { duration: 0 }
@@ -162,6 +151,46 @@ export function mediaVariants(
     },
   };
 }
+
+/**
+ * The photo rises from below and swings through to square, counter-leaning on
+ * the way in so it settles into the CSS tilt rather than away from it.
+ */
+export const PHOTO_RISE = 28;
+export const PHOTO_ENTRY_TILT = 6;
+
+export function photoVariants(reduced: boolean, side: TimelineSide): Variants {
+  const dir = outwardDirection(side);
+
+  return {
+    hidden: {
+      opacity: 0,
+      y: PHOTO_RISE,
+      rotate: -PHOTO_ENTRY_TILT * dir,
+      scale: 0.96,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      rotate: 0,
+      scale: 1,
+      transition: reduced
+        ? { duration: 0 }
+        : { type: 'spring', stiffness: 200, damping: 24, mass: 0.9 },
+    },
+  };
+}
+
+/**
+ * The photo's resting lean, away from the rail. Deliberately CSS and
+ * deliberately `md`-only: below that the photo is inside the card, where a
+ * lean is exactly the thing that looked wrong.
+ *
+ * Both strings are spelled out in full - Tailwind only ever sees complete
+ * class names, so a built-up one would compile to nothing.
+ */
+export const photoRestTiltClass = (side: TimelineSide) =>
+  side === 'right' ? 'md:rotate-[2.5deg]' : 'md:-rotate-[2.5deg]';
 
 /* ---------------------------------------------------------------- Node -- */
 
@@ -210,9 +239,32 @@ export const RAIL_X_CLASS = 'left-4 md:left-1/2';
 export const NODE_Y_CLASS = 'top-8 md:top-9';
 
 /**
- * How far a card is inset past the rail's centre line. The desktop connector
- * spans exactly this, so the two have to stay in step: `w-10` is `2.5rem`.
+ * How far a card is inset past the rail's centre line, and the connector that
+ * bridges the gap. The connector spans exactly this, so the three have to
+ * stay in step.
+ *
+ * The mobile inset is `pl-14` (3.5rem) against a rail centred at `left-4`
+ * (1rem), which leaves a 2.5rem gap - deliberately the same 2.5rem the card
+ * is inset past the centre line at `md`. That means one `w-10` is right at
+ * every width, which in turn keeps the connector's reduced-motion override a
+ * single class instead of a per-breakpoint pair fighting over precedence.
  */
 export const CONNECTOR_W_CLASS = 'w-10';
-export const CARD_INSET_RIGHT_CLASS = 'pl-12 md:pr-0 md:pl-[calc(50%+2.5rem)]';
-export const CARD_INSET_LEFT_CLASS = 'pl-12 md:pl-0 md:pr-[calc(50%+2.5rem)]';
+export const CARD_INSET_RIGHT_CLASS = 'pl-14 md:pr-0 md:pl-[calc(50%+2.5rem)]';
+export const CARD_INSET_LEFT_CLASS = 'pl-14 md:pl-0 md:pr-[calc(50%+2.5rem)]';
+
+/**
+ * Where a photo sits from `md` up: the half of the timeline the card isn't
+ * using, mirroring the card's own inset so the two read as a matched pair
+ * either side of the rail.
+ *
+ * It's absolutely positioned against the entry's `<li>` - the card is a grid
+ * and is deliberately left unpositioned, so the photo can start life as an
+ * ordinary block inside it on mobile and be lifted out of the card entirely
+ * at `md` without being duplicated in the DOM. If the card ever gains
+ * `relative`, this breaks and the photo will land inside it.
+ */
+export const PHOTO_HALF_LEFT_CLASS =
+  'md:absolute md:top-0 md:left-0 md:right-[calc(50%+2.5rem)]';
+export const PHOTO_HALF_RIGHT_CLASS =
+  'md:absolute md:top-0 md:right-0 md:left-[calc(50%+2.5rem)]';

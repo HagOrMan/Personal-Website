@@ -7,31 +7,43 @@
  * the middle of your history.
  *
  * Media lives in /public:
- *   - logos  -> /public/logos/{slug}.png   (small, transparent, square-ish)
- *   - photos -> /public/posters/{slug}.jpg (or anywhere under /public)
+ *   - logos  -> /public/logos/{slug}.png       (small, square-ish)
+ *   - photos -> /public/experiences/{slug}.png (or anywhere under /public)
  * A logo whose file isn't there yet falls back to an org monogram rather than
- * a broken image, so a half-filled entry still renders - see ExperienceMedia.
+ * a broken image, so a half-filled entry still renders - see LogoMark.
  */
 
 export type ExperienceKind = 'coop' | 'volunteering';
 
-export type ExperienceMedia =
-  | { kind: 'logo'; src: string; alt: string }
-  | {
-      kind: 'photo';
-      src: string;
-      alt: string;
-      caption?: string;
-      /**
-       * Intrinsic pixel size. Give both and the image renders at its true
-       * aspect ratio - nothing cropped, no letterbox bars, and the right
-       * amount of space reserved before it loads. Leave them off and it
-       * falls back to a 16:9 box with the image contained inside it, which
-       * is safe but will letterbox anything that isn't 16:9.
-       */
-      width?: number;
-      height?: number;
-    };
+/**
+ * The org's mark. Small, square-ish, and sits beside the role title inside
+ * the card - so it reads as identification, not decoration.
+ */
+export interface ExperienceLogo {
+  src: string;
+  alt: string;
+}
+
+/**
+ * An illustration for the entry, and the only thing on the page that leaves
+ * the card. On desktop it sits in the empty half of the timeline opposite the
+ * card; below `md` there is no empty half, so it drops into the card beneath
+ * the heading.
+ */
+export interface ExperiencePhoto {
+  src: string;
+  alt: string;
+  caption?: string;
+  /**
+   * Intrinsic pixel size. Give both and the image renders at its true aspect
+   * ratio - nothing cropped, no letterbox bars, and the right amount of space
+   * reserved before it loads. Leave them off and it falls back to a 16:9 box
+   * with the image contained inside it, which is safe but will letterbox
+   * anything that isn't 16:9.
+   */
+  width?: number;
+  height?: number;
+}
 
 export interface Experience {
   /** Stable slug. Becomes the DOM id, so it's also the deep link: /experience#scotiabank */
@@ -49,7 +61,12 @@ export interface Experience {
   /** LinkedIn-level bullets, revealed on expand. Plain text - no links. */
   details: string[];
   stack?: string[];
-  media: ExperienceMedia;
+  /**
+   * Both are optional and independent: an entry can carry a logo, a photo,
+   * both, or neither, and the card lays itself out around whatever is there.
+   */
+  logo?: ExperienceLogo;
+  photo?: ExperiencePhoto;
   href?: string;
 }
 
@@ -79,8 +96,7 @@ export const experiences: Experience[] = [
       'Automated daily P&L and client-facing reporting in Python, removing manual steps and saving the team 6 hours weekly.',
     ],
     stack: ['Python', 'Java', 'Angular (MEAN)'],
-    media: {
-      kind: 'logo',
+    logo: {
       src: '/logos/scotiabank.png',
       alt: 'Scotiabank logo',
     },
@@ -104,8 +120,7 @@ export const experiences: Experience[] = [
       'Built a self-hosted document Q&A demo using Llama 2, LangChain, and a vector database as a private alternative to ChatGPT, which was used in enterprise prospect conversations to open doors with new clients.',
     ],
     stack: ['Python', 'Agentic Architecture', 'Azure', 'GCP'],
-    media: {
-      kind: 'logo',
+    logo: {
       src: '/logos/gradient-ascent.png',
       alt: 'Gradient Ascent AI logo',
     },
@@ -136,8 +151,11 @@ export const experiences: Experience[] = [
       'MongoDB',
       'NextAuth',
     ],
-    media: {
-      kind: 'photo',
+    logo: {
+      src: '/logos/mcmaster_engineering_society.png',
+      alt: 'McMaster Engineering Society logo',
+    },
+    photo: {
       src: '/experiences/booking-portal.png',
       alt: 'The custom booking portal from a user perspective',
       caption: 'Our custom booking portal, as seen by the students',

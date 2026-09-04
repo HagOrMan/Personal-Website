@@ -123,14 +123,14 @@ export function Timeline({ experiences }: { experiences: Experience[] }) {
     <div
       className={cn(
         'mx-auto w-full max-w-5xl',
-        // Insurance for the narrowest screens: the media swings in from
-        // outside the card and rotates on the way, and on a ~320px viewport
-        // the card is wide enough that the overshoot gets close to the
-        // page edge (see MEDIA_MOTION for the travel values). `clip`
-        // rather than `hidden` so this never becomes a scroll container, and
-        // only below md - on a desktop the container has hundreds of pixels
-        // of slack either side, so clipping there would only cost us the
-        // overhang the gesture is made of.
+        // Insurance for the narrowest screens, where the logo's horizontal
+        // swing is the one thing that travels sideways. `clip` rather than
+        // `hidden` so this never becomes a scroll container.
+        //
+        // Explicitly off from md: up there the photo sits at the very edge of
+        // its half and leans a couple of degrees past it, and a clip would
+        // shave exactly the overhang the gesture is made of. There's plenty
+        // of page margin either side to absorb it.
         'overflow-x-clip md:overflow-x-visible',
       )}
     >

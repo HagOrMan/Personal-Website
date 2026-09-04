@@ -5,10 +5,15 @@ import Image from 'next/image';
 
 import { motion } from 'motion/react';
 
-import { type ExperienceMedia as ExperienceMediaData } from '@/data/experiences';
+import { type ExperienceLogo, type ExperiencePhoto } from '@/data/experiences';
 import { cn } from '@/lib/utils';
 
-import { mediaVariants, type TimelineSide } from './motion';
+import {
+  logoVariants,
+  photoRestTiltClass,
+  photoVariants,
+  type TimelineSide,
+} from './motion';
 
 /**
  * First letters of the first two words that start with a letter. Only ever
@@ -24,36 +29,28 @@ function monogram(org: string): string {
 }
 
 /**
- * How wide the photo renders at each breakpoint. It spans the card's content
- * box, so this tracks the card width: page padding, the rail inset, and the
- * card's own padding all come off the viewport.
- */
-const PHOTO_SIZES =
-  '(min-width: 1024px) 432px, (min-width: 768px) 288px, calc(100vw - 8.5rem)';
-
-/**
- * The entry's image, swinging in from outside the card and settling at a
- * slight tilt. Two shapes, and they want opposite things:
+ * The org's mark, tucked into the card's outer corner beside the heading.
+ * Contained and padded on a neutral surface so it's never cropped, and it
+ * lands square - it lives inside a straight-edged card, where a lean would
+ * only read as a misprint.
  *
- *   logo  - a small square that sits beside the title on the card's outer
- *           edge. Contained and padded on a neutral surface, never cropped.
- *   photo - the full width of the card, at its own aspect ratio. Screenshots
- *           and group shots are wide; squeezing one into a narrow side column
- *           and cropping it to a fixed frame threw most of the picture away
- *           and left the text wedged into what was left.
+ * Deliberately tiny on mobile. There the card is only a couple of hundred
+ * pixels wide and the mark shares its line with the date and the role, so it
+ * has to read as a corner detail rather than as content; it only grows into
+ * something you'd actually look at once there's a desktop card to hold it.
  *
  * A logo whose file isn't in /public yet falls back to an org monogram in the
  * same box, so an entry that's still being filled in never renders a broken
  * image or shifts the layout when the real file lands.
  */
-export function ExperienceMedia({
-  media,
+export function LogoMark({
+  logo,
   org,
   side,
   reduced,
 }: {
-  media: ExperienceMediaData;
-  /** Only used for the missing-logo monogram. */
+  logo: ExperienceLogo;
+  /** Only used for the missing-file monogram. */
   org: string;
   side: TimelineSide;
   reduced: boolean;
@@ -61,50 +58,87 @@ export function ExperienceMedia({
   const [failed, setFailed] = useState(false);
 
   return (
-    <motion.figure
-      variants={mediaVariants(reduced, side, media.kind)}
-      className={cn('m-0', media.kind === 'photo' ? 'w-full' : 'w-fit')}
+    <motion.div
+      variants={logoVariants(reduced, side)}
+      className='bg-muted border-border relative size-10 rounded-md border p-1 md:size-24 md:rounded-lg md:p-3'
     >
-      {media.kind === 'logo' ? (
-        <div className='bg-muted border-border relative size-20 rounded-lg border p-3 md:size-24'>
-          {failed ? (
-            <span className='text-muted-foreground absolute inset-0 flex items-center justify-center text-xl font-semibold'>
-              {monogram(org)}
-            </span>
-          ) : (
-            <Image
-              src={media.src}
-              alt={media.alt}
-              fill
-              // `fill` resolves inset-0 against the padding box, so the
-              // wrapper's p-3 is already the logo's breathing room.
-              sizes='(min-width: 768px) 72px, 56px'
-              className='object-contain'
-              onError={() => setFailed(true)}
-            />
-          )}
-        </div>
-      ) : media.width && media.height ? (
+      {failed ? (
+        <span className='text-muted-foreground absolute inset-0 flex items-center justify-center text-xs font-semibold md:text-xl'>
+          {monogram(org)}
+        </span>
+      ) : (
+        <Image
+          src={logo.src}
+          alt={logo.alt}
+          fill
+          // `fill` resolves inset-0 against the padding box, so the wrapper's
+          // padding is already the logo's breathing room.
+          sizes='(min-width: 768px) 72px, 32px'
+          className='object-contain'
+          onError={() => setFailed(true)}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+/**
+ * How wide the photo renders. On desktop it fills the empty half of the
+ * timeline opposite the card; below `md` it's inside the card, so page
+ * padding, the rail inset and the card's own padding all come off.
+ */
+const PHOTO_SIZES =
+  '(min-width: 1024px) 472px, (min-width: 768px) 304px, calc(100vw - 8.5rem)';
+
+/**
+ * The entry's illustration, and the page's one bold gesture: it rises from
+ * below, swings through, and - on desktop, where it's floating in open space
+ * beside the timeline rather than boxed inside the card - settles at a slight
+ * lean, like a print left on the page.
+ *
+ * The lean is a CSS class rather than part of the animation, which is what
+ * lets it apply only from `md` up. Tailwind v4's rotate-* compiles to the
+ * standalone `rotate` property and motion writes `transform`, so the two
+ * compose: motion swings it to square, and CSS holds it at the lean.
+ *
+ * `side` here is the photo's own half of the timeline - the opposite one to
+ * the card's - so it leans away from the rail, not into it.
+ */
+export function PhotoPlate({
+  photo,
+  side,
+  reduced,
+}: {
+  photo: ExperiencePhoto;
+  side: TimelineSide;
+  reduced: boolean;
+}) {
+  return (
+    <motion.figure
+      variants={photoVariants(reduced, side)}
+      className={cn('m-0 w-full', photoRestTiltClass(side))}
+    >
+      {photo.width && photo.height ? (
         // Intrinsic sizing: the browser reserves the right box from the ratio
         // before the file arrives, and the image fills it exactly - no crop,
         // no bars. This is the path worth being on.
         <Image
-          src={media.src}
-          alt={media.alt}
-          width={media.width}
-          height={media.height}
+          src={photo.src}
+          alt={photo.alt}
+          width={photo.width}
+          height={photo.height}
           sizes={PHOTO_SIZES}
-          className='ring-border h-auto w-full rounded-lg shadow-md ring-1'
+          className='ring-border h-auto w-full rounded-lg shadow-lg ring-1'
         />
       ) : (
         // No declared size, so fall back to a 16:9 box with the whole image
         // contained in it. Anything that isn't 16:9 letterboxes against the
         // muted surface - visibly a fallback, and fixed by adding width and
         // height to the entry.
-        <div className='bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-md ring-1'>
+        <div className='bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1'>
           <Image
-            src={media.src}
-            alt={media.alt}
+            src={photo.src}
+            alt={photo.alt}
             fill
             sizes={PHOTO_SIZES}
             className='object-contain'
@@ -112,9 +146,9 @@ export function ExperienceMedia({
         </div>
       )}
 
-      {media.kind === 'photo' && media.caption && (
+      {photo.caption && (
         <figcaption className='text-muted-foreground mt-2 text-xs'>
-          {media.caption}
+          {photo.caption}
         </figcaption>
       )}
     </motion.figure>

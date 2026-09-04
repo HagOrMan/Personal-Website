@@ -78,10 +78,10 @@ export function TimelineNode({
   reduced: boolean;
 }) {
   return (
-    // Positioning lives on a plain wrapper: motion writes `transform` inline
-    // on the element it animates, which would clobber a Tailwind `-translate-*`.
-    // Timeline finds these by the data attribute to measure where each node
-    // sits along the rail.
+    // Positioning lives on a plain wrapper so the box Timeline measures is a
+    // steady 14px: getBoundingClientRect reports the *scaled* box, so reading
+    // the bumping element itself would make a node's position on the rail
+    // wobble every time it activated. It's found by the data attribute below.
     <span
       aria-hidden
       data-timeline-node
