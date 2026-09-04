@@ -7,8 +7,12 @@
  * the middle of your history.
  *
  * Media lives in /public:
- *   - logos  -> /public/logos/{slug}.png       (small, square-ish)
- *   - photos -> /public/experiences/{slug}.png (or anywhere under /public)
+ *   - logos  -> /public/logos/{slug}.png        (small, square-ish, 200x200)
+ *   - photos -> /public/experiences/{slug}.webp (1080px on the long edge)
+ * Photos are webp at 1080 because nothing renders one wider than 472 CSS px
+ * (see PHOTO_SIZES), so 1080 covers a 2x display with room to spare and the
+ * source stays a tenth of what comes off a phone.
+ *
  * A logo whose file isn't there yet falls back to an org monogram rather than
  * a broken image, so a half-filled entry still renders - see LogoMark.
  */
@@ -100,6 +104,13 @@ export const experiences: Experience[] = [
     logo: {
       src: '/logos/scotiabank.png',
       alt: 'Scotiabank logo',
+    },
+    photo: {
+      src: '/experiences/scotia-christmas.webp',
+      alt: 'Outside of my office in the winter',
+      caption: 'The view from outside my office during Christmas',
+      width: 1080,
+      height: 810,
     },
     href: 'https://www.scotiabank.com',
   },
@@ -201,13 +212,13 @@ export const experiences: Experience[] = [
       alt: 'McMaster Engineering Society logo',
     },
     photo: {
-      src: '/experiences/booking-portal.png',
+      src: '/experiences/booking-portal.webp',
       alt: 'The custom booking portal from a user perspective',
       caption: 'Our custom booking portal, as seen by the students',
       // The file's real pixels - it's 2.26:1, far wider than any fixed frame
       // would have allowed, so it renders at its own ratio instead.
-      width: 1280,
-      height: 566,
+      width: 1080,
+      height: 478,
     },
     href: 'https://macengsociety.ca',
   },
