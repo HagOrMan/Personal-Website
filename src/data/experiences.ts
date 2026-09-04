@@ -8,10 +8,13 @@
  *
  * Media lives in /public:
  *   - logos  -> /public/logos/{slug}.png        (small, square-ish, 200x200)
- *   - photos -> /public/experiences/{slug}.webp (1080px on the long edge)
- * Photos are webp at 1080 because nothing renders one wider than 472 CSS px
- * (see PHOTO_SIZES), so 1080 covers a 2x display with room to spare and the
- * source stays a tenth of what comes off a phone.
+ *   - photos -> /public/experiences/{slug}.webp (up to 2160px on the long edge)
+ * The timeline itself never renders a photo wider than 472 CSS px (see
+ * PHOTO_SIZES), so 1080 would be plenty for it - the ceiling is set by
+ * ZoomImage, which blows the same file up to fill the screen when someone
+ * clicks it. So export from the original at up to 2160 and never upscale: a
+ * 1080px file stretched across a laptop is exactly the softness this is
+ * avoiding, and a file that never had the pixels can't be given them back.
  *
  * A logo whose file isn't there yet falls back to an org monogram rather than
  * a broken image, so a half-filled entry still renders - see LogoMark.
@@ -62,8 +65,14 @@ export interface Experience {
   end: string | 'present';
   /** 1-2 sentences. Always visible, never behind the accordion. */
   summary: string;
-  /** LinkedIn-level bullets, revealed on expand. Plain text - no links. */
-  details: string[];
+  /**
+   * LinkedIn-level bullets, revealed on expand. Plain text - no links.
+   *
+   * Optional, and left off where the summary already says everything worth
+   * saying. A card with no bullets renders with no More button rather than
+   * with a disclosure that opens onto nothing.
+   */
+  details?: string[];
   stack?: string[];
   /**
    * Both are optional and independent: an entry can carry a logo, a photo,
@@ -330,6 +339,55 @@ export const experiences: Experience[] = [
       height: 1200,
     },
     href: 'https://linktr.ee/hdsbhackathon2023',
+  },
+  {
+    id: 'mcmaster-engineering-musical-2024',
+    kind: 'volunteering',
+    org: 'McMaster Engineering Musical',
+    role: 'Writer',
+    location: 'Hamilton, ON',
+    start: '2023-09',
+    end: '2024-03',
+    summary:
+      "My first year in the writing crew for McMaster Engineering's fully student-produced musical, this year based on Beetlejuice.",
+    stack: ['Collaborative Writing', 'Editing'],
+    logo: {
+      // No file yet - renders as an "MM" monogram until one lands in /public.
+      src: '/logos/mcmaster-engineering.png',
+      alt: 'McMaster Engineering Musical logo',
+    },
+    photo: {
+      src: '/experiences/musical-writing-crew-2024.webp',
+      alt: 'The writing crew for the 2024 McMaster Engineering Musical',
+      caption: 'The writing crew behind the 2024 show',
+      width: 2048,
+      height: 1142,
+    },
+    href: 'https://www.macengmusical.com/past-shows',
+  },
+  {
+    id: 'mcmaster-engineering-musical-2025',
+    kind: 'volunteering',
+    org: 'McMaster Engineering Musical',
+    role: 'Writer',
+    location: 'Hamilton, ON',
+    start: '2024-09',
+    end: '2025-03',
+    summary:
+      'Back in the writing crew for a second show, this time based on the Odyssey! (before Nolan ever announced his version).',
+    stack: ['Collaborative Writing', 'Editing'],
+    logo: {
+      src: '/logos/mac-eng-musical-2025.png',
+      alt: 'McMaster Engineering Musical logo',
+    },
+    photo: {
+      src: '/experiences/musical-writing-crew-2025.webp',
+      alt: 'The writing crew for the 2025 McMaster Engineering Musical',
+      caption: 'The writing crew behind the 2025 show',
+      width: 2048,
+      height: 1365,
+    },
+    href: 'https://www.macengmusical.com/past-shows',
   },
 ];
 

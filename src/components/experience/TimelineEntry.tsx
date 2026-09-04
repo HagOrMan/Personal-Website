@@ -72,6 +72,7 @@ export function TimelineEntry({
 
   const { logo, photo } = experience;
   const onRight = side === 'right';
+  const hasDetails = (experience.details?.length ?? 0) > 0;
 
   /**
    * The photo takes the half the card isn't using, so its side - and every
@@ -257,23 +258,32 @@ export function TimelineEntry({
             The LinkedIn link rides in the disclosure's own action row rather
             than being placed here: it's the second half of a pair, and the row
             that holds both is the thing whose height the layout above depends
-            on staying constant. */}
-        <motion.div variants={item} custom={2} className='min-w-0'>
-          <ExpandableDetail
-            id={experience.id}
-            details={experience.details}
-            reduced={reduced}
-            action={
-              experience.linkedin && (
-                <LinkedInPostLink
-                  href={experience.linkedin}
-                  org={experience.org}
-                  role={experience.role}
-                />
-              )
-            }
-          />
-        </motion.div>
+            on staying constant.
+
+            Skipped outright for an entry with neither bullets nor a link,
+            because the row would be empty and the card's gap-4 would still
+            pay for it. Such a card ends a little sooner than its neighbours,
+            so its photo sits a few pixels lower against it than theirs do -
+            the constant-height row keeps the cards that have one in step with
+            each other, which is as far as that invariant reaches. */}
+        {(hasDetails || experience.linkedin) && (
+          <motion.div variants={item} custom={2} className='min-w-0'>
+            <ExpandableDetail
+              id={experience.id}
+              details={experience.details}
+              reduced={reduced}
+              action={
+                experience.linkedin && (
+                  <LinkedInPostLink
+                    href={experience.linkedin}
+                    org={experience.org}
+                    role={experience.role}
+                  />
+                )
+              }
+            />
+          </motion.div>
+        )}
       </article>
     </motion.li>
   );

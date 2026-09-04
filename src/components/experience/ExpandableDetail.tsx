@@ -10,8 +10,33 @@ import { cn } from '@/lib/utils';
 import { accordionTransition, chevronTransition } from './motion';
 
 /**
- * The detail bullets, collapsed in place. The card grows downward from the
- * button, so expanding an entry never moves what the reader is looking at.
+ * The card's one band of interactivity: the More/Less trigger, and whatever
+ * `action` holds beside it.
+ *
+ * `min-h-8` is pinned here rather than left to whatever the row happens to
+ * contain, for two reasons: it gives the bare text trigger a proper touch
+ * target on a phone, and it keeps every card's row the same height whether or
+ * not that entry has a link, or bullets - which is what stops the desktop
+ * photo's centring drifting from card to card (see PHOTO_ANCHOR_CLASS in
+ * ./motion).
+ *
+ * Wrapping is the safety net, not the plan: the pair fits on one line down to
+ * roughly a 320px viewport. `justify-between` needs no special case for a row
+ * holding only one of the two - a lone trigger or a lone action sits left,
+ * where it would have been anyway.
+ */
+const ACTION_ROW_CLASS =
+  'flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-2';
+
+/**
+ * The card's action row, and - for the entries that have bullets - the
+ * disclosure those bullets live in. The card grows downward from the button,
+ * so expanding an entry never moves what the reader is looking at.
+ *
+ * `details` is optional because not every entry has bullets worth hiding
+ * behind a button; those cards render the row with whatever `action` holds
+ * and no trigger, rather than a More button that opens onto nothing. The
+ * caller decides whether a row is worth having at all - see TimelineEntry.
  *
  * Renders flush at the top: the card is a flex column with its own gap, and
  * this sits in a cell of it, so a margin here would stack on top of that gap.
@@ -33,7 +58,7 @@ export function ExpandableDetail({
 }: {
   /** The experience's slug - namespaces the button/panel id pair. */
   id: string;
-  details: string[];
+  details?: string[];
   reduced: boolean;
   /**
    * A second control for the card's action row - the LinkedIn post link,
@@ -48,21 +73,20 @@ export function ExpandableDetail({
   const panelId = `${id}-details`;
   const triggerId = `${id}-details-trigger`;
 
+  // Nothing to disclose, so the row is whatever `action` holds and there's no
+  // trigger to sit beside it. Deliberately still the row: an entry with a
+  // LinkedIn link and no bullets should hold the same band, at the same
+  // height, as one with both.
+  //
+  // Spelled out as the condition rather than through a `hasDetails` flag so
+  // the narrowing carries to the panel below, where `details` is mapped.
+  if (details === undefined || details.length === 0) {
+    return <div className={ACTION_ROW_CLASS}>{action}</div>;
+  }
+
   return (
     <>
-      {/*
-        The action row. `min-h-8` is set here rather than left to whatever the
-        row happens to contain, for two reasons: it gives the bare text trigger
-        a proper touch target on a phone, and it keeps every card's row the
-        same height whether or not that entry has a link - which is what stops
-        the desktop photo's centring drifting card to card (see
-        PHOTO_ANCHOR_CLASS in ./motion).
-
-        Wrapping is the safety net, not the plan: the pair fits one line down
-        to roughly a 320px viewport, and `justify-between` simply leaves the
-        trigger alone on cards with no action.
-      */}
-      <div className='flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-2'>
+      <div className={ACTION_ROW_CLASS}>
         <button
           type='button'
           id={triggerId}

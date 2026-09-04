@@ -49,6 +49,22 @@ const CAPTION_GAP = '0.75rem';
 const CAPTION_FIRST_PAINT_HEIGHT = 20;
 
 /**
+ * Higher than Next's default 75, and only for the enlarged copy.
+ *
+ * The sources are already lossy webp, and the optimizer re-encodes whatever
+ * it's given - so at the default the picture is compressed twice, and the
+ * second pass is quantising artifacts from the first. That's invisible in a
+ * 472px-wide thumbnail and very visible blown up across a laptop screen,
+ * particularly on screenshots, where the damage lands on the edges of text.
+ *
+ * This buys back the second pass. It cannot buy back the first, and it can't
+ * add pixels a 1080px-wide source never had - for that, the file itself has
+ * to be re-exported larger. Keep this value in `images.qualities` in
+ * next.config.ts, which is the allowlist the optimizer checks.
+ */
+const LIGHTBOX_QUALITY = 92;
+
+/**
  * A thumbnail that opens full screen when you click it.
  *
  * The enlarged picture claims every pixel the viewport has in one dimension
@@ -241,6 +257,7 @@ export function ZoomImage({
                   // there's no smaller candidate worth describing. Next caps
                   // the request at the source file's own width regardless.
                   sizes='100vw'
+                  quality={LIGHTBOX_QUALITY}
                   style={{ width: pictureWidth }}
                   className='h-auto rounded-lg shadow-2xl'
                 />
