@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import { motion, useInView } from 'motion/react';
 
+import { ZoomImage } from '@/components/ui/ZoomImage';
 import { type ExperienceLogo, type ExperiencePhoto } from '@/data/experiences';
 import { cn } from '@/lib/utils';
 
@@ -177,19 +178,24 @@ export function PhotoPlate({
         // before the file arrives, and the image fills it exactly - no crop,
         // no bars. This is the path worth being on. The height cap is the
         // figure's problem, not this element's - see --photo-cap above.
-        <Image
+        //
+        // Also the path that gets to be clickable: ZoomImage sizes the
+        // enlarged picture off the ratio, so it needs the declared dimensions
+        // the same way this branch does.
+        <ZoomImage
           src={photo.src}
           alt={photo.alt}
           width={photo.width}
           height={photo.height}
+          caption={photo.caption}
           sizes={PHOTO_SIZES}
-          className='ring-border h-auto w-full rounded-lg shadow-lg ring-1'
+          imageClassName='ring-border rounded-lg shadow-lg ring-1'
         />
       ) : (
         // No declared size, so fall back to a 16:9 box with the whole image
         // contained in it. Anything that isn't 16:9 letterboxes against the
         // muted surface - visibly a fallback, and fixed by adding width and
-        // height to the entry.
+        // height to the entry, which also makes it click-to-enlarge.
         <div className='bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1'>
           <Image
             src={photo.src}
