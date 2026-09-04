@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { type CSSProperties, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { motion, useInView } from 'motion/react';
@@ -13,7 +13,8 @@ import {
   logoVariants,
   photoRestTiltClass,
   photoVariants,
-  PHOTO_MAX_H_CLASS,
+  photoInnerEdgeClass,
+  PHOTO_MAX_H,
   type TimelineSide,
 } from './motion';
 
@@ -89,8 +90,8 @@ export function LogoMark({
  * timeline opposite the card; below `md` it's inside the card, so page
  * padding, the rail inset and the card's own padding all come off.
  *
- * The upper bound, in other words. A photo tall enough for PHOTO_MAX_H_CLASS
- * to catch renders narrower than this, and the browser then fetches one size
+ * The upper bound, in other words. A photo the figure's --photo-cap catches
+ * renders narrower than this, and the browser then fetches one size
  * up from what it strictly needs - which is the harmless direction to be
  * wrong in, and cheaper than encoding the cap's arithmetic here as well.
  */
@@ -132,6 +133,13 @@ export function PhotoPlate({
     margin: ENTRY_IN_VIEW_MARGIN,
   });
 
+  // PHOTO_MAX_H is a height, and this is the width that height buys at this
+  // image's ratio - so capping the figure caps the picture without the image
+  // itself having to leave a dimension `auto`. A photo with no declared size
+  // renders in the 16:9 fallback box below, which is the ratio to cap it at.
+  const ratio =
+    photo.width && photo.height ? photo.width / photo.height : 16 / 9;
+
   return (
     <motion.figure
       ref={figureRef}
@@ -141,47 +149,39 @@ export function PhotoPlate({
       initial='hidden'
       animate={reduced || inView ? 'visible' : 'hidden'}
       variants={photoVariants(reduced, side)}
-      className={cn('m-0 w-full', photoRestTiltClass(side))}
+      style={
+        {
+          '--photo-cap': `calc(${PHOTO_MAX_H} * ${ratio.toFixed(4)})`,
+        } as CSSProperties
+      }
+      className={cn(
+        'm-0 w-full',
+        // Only consumed from md - below that the photo is inside the card,
+        // where the card's own width is the only cap it needs.
+        'md:max-w-(--photo-cap)',
+        photoInnerEdgeClass(side),
+        photoRestTiltClass(side),
+      )}
     >
       {photo.width && photo.height ? (
         // Intrinsic sizing: the browser reserves the right box from the ratio
         // before the file arrives, and the image fills it exactly - no crop,
-        // no bars. This is the path worth being on.
-        //
-        // `w-auto max-w-full` rather than `w-full` so PHOTO_MAX_H_CLASS can
-        // do its job. Both dimensions have to be free for the browser to
-        // honour a max-height by shrinking the picture; pin the width and it
-        // clamps the height alone and squashes it. The image is always wider
-        // than its half here, so max-width is what sets the size in the usual
-        // case and the cap only bites on the tall ones - the square
-        // infographic, mainly. `mx-auto` centres whatever it leaves.
+        // no bars. This is the path worth being on. The height cap is the
+        // figure's problem, not this element's - see --photo-cap above.
         <Image
           src={photo.src}
           alt={photo.alt}
           width={photo.width}
           height={photo.height}
           sizes={PHOTO_SIZES}
-          className={cn(
-            'ring-border mx-auto h-auto w-auto max-w-full rounded-lg shadow-lg ring-1',
-            PHOTO_MAX_H_CLASS,
-          )}
+          className='ring-border h-auto w-full rounded-lg shadow-lg ring-1'
         />
       ) : (
         // No declared size, so fall back to a 16:9 box with the whole image
         // contained in it. Anything that isn't 16:9 letterboxes against the
         // muted surface - visibly a fallback, and fixed by adding width and
         // height to the entry.
-        //
-        // The cap applies here too. It can only clip the box rather than
-        // shrink it, since the ratio is declared and the width is 100%, but
-        // `object-contain` means that letterboxes the image instead of
-        // cropping it - which is what this branch already does anyway.
-        <div
-          className={cn(
-            'bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1',
-            PHOTO_MAX_H_CLASS,
-          )}
-        >
+        <div className='bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1'>
           <Image
             src={photo.src}
             alt={photo.alt}
