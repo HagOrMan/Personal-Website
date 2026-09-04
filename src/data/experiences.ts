@@ -174,6 +174,13 @@ export const experiences: Experience[] = [
       src: '/logos/fedex.png',
       alt: 'FedEx logo',
     },
+    photo: {
+      src: '/experiences/fedex-plane-pull.webp',
+      alt: 'Me at the FedEx plane pull',
+      caption: 'Me at the FedEx plane pull!',
+      width: 1080,
+      height: 810,
+    },
     href: 'https://www.fedex.com/en-ca/home.html',
   },
   {
