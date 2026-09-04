@@ -1,4 +1,9 @@
-import type { Transition, UseScrollOptions, Variants } from 'motion/react';
+import type {
+  Transition,
+  UseInViewOptions,
+  UseScrollOptions,
+  Variants,
+} from 'motion/react';
 
 /**
  * Every tunable the timeline's motion depends on, in one file. The rest of
@@ -204,8 +209,21 @@ export const nodeBumpTransition: Transition = {
   times: [0, 0.45, 1],
 };
 
-/** How much of an entry has to be on screen before it reveals and its node fills. */
-export const ENTRY_IN_VIEW_AMOUNT = 0.4;
+/**
+ * When a reveal fires: as its element's top edge crosses 85% of the viewport,
+ * so it's already going by the time you've properly seen the thing.
+ *
+ * A negative bottom root-margin rather than an `amount`, because `amount` is
+ * a fraction of the element's *own* height and these elements are mostly
+ * empty space. An entry is 72vh tall with a ~340px card at the top of it, so
+ * waiting for 40% of the entry meant waiting long after the card itself had
+ * arrived - and the same figure meant something different again at md, where
+ * entries are 56vh, and different a third time on the last entry, which has
+ * no minimum height at all. A margin is height-independent, so every reveal
+ * on the page fires at the same place on screen.
+ */
+export const ENTRY_IN_VIEW_MARGIN: UseInViewOptions['margin'] =
+  '0px 0px -25% 0px';
 
 /* ----------------------------------------------------------- Accordion -- */
 

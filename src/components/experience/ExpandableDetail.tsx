@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { cn } from '@/lib/utils';
+
 import { accordionTransition, chevronTransition } from './motion';
 
 /**
@@ -41,7 +43,16 @@ export function ExpandableDetail({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((wasOpen) => !wasOpen)}
-        className='text-primary focus-visible:ring-ring mt-4 inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
+        className={cn(
+          'focus-visible:ring-ring mt-4 inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
+          // The rail's blue rather than the site's turquoise primary, so the
+          // one interactive thing on a card belongs to the same palette as
+          // the timeline it sits against. Two shades because breeze-400 is a
+          // bright sky blue - it reads well on the dark card and washes out
+          // on the light one, so light mode takes the deeper step.
+          'text-breeze-700 hover:text-breeze-800 dark:text-breeze-400 dark:hover:text-breeze-300',
+          'transition-colors motion-reduce:transition-none',
+        )}
       >
         {/* Says what happens next, and stays the same two words either way. */}
         {open ? 'Less' : 'More'}

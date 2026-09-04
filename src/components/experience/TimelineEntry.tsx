@@ -19,7 +19,7 @@ import {
   CARD_INSET_LEFT_CLASS,
   CARD_INSET_RIGHT_CLASS,
   CONNECTOR_W_CLASS,
-  ENTRY_IN_VIEW_AMOUNT,
+  ENTRY_IN_VIEW_MARGIN,
   entryContainerVariants,
   entryItemVariants,
   NODE_Y_CLASS,
@@ -56,7 +56,10 @@ export function TimelineEntry({
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const reduced = useReducedMotion() ?? false;
-  const inView = useInView(ref, { amount: ENTRY_IN_VIEW_AMOUNT, once: true });
+  const inView = useInView(ref, {
+    once: true,
+    margin: ENTRY_IN_VIEW_MARGIN,
+  });
 
   // With motion off there's no reveal to wait for, so the entry is simply
   // there rather than waiting on an observer it doesn't need.

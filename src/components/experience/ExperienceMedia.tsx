@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Image from 'next/image';
 
-import { motion } from 'motion/react';
+import { motion, useInView } from 'motion/react';
 
 import { type ExperienceLogo, type ExperiencePhoto } from '@/data/experiences';
 import { cn } from '@/lib/utils';
 
 import {
+  ENTRY_IN_VIEW_MARGIN,
   logoVariants,
   photoRestTiltClass,
   photoVariants,
@@ -103,6 +104,13 @@ const PHOTO_SIZES =
  *
  * `side` here is the photo's own half of the timeline - the opposite one to
  * the card's - so it leans away from the rail, not into it.
+ *
+ * It watches itself rather than inheriting the entry's reveal, so it lands as
+ * its own beat. That matters most on mobile, where it sits below the heading
+ * inside the card and would otherwise have already played by the time you
+ * scrolled down to it. On desktop it's aligned with the top of the card in
+ * the opposite half, so the two triggers land at more or less the same
+ * moment anyway.
  */
 export function PhotoPlate({
   photo,
@@ -113,8 +121,20 @@ export function PhotoPlate({
   side: TimelineSide;
   reduced: boolean;
 }) {
+  const figureRef = useRef<HTMLElement>(null);
+  const inView = useInView(figureRef, {
+    once: true,
+    margin: ENTRY_IN_VIEW_MARGIN,
+  });
+
   return (
     <motion.figure
+      ref={figureRef}
+      // Its own initial/animate pair, which is what detaches it from the
+      // variants the entry propagates down. `initial` stays a constant so the
+      // server's markup never depends on the reduced-motion setting.
+      initial='hidden'
+      animate={reduced || inView ? 'visible' : 'hidden'}
       variants={photoVariants(reduced, side)}
       className={cn('m-0 w-full', photoRestTiltClass(side))}
     >
