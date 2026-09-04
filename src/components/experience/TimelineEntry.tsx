@@ -126,9 +126,11 @@ export function TimelineEntry({
       />
 
       <article
-        // Deliberately not `relative`: the photo below escapes this card at
-        // md by resolving against the <li> instead.
-        className='bg-card text-card-foreground border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm md:p-6'
+        // `md:relative` is what the photo centres against - see PHOTO_HALF_*.
+        // It's only positioned from md, which is also the only breakpoint
+        // where the photo leaves the card, so below that the photo is just an
+        // ordinary block in the flow here.
+        className='bg-card text-card-foreground border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm md:relative md:p-6'
       >
         {/* Heading row: the text block, and the logo tucked into the card's
             outer corner beside it. A flex row rather than a grid column, so

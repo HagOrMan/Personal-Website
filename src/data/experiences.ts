@@ -179,14 +179,7 @@ export const experiences: Experience[] = [
       'Rebuilt the entire website alongside 4 developers in Nextjs and Reactjs, learning React for the first time.',
       'Bootstrapped sign-on using a magic link and NextAuth to ensure only McMaster students could make accounts through their school emails.',
     ],
-    stack: [
-      'Next.js',
-      'React',
-      'TypeScript',
-      'Tailwind CSS',
-      'MongoDB',
-      'NextAuth',
-    ],
+    stack: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS'],
     logo: {
       src: '/logos/mcmaster_engineering_society.png',
       alt: 'McMaster Engineering Society logo',

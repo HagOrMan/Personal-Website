@@ -273,16 +273,29 @@ export const CARD_INSET_LEFT_CLASS = 'pl-14 md:pl-0 md:pr-[calc(50%+2.5rem)]';
 
 /**
  * Where a photo sits from `md` up: the half of the timeline the card isn't
- * using, mirroring the card's own inset so the two read as a matched pair
- * either side of the rail.
+ * using, vertically centred on the card.
  *
- * It's absolutely positioned against the entry's `<li>` - the card is a grid
- * and is deliberately left unpositioned, so the photo can start life as an
- * ordinary block inside it on mobile and be lifted out of the card entirely
- * at `md` without being duplicated in the DOM. If the card ever gains
- * `relative`, this breaks and the photo will land inside it.
+ * Positioned against the *card*, not the entry, and that's the whole trick.
+ * An entry is a 56vh block that's mostly empty space below the card, so
+ * `top: 50%` of the entry would drop the photo well beneath the thing it
+ * belongs to. The card is what the eye pairs it with, so the card is what it
+ * centres against - which is only possible because the card is `md:relative`.
+ *
+ * The horizontal offsets fall out of the geometry. Card and photo are each
+ * inset 2.5rem from the rail's centre line, so the gap between the card's
+ * near edge and the photo's near edge is exactly twice that, 5rem; and the
+ * two halves are the same width, so `w-full` against the card is the right
+ * span.
+ *
+ * Strictly the photo lands ~2px narrower than the card, because percentages
+ * resolve against the card's padding box and that excludes its 1px border.
+ * Correcting it would mean hard-coding the border width here, where it would
+ * drift silently the moment anyone restyled the card - for a difference
+ * nobody can see between two edges a thousand pixels apart.
+ *
+ * Below `md` none of this applies: the photo is a plain block inside the card.
  */
 export const PHOTO_HALF_LEFT_CLASS =
-  'md:absolute md:top-0 md:left-0 md:right-[calc(50%+2.5rem)]';
+  'md:absolute md:top-1/2 md:right-[calc(100%+5rem)] md:w-full md:-translate-y-1/2';
 export const PHOTO_HALF_RIGHT_CLASS =
-  'md:absolute md:top-0 md:right-0 md:left-[calc(50%+2.5rem)]';
+  'md:absolute md:top-1/2 md:left-[calc(100%+5rem)] md:w-full md:-translate-y-1/2';
