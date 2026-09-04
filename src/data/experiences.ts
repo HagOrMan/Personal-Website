@@ -71,7 +71,21 @@ export interface Experience {
    */
   logo?: ExperienceLogo;
   photo?: ExperiencePhoto;
+  /**
+   * The org itself - its site, or the page announcing the thing. Renders as
+   * the link on the org's name in the card heading.
+   */
   href?: string;
+  /**
+   * A post of mine on LinkedIn about this experience, if there is one. Renders
+   * as a labelled link in the card's action row, beside More/Less.
+   *
+   * Independent of `href`: that one is "who this was with", this one is "what
+   * I wrote about it", and an entry can carry either, both, or neither. Point
+   * it at the post itself (the /posts/ or /feed/update/ permalink), not at my
+   * profile - the label promises a post.
+   */
+  linkedin?: string;
 }
 
 /** Node shape differs by kind, so the timeline prints a legend from this. */
@@ -113,6 +127,8 @@ export const experiences: Experience[] = [
       height: 810,
     },
     href: 'https://www.scotiabank.com',
+    linkedin:
+      'https://www.linkedin.com/posts/kyle-hagerman-se_i-just-wrapped-up-my-one-year-co-op-at-scotiabank-activity-7367375294803976193-4rSy?utm_source=share&utm_medium=member_desktop&rcm=ACoAADfaWEcBdC0j1c09zJFNEe2KwpuIz95fElU',
   },
   {
     id: 'gradient-ascent-ai',
@@ -221,6 +237,8 @@ export const experiences: Experience[] = [
       height: 478,
     },
     href: 'https://macengsociety.ca',
+    linkedin:
+      'https://www.linkedin.com/posts/kyle-hagerman-se_at-our-2025-fireball-our-undergraduate-engineering-activity-7289841812318429184-xmKY?utm_source=share&utm_medium=member_desktop&rcm=ACoAADfaWEcBdC0j1c09zJFNEe2KwpuIz95fElU',
   },
   {
     id: 'mcmaster-engineering-society-member',
@@ -279,6 +297,8 @@ export const experiences: Experience[] = [
       height: 798,
     },
     href: 'https://www.eng.mcmaster.ca/news/solutions-that-last-the-focus-of-mcmaster-student-hosted-ontario-engineering-competition/',
+    linkedin:
+      'https://www.linkedin.com/posts/kyle-hagerman-se_what-a-weekend-at-the-ontario-engineering-activity-7296954533425917952-uope?utm_source=share&utm_medium=member_desktop&rcm=ACoAADfaWEcBdC0j1c09zJFNEe2KwpuIz95fElU',
   },
   {
     id: 'hdsb-hackathon-judge-2023',

@@ -282,10 +282,17 @@ export const CARD_INSET_LEFT_CLASS = 'pl-14 md:pl-0 md:pr-[calc(50%+2.5rem)]';
  * accordion is the only thing below this block, so "everything above the
  * More button" and "everything that holds still" are the same run of content.
  *
- * The block's midpoint sits a little under 20px above the collapsed card's
- * true midpoint - it's missing the button row and the card's bottom padding.
- * At this size that reads as centred, and buying back the difference would
- * mean splitting the disclosure's button from its panel.
+ * The block's midpoint sits ~24px above the collapsed card's true midpoint -
+ * it's missing the action row and the card's bottom padding, which is half of
+ * (32px row + 16px gap) minus half the 24px bottom padding. At this size that
+ * reads as centred, and buying back the difference would mean splitting the
+ * disclosure's button from its panel.
+ *
+ * That 32px is the action row's `min-h-8` rather than the natural height of
+ * whatever is in it, which is why the figure is one number and not two: a card
+ * carrying a LinkedIn link and a card carrying only the More button have rows
+ * of the same height, so the photo sits the same distance off centre on every
+ * entry instead of shifting by 6px depending on the data.
  *
  * The negative inline margin is what keeps the geometry below honest. An
  * absolutely positioned child resolves its percentages against its containing

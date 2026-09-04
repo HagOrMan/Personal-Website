@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { ChevronDown } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -21,17 +21,27 @@ import { accordionTransition, chevronTransition } from './motion';
  * `details` is typed as plain strings for exactly this reason: with nothing
  * focusable inside, a collapsed panel can't trap the keyboard, so it needs no
  * `inert` (which would take the text back out of find-in-page). Put a link in
- * here one day and that changes.
+ * here one day and that changes. Note that `action` below is explicitly *not*
+ * that: it shares the trigger's row, outside the collapsible panel, and so is
+ * reachable whether the card is open or shut.
  */
 export function ExpandableDetail({
   id,
   details,
   reduced,
+  action,
 }: {
   /** The experience's slug - namespaces the button/panel id pair. */
   id: string;
   details: string[];
   reduced: boolean;
+  /**
+   * A second control for the card's action row - the LinkedIn post link,
+   * today. It shares the trigger's row rather than claiming one of its own so
+   * a card keeps exactly one band of interactivity at its foot, and so the
+   * row's height doesn't depend on whether an entry happens to have a link.
+   */
+  action?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -40,34 +50,54 @@ export function ExpandableDetail({
 
   return (
     <>
-      <button
-        type='button'
-        id={triggerId}
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((wasOpen) => !wasOpen)}
-        className={cn(
-          'focus-visible:ring-ring inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-          // The rail's blue rather than the site's turquoise primary, so the
-          // one interactive thing on a card belongs to the same palette as
-          // the timeline it sits against. Two shades because breeze-400 is a
-          // bright sky blue - it reads well on the dark card and washes out
-          // on the light one, so light mode takes the deeper step.
-          'text-breeze-700 hover:text-breeze-800 dark:text-breeze-400 dark:hover:text-breeze-300',
-          'transition-colors motion-reduce:transition-none',
-        )}
-      >
-        {/* Says what happens next, and stays the same two words either way. */}
-        {open ? 'Less' : 'More'}
-        <motion.span
-          aria-hidden
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={chevronTransition(reduced)}
-          className='flex'
+      {/*
+        The action row. `min-h-8` is set here rather than left to whatever the
+        row happens to contain, for two reasons: it gives the bare text trigger
+        a proper touch target on a phone, and it keeps every card's row the
+        same height whether or not that entry has a link - which is what stops
+        the desktop photo's centring drifting card to card (see
+        PHOTO_ANCHOR_CLASS in ./motion).
+
+        Wrapping is the safety net, not the plan: the pair fits one line down
+        to roughly a 320px viewport, and `justify-between` simply leaves the
+        trigger alone on cards with no action.
+      */}
+      <div className='flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-2'>
+        <button
+          type='button'
+          id={triggerId}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((wasOpen) => !wasOpen)}
+          className={cn(
+            'focus-visible:ring-ring inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
+            // The rail's blue rather than the site's turquoise primary, so the
+            // one interactive thing on a card belongs to the same palette as
+            // the timeline it sits against. Two shades because breeze-400 is a
+            // bright sky blue - it reads well on the dark card and washes out
+            // on the light one, so light mode takes the deeper step.
+            //
+            // It also keeps the only colour in the row: whatever sits in
+            // `action` starts muted, so the primary action stays the one the
+            // eye lands on first.
+            'text-breeze-700 hover:text-breeze-800 dark:text-breeze-400 dark:hover:text-breeze-300',
+            'transition-colors motion-reduce:transition-none',
+          )}
         >
-          <ChevronDown className='size-4' />
-        </motion.span>
-      </button>
+          {/* Says what happens next, and stays the same two words either way. */}
+          {open ? 'Less' : 'More'}
+          <motion.span
+            aria-hidden
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={chevronTransition(reduced)}
+            className='flex'
+          >
+            <ChevronDown className='size-4' />
+          </motion.span>
+        </button>
+
+        {action}
+      </div>
 
       {/*
         No role="region" on purpose: it would be named from the trigger, and a

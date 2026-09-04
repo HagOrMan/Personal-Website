@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 
 import { ExpandableDetail } from './ExpandableDetail';
 import { LogoMark, PhotoPlate } from './ExperienceMedia';
+import { LinkedInPostLink } from './LinkedInPostLink';
 import {
   CARD_INSET_LEFT_CLASS,
   CARD_INSET_RIGHT_CLASS,
@@ -251,12 +252,26 @@ export function TimelineEntry({
         {/* The one thing that can change the card's height, and so the one
             thing left outside the block above. Same reveal beat as the body
             it used to sit inside; the card's own gap-4 provides the space the
-            button used to carry as a margin. */}
+            button used to carry as a margin.
+
+            The LinkedIn link rides in the disclosure's own action row rather
+            than being placed here: it's the second half of a pair, and the row
+            that holds both is the thing whose height the layout above depends
+            on staying constant. */}
         <motion.div variants={item} custom={2} className='min-w-0'>
           <ExpandableDetail
             id={experience.id}
             details={experience.details}
             reduced={reduced}
+            action={
+              experience.linkedin && (
+                <LinkedInPostLink
+                  href={experience.linkedin}
+                  org={experience.org}
+                  role={experience.role}
+                />
+              )
+            }
           />
         </motion.div>
       </article>
