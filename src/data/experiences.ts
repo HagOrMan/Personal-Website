@@ -95,7 +95,7 @@ export const experiences: Experience[] = [
       'Built a Python web scraper flagging anomalous high-notional trades, producing a daily signal used by 15 equity traders.',
       'Automated daily P&L and client-facing reporting in Python, removing manual steps and saving the team 6 hours weekly.',
     ],
-    stack: ['Python', 'Java', 'Angular (MEAN)'],
+    stack: ['Python', 'Java', 'Angular (MEAN)', 'SQL'],
     logo: {
       src: '/logos/scotiabank.png',
       alt: 'Scotiabank logo',
@@ -126,14 +126,13 @@ export const experiences: Experience[] = [
     },
     href: 'https://gradient-ascent.com/',
   },
-
   {
     id: 'mcmaster-engineering-society',
     kind: 'volunteering',
     org: 'McMaster Engineering Society',
     role: 'Infrastructure Technology Manager',
     location: 'Hamilton, ON',
-    start: '2022-09',
+    start: '2024-05',
     end: 'present',
     summary:
       "I lead around 20 developers building the tools McMaster's engineering student body uses, our flagship being a custom booking portal for study rooms.",
@@ -165,6 +164,63 @@ export const experiences: Experience[] = [
       height: 566,
     },
     href: 'https://macengsociety.ca',
+  },
+  {
+    id: 'mcmaster-engineering-society-member',
+    kind: 'volunteering',
+    org: 'McMaster Engineering Society',
+    role: 'Infrastructure Technology Member',
+    location: 'Hamilton, ON',
+    start: '2023-05',
+    end: '2024-04',
+    summary:
+      'I remade the McMaster Engineering Society website from scratch, my first ever website development experience!',
+    details: [
+      'Rebuilt the entire website alongside 4 developers in Nextjs and Reactjs, learning React for the first time.',
+      'Bootstrapped sign-on using a magic link and NextAuth to ensure only McMaster students could make accounts through their school emails.',
+    ],
+    stack: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Tailwind CSS',
+      'MongoDB',
+      'NextAuth',
+    ],
+    logo: {
+      src: '/logos/mcmaster_engineering_society.png',
+      alt: 'McMaster Engineering Society logo',
+    },
+    photo: {
+      src: '/experiences/mes-website.webp',
+      alt: 'A page I worked on for the MES website',
+      caption: 'A page I worked on, showing off engineering publications!',
+      width: 1080,
+      height: 493,
+    },
+    href: 'https://macengsociety.ca',
+  },
+  {
+    id: 'fedex',
+    kind: 'coop',
+    org: 'FedEx',
+    role: 'Associate Programmer Analyst',
+    location: 'Mississauga, ON',
+    start: '2022-05',
+    end: '2022-08',
+    summary:
+      'Worked with Business Intelligence Analysts for ETL processes and scripting.',
+    details: [
+      'Reworked an existing data pipeline in Azure to use a new source, validated the new data, optimized the process, and created documentation from scratch on the pipeline.',
+      'Assisted in data reporting activities using TIBCO Spotfire and Power BI, creating dashboards and data feeds tied to vaccine reporting.',
+      'Assisted in data extraction, data warehouse and data lake development using Microsoft Azure, creating new data pipelines for a predictive analysis project.',
+    ],
+    stack: ['SQL', 'Microsoft Azure', 'Power BI', 'Data Pipelines'],
+    logo: {
+      src: '/logos/fedex.png',
+      alt: 'FedEx logo',
+    },
+    href: 'https://www.fedex.com/en-ca/home.html',
   },
 ];
 
