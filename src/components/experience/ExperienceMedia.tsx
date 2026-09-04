@@ -11,11 +11,11 @@ import { cn } from '@/lib/utils';
 import {
   ENTRY_IN_VIEW_MARGIN,
   logoVariants,
-  photoRestTiltClass,
-  photoVariants,
-  photoInnerEdgeClass,
   PHOTO_MAX_H,
   PHOTO_RAIL_GAP,
+  photoInnerEdgeClass,
+  photoRestTiltClass,
+  photoVariants,
   type TimelineSide,
 } from './motion';
 
