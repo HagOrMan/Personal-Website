@@ -1,5 +1,7 @@
 import { WaveSpray } from '@/components/animated-fun/Wavespray';
+import { Timeline } from '@/components/experience/Timeline';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { sortedExperiences } from '@/data/experiences';
 
 export default function Experience() {
   return (
@@ -17,6 +19,9 @@ export default function Experience() {
         }
         fadeDecoration={true}
       />
+
+      {/* Server component down to here - only the timeline subtree is client. */}
+      <Timeline experiences={sortedExperiences} />
     </main>
   );
 }
