@@ -13,6 +13,9 @@ import { accordionTransition, chevronTransition } from './motion';
  * The detail bullets, collapsed in place. The card grows downward from the
  * button, so expanding an entry never moves what the reader is looking at.
  *
+ * Renders flush at the top: the card is a flex column with its own gap, and
+ * this sits in a cell of it, so a margin here would stack on top of that gap.
+ *
  * The panel is always rendered and only collapsed to `height: 0` - the
  * bullets stay in the DOM so find-in-page and site search still reach them.
  * `details` is typed as plain strings for exactly this reason: with nothing
@@ -44,7 +47,7 @@ export function ExpandableDetail({
         aria-controls={panelId}
         onClick={() => setOpen((wasOpen) => !wasOpen)}
         className={cn(
-          'focus-visible:ring-ring mt-4 inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
+          'focus-visible:ring-ring inline-flex cursor-pointer items-center gap-1 rounded-md text-sm font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
           // The rail's blue rather than the site's turquoise primary, so the
           // one interactive thing on a card belongs to the same palette as
           // the timeline it sits against. Two shades because breeze-400 is a

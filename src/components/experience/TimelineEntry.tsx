@@ -23,6 +23,7 @@ import {
   entryContainerVariants,
   entryItemVariants,
   NODE_Y_CLASS,
+  PHOTO_ANCHOR_CLASS,
   PHOTO_HALF_LEFT_CLASS,
   PHOTO_HALF_RIGHT_CLASS,
   RAIL_X_CLASS,
@@ -89,14 +90,25 @@ export function TimelineEntry({
       animate={revealed ? 'visible' : 'hidden'}
       variants={entryContainerVariants}
       className={cn(
-        // Also the containing block for the photo at md - see PHOTO_HALF_*.
+        // The positioning context the node and the connector hang off. The
+        // photo has its own at md - see PHOTO_ANCHOR_CLASS.
         'relative',
         // scroll-mt clears the fixed navbar when someone lands on /experience#slug.
         'scroll-mt-24',
-        // One entry roughly fills the view, with the next node peeking below.
-        // Shorter at md, which is what puts more of the timeline on screen on
-        // a desktop. These two are the vertical-rhythm tuning knobs.
-        'min-h-[72vh] pb-[8vh] md:min-h-[56vh]',
+        // Two different rhythms, on purpose.
+        //
+        // At md the entry is a fixed 56vh block: the photo hangs in the half
+        // the card isn't using, so the entry has to reserve room for whichever
+        // of the two is taller, and a card that grew into the next entry's
+        // photo column would collide with it. Spacing is a side effect of that
+        // reservation, so it varies with the card - which is fine, because at
+        // this width the empty half is carrying the eye anyway.
+        //
+        // Below md there is no second column and nothing to reserve room for,
+        // so a min-height only bought the shorter cards a screenful of dead
+        // rail while the tall ones got the padding alone. Padding on its own
+        // gives every card the same gap to the next one.
+        'pb-16 md:min-h-[56vh] md:pb-[8vh]',
         // The last entry shouldn't leave most of a screen of empty rail under it.
         'last:min-h-0 last:pb-0',
         onRight ? CARD_INSET_RIGHT_CLASS : CARD_INSET_LEFT_CLASS,
@@ -125,114 +137,122 @@ export function TimelineEntry({
         )}
       />
 
-      <article
-        // `md:relative` is what the photo centres against - see PHOTO_HALF_*.
-        // It's only positioned from md, which is also the only breakpoint
-        // where the photo leaves the card, so below that the photo is just an
-        // ordinary block in the flow here.
-        className='bg-card text-card-foreground border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm md:relative md:p-6'
-      >
-        {/* Heading row: the text block, and the logo tucked into the card's
-            outer corner beside it. A flex row rather than a grid column, so
-            the logo shares the heading's line at every width instead of
-            claiming a row of its own on mobile - and so everything below
-            keeps the card's full width without any span juggling. */}
-        <div
-          className={cn(
-            'flex items-start gap-4',
-            // At md the outer corner is whichever side faces away from the
-            // rail; reversing moves the logo there without moving the text.
-            !onRight && 'md:flex-row-reverse',
-          )}
-        >
-          <div className='min-w-0 flex-1'>
-            <motion.p
-              variants={item}
-              custom={0}
-              className='text-muted-foreground text-sm'
-            >
-              {/* Sighted readers get the kind from the node's shape, which is
-                  decorative - this is the same information for everyone else. */}
-              <span className='sr-only'>{KIND_LABELS[experience.kind]}. </span>
-              <time dateTime={range.start.dateTime}>{range.start.label}</time>
-              {' — '}
-              {range.end ? (
-                <time dateTime={range.end.dateTime}>{range.end.label}</time>
-              ) : (
-                PRESENT_LABEL
-              )}
-            </motion.p>
-
-            <motion.div variants={item} custom={1} className='mt-1'>
-              <h2 className='text-foreground text-xl font-semibold tracking-tight md:text-2xl'>
-                {experience.role}
-              </h2>
-              <p className='text-muted-foreground mt-0.5 text-sm md:text-base'>
-                {experience.href ? (
-                  <a
-                    href={experience.href}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='animated-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-hidden'
-                  >
-                    {experience.org}
-                  </a>
+      <article className='bg-card text-card-foreground border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm md:p-6'>
+        {/* Everything down to the More button, which is everything whose
+            height is fixed once the card has rendered. From md this is what
+            the photo is positioned and centred against, so that opening the
+            details grows the card beneath the photo instead of carrying it
+            down the page - see PHOTO_ANCHOR_CLASS. Below md it's an ordinary
+            wrapper and the photo is just a block in the flow inside it. */}
+        <div className={cn('flex flex-col gap-4', PHOTO_ANCHOR_CLASS)}>
+          {/* Heading row: the text block, and the logo tucked into the card's
+              outer corner beside it. A flex row rather than a grid column, so
+              the logo shares the heading's line at every width instead of
+              claiming a row of its own on mobile - and so everything below
+              keeps the card's full width without any span juggling. */}
+          <div
+            className={cn(
+              'flex items-start gap-4',
+              // At md the outer corner is whichever side faces away from the
+              // rail; reversing moves the logo there without moving the text.
+              !onRight && 'md:flex-row-reverse',
+            )}
+          >
+            <div className='min-w-0 flex-1'>
+              <motion.p
+                variants={item}
+                custom={0}
+                className='text-muted-foreground text-sm'
+              >
+                {/* Sighted readers get the kind from the node's shape, which is
+                    decorative - this is the same information for everyone else. */}
+                <span className='sr-only'>{KIND_LABELS[experience.kind]}. </span>
+                <time dateTime={range.start.dateTime}>{range.start.label}</time>
+                {' — '}
+                {range.end ? (
+                  <time dateTime={range.end.dateTime}>{range.end.label}</time>
                 ) : (
-                  experience.org
+                  PRESENT_LABEL
                 )}
-                {experience.location && (
-                  <>
-                    {' · '}
-                    {experience.location}
-                  </>
-                )}
-              </p>
-            </motion.div>
+              </motion.p>
+
+              <motion.div variants={item} custom={1} className='mt-1'>
+                <h2 className='text-foreground text-xl font-semibold tracking-tight md:text-2xl'>
+                  {experience.role}
+                </h2>
+                <p className='text-muted-foreground mt-0.5 text-sm md:text-base'>
+                  {experience.href ? (
+                    <a
+                      href={experience.href}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='animated-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-hidden'
+                    >
+                      {experience.org}
+                    </a>
+                  ) : (
+                    experience.org
+                  )}
+                  {experience.location && (
+                    <>
+                      {' · '}
+                      {experience.location}
+                    </>
+                  )}
+                </p>
+              </motion.div>
+            </div>
+
+            {logo && (
+              <div className='shrink-0'>
+                <LogoMark
+                  logo={logo}
+                  org={experience.org}
+                  side={side}
+                  reduced={reduced}
+                />
+              </div>
+            )}
           </div>
 
-          {logo && (
-            <div className='shrink-0'>
-              <LogoMark
-                logo={logo}
-                org={experience.org}
-                side={side}
-                reduced={reduced}
-              />
+          {/* One element, two homes. Below md it's an ordinary block inside the
+              card, sitting under the heading. From md it's lifted out onto the
+              empty half of the timeline opposite the card - same DOM node, no
+              duplicate image, no viewport measured in JS. */}
+          {photo && (
+            <div
+              className={
+                photoSide === 'left'
+                  ? PHOTO_HALF_LEFT_CLASS
+                  : PHOTO_HALF_RIGHT_CLASS
+              }
+            >
+              <PhotoPlate photo={photo} side={photoSide} reduced={reduced} />
             </div>
           )}
+
+          <motion.div variants={item} custom={2} className='min-w-0'>
+            <p className='text-foreground/80 text-base leading-relaxed break-words'>
+              {experience.summary}
+            </p>
+
+            {experience.stack && experience.stack.length > 0 && (
+              <ul className='mt-3 flex flex-wrap gap-2'>
+                {experience.stack.map((tool) => (
+                  <li key={tool}>
+                    <Chip>{tool}</Chip>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
         </div>
 
-        {/* One element, two homes. Below md it's an ordinary block inside the
-            card, sitting under the heading. From md it's lifted out onto the
-            empty half of the timeline opposite the card - same DOM node, no
-            duplicate image, no viewport measured in JS. */}
-        {photo && (
-          <div
-            className={
-              photoSide === 'left'
-                ? PHOTO_HALF_LEFT_CLASS
-                : PHOTO_HALF_RIGHT_CLASS
-            }
-          >
-            <PhotoPlate photo={photo} side={photoSide} reduced={reduced} />
-          </div>
-        )}
-
+        {/* The one thing that can change the card's height, and so the one
+            thing left outside the block above. Same reveal beat as the body
+            it used to sit inside; the card's own gap-4 provides the space the
+            button used to carry as a margin. */}
         <motion.div variants={item} custom={2} className='min-w-0'>
-          <p className='text-foreground/80 text-base leading-relaxed break-words'>
-            {experience.summary}
-          </p>
-
-          {experience.stack && experience.stack.length > 0 && (
-            <ul className='mt-3 flex flex-wrap gap-2'>
-              {experience.stack.map((tool) => (
-                <li key={tool}>
-                  <Chip>{tool}</Chip>
-                </li>
-              ))}
-            </ul>
-          )}
-
           <ExpandableDetail
             id={experience.id}
             details={experience.details}

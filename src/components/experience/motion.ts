@@ -272,14 +272,82 @@ export const CARD_INSET_RIGHT_CLASS = 'pl-14 md:pr-0 md:pl-[calc(50%+2.5rem)]';
 export const CARD_INSET_LEFT_CLASS = 'pl-14 md:pl-0 md:pr-[calc(50%+2.5rem)]';
 
 /**
+ * The card's resting block: the run of content whose height can't change.
+ * From `md` up it's also the box the photo is positioned against - see
+ * PHOTO_HALF_* - which is the whole point of it existing.
+ *
+ * Centring the photo on the *card* meant the photo moved every time someone
+ * opened the details, because the card's midpoint moves when the card grows.
+ * Centring it on the part of the card that can't grow keeps it still. The
+ * accordion is the only thing below this block, so "everything above the
+ * More button" and "everything that holds still" are the same run of content.
+ *
+ * The block's midpoint sits a little under 20px above the collapsed card's
+ * true midpoint - it's missing the button row and the card's bottom padding.
+ * At this size that reads as centred, and buying back the difference would
+ * mean splitting the disclosure's button from its panel.
+ *
+ * The negative inline margin is what keeps the geometry below honest. An
+ * absolutely positioned child resolves its percentages against its containing
+ * block's padding box, and this block sits inside the card's `md:p-6`, so it
+ * would otherwise be 3rem narrower than the card and hand the photo that
+ * width. Pulling the block out by the padding and putting the same padding
+ * back on itself leaves its own content exactly where it was while restoring
+ * the card's full width as the photo's reference.
+ */
+export const PHOTO_ANCHOR_CLASS = 'md:relative md:-mx-6 md:px-6';
+
+/**
+ * How tall a photo may get from `md` up.
+ *
+ * Uncapped, a photo is `width: 100%` of its half - 472px at `lg` - so a
+ * square image renders 472px tall against cards that sit nearer 300px. The
+ * overhang goes both ways from the centre, and the top of it reaches into the
+ * card above. That card is a real collision rather than a near miss: sides
+ * alternate, so an entry's photo shares its column with the *previous*
+ * entry's card, not with its own.
+ *
+ * The two terms cover the two ways that happens. `24rem` stops a tall image
+ * dominating a roomy window; `40vh` keeps it inside the entry's `56vh` on a
+ * short one, where the previous card's bottom edge is much closer. Whichever
+ * is smaller is the one doing the work.
+ *
+ * A raw length rather than a class because it's spent as a *width*: PhotoPlate
+ * multiplies it by the image's own ratio and caps the figure. Capping the
+ * height instead would leave the caption at the figure's full width with the
+ * picture floating narrower above it, and would need the image's width left
+ * `auto` - which is the same thing said less directly.
+ */
+export const PHOTO_MAX_H = 'min(24rem,40vh)';
+
+/**
+ * Which edge a capped photo hugs: the one facing the rail, always.
+ *
+ * A photo is normally exactly as wide as the card opposite it, and the two are
+ * inset the same 2.5rem from the rail's centre line, so their inner edges sit
+ * symmetric about it. That symmetry is the layout's one strong horizontal
+ * relationship, and PHOTO_MAX_H breaks it the moment it bites: the photo gets
+ * narrower, and centring the slack would split it across both edges and pull
+ * the inner one away from the rail. Against a card that hasn't moved, the card
+ * then reads as shifted outwards.
+ *
+ * So the slack all goes to the outer edge, which lines up with nothing and
+ * can absorb it invisibly. `side` is the photo's own half, so a photo in the
+ * left half hugs right.
+ */
+export const photoInnerEdgeClass = (side: TimelineSide) =>
+  side === 'left' ? 'md:ml-auto' : 'md:mr-auto';
+
+/**
  * Where a photo sits from `md` up: the half of the timeline the card isn't
- * using, vertically centred on the card.
+ * using, vertically centred on the card's resting block.
  *
  * Positioned against the *card*, not the entry, and that's the whole trick.
  * An entry is a 56vh block that's mostly empty space below the card, so
  * `top: 50%` of the entry would drop the photo well beneath the thing it
  * belongs to. The card is what the eye pairs it with, so the card is what it
- * centres against - which is only possible because the card is `md:relative`.
+ * centres against - which is only possible because PHOTO_ANCHOR_CLASS makes
+ * that block `md:relative`.
  *
  * The horizontal offsets fall out of the geometry. Card and photo are each
  * inset 2.5rem from the rail's centre line, so the gap between the card's

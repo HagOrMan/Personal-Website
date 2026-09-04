@@ -13,6 +13,7 @@ import {
   logoVariants,
   photoRestTiltClass,
   photoVariants,
+  PHOTO_MAX_H_CLASS,
   type TimelineSide,
 } from './motion';
 
@@ -87,6 +88,11 @@ export function LogoMark({
  * How wide the photo renders. On desktop it fills the empty half of the
  * timeline opposite the card; below `md` it's inside the card, so page
  * padding, the rail inset and the card's own padding all come off.
+ *
+ * The upper bound, in other words. A photo tall enough for PHOTO_MAX_H_CLASS
+ * to catch renders narrower than this, and the browser then fetches one size
+ * up from what it strictly needs - which is the harmless direction to be
+ * wrong in, and cheaper than encoding the cap's arithmetic here as well.
  */
 const PHOTO_SIZES =
   '(min-width: 1024px) 472px, (min-width: 768px) 304px, calc(100vw - 8.5rem)';
@@ -108,9 +114,8 @@ const PHOTO_SIZES =
  * It watches itself rather than inheriting the entry's reveal, so it lands as
  * its own beat. That matters most on mobile, where it sits below the heading
  * inside the card and would otherwise have already played by the time you
- * scrolled down to it. On desktop it's aligned with the top of the card in
- * the opposite half, so the two triggers land at more or less the same
- * moment anyway.
+ * scrolled down to it. On desktop it sits alongside the card in the opposite
+ * half, so the two triggers land at more or less the same moment anyway.
  */
 export function PhotoPlate({
   photo,
@@ -142,20 +147,41 @@ export function PhotoPlate({
         // Intrinsic sizing: the browser reserves the right box from the ratio
         // before the file arrives, and the image fills it exactly - no crop,
         // no bars. This is the path worth being on.
+        //
+        // `w-auto max-w-full` rather than `w-full` so PHOTO_MAX_H_CLASS can
+        // do its job. Both dimensions have to be free for the browser to
+        // honour a max-height by shrinking the picture; pin the width and it
+        // clamps the height alone and squashes it. The image is always wider
+        // than its half here, so max-width is what sets the size in the usual
+        // case and the cap only bites on the tall ones - the square
+        // infographic, mainly. `mx-auto` centres whatever it leaves.
         <Image
           src={photo.src}
           alt={photo.alt}
           width={photo.width}
           height={photo.height}
           sizes={PHOTO_SIZES}
-          className='ring-border h-auto w-full rounded-lg shadow-lg ring-1'
+          className={cn(
+            'ring-border mx-auto h-auto w-auto max-w-full rounded-lg shadow-lg ring-1',
+            PHOTO_MAX_H_CLASS,
+          )}
         />
       ) : (
         // No declared size, so fall back to a 16:9 box with the whole image
         // contained in it. Anything that isn't 16:9 letterboxes against the
         // muted surface - visibly a fallback, and fixed by adding width and
         // height to the entry.
-        <div className='bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1'>
+        //
+        // The cap applies here too. It can only clip the box rather than
+        // shrink it, since the ratio is declared and the width is 100%, but
+        // `object-contain` means that letterboxes the image instead of
+        // cropping it - which is what this branch already does anyway.
+        <div
+          className={cn(
+            'bg-muted ring-border relative aspect-video w-full overflow-hidden rounded-lg shadow-lg ring-1',
+            PHOTO_MAX_H_CLASS,
+          )}
+        >
           <Image
             src={photo.src}
             alt={photo.alt}
