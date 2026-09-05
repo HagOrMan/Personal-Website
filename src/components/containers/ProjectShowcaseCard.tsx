@@ -150,7 +150,7 @@ export const ProjectShowcaseCard = ({
               src={project.thumbnail}
               alt=''
               fill
-              sizes='(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
+              sizes='(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw'
               // Contain, matching the spotlight variant: a poster that isn't
               // 16:9 letterboxes against bg-muted instead of losing its edges.
               // The hover scale above then eats into the bars first.

@@ -56,7 +56,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
       'NextAuth',
     ],
     description:
-      'A custom room booking system that McMaster engineering students use to reserve study space on campus.',
+      'A custom room booking system that McMaster engineering students use to reserve study spaces on campus, with an admin portal for managing rooms.',
     year: '2024-present',
     tags: ['at-scale', 'community', 'fullstack'],
     featured: true,
@@ -76,7 +76,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     skills: 'Next.js, TypeScript, design',
     tools: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS'],
     description:
-      'The McMaster Engineering Society site, rebuilt from Wix into Next.js: info pages plus club and event portals.',
+      'The McMaster Engineering Society site, rebuilt from Wix into Next.js. My first website development experience ever!',
     // Ties with Hatch on both bounds, so the authored order above is what
     // separates them on the page.
     year: '2024-present',
@@ -106,7 +106,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
       'Zustand',
     ],
     description:
-      'Tracks daily spending and money owed back from group purchases, with charts, reports, and email digests.',
+      'Tracks daily spending and money owed back from group purchases, with charts, reports, and email digests. Created to keep me mindful of my spending and visualize it better.',
     year: 2026,
     // Single-user by construction — an owner allowlist, not a product — so
     // it's personal rather than at-scale, however much machinery is in it.
@@ -134,7 +134,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
       'LaTeX',
     ],
     description:
-      'Tracks job applications, their event timelines, and the resume version each used.',
+      'Tracks job applications, their event timelines, and the resume version each used (auto-compiled from the LaTeX code into a pdf!).',
     year: 2026,
     tags: ['personal', 'fullstack'],
     featured: true,
@@ -168,7 +168,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     skills: 'Flutter, Flask, Java web scraping, team of four in a weekend',
     tools: ['Flutter', 'Python', 'Flask', 'Java'],
     description:
-      "Scan a medication's barcode with your phone and see which drugs it dangerously interacts with.",
+      "Scan a medication's barcode with your phone and see which drugs it dangerously interacts with, ensuring you never experience any adverse effects.",
     year: 2023,
     tags: ['no-ai', 'hackathon-winner'],
     featured: true,
@@ -193,7 +193,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     skills: 'Python, Pygame, trajectory & collision math',
     tools: ['Python', 'Pygame'],
     description:
-      'Throw pokeballs to catch pokemon with full catch animations, then browse your collection in a full pokedex.',
+      'Throw pokeballs to catch pokemon with fully custom animations, then browse your collection in a pokedex where you can level up your monpokes!',
     year: '2021-2022',
     tags: ['personal', 'no-ai'],
     featured: true,

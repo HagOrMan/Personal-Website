@@ -96,7 +96,7 @@ export const ProjectSpotlightCard = ({
             src={project.thumbnail}
             alt=''
             fill
-            sizes='(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
+            sizes='(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw'
             // Contain so nothing is cropped — see ProjectPreviewVideo, which
             // stacks on top of this and has to letterbox the same way.
             className='object-contain object-center'
