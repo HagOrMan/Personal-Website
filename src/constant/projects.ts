@@ -184,7 +184,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     description:
       'Generates procedural islands with biomes, rivers, and lakes, then maps road networks connecting their cities.',
     year: 2023,
-    tags: ['no-ai', 'personal'],
+    tags: ['no-ai'],
     featured: false,
     links: [
       { kind: 'github', href: 'https://github.com/HagOrMan/Island_Builder' },
@@ -235,7 +235,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     description:
       'Simulates 42 games of the dice board game Piraten Kapern between two bot players and reports win rates.',
     year: 2023,
-    tags: ['no-ai', 'personal'],
+    tags: ['no-ai'],
     featured: false,
     links: [
       { kind: 'github', href: 'https://github.com/HagOrMan/Piraten-Kapern' },

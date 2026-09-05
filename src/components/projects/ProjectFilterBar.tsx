@@ -159,7 +159,10 @@ function TagFilterChip({
           </button>
         </Chip>
       </TooltipTrigger>
-      <TooltipContent className='max-w-60'>{description}</TooltipContent>
+      {/* Wide enough that every tag description but No AI fits on one line,
+          where w-fit hugs the text exactly. At the old max-w-60 the longer
+          ones hit the clamp and sat in a box wider than their own text. */}
+      <TooltipContent className='max-w-72'>{description}</TooltipContent>
     </Tooltip>
   );
 }
