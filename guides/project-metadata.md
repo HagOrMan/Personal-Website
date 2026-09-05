@@ -48,14 +48,15 @@ team of five"`). It never drives a filter, so it's allowed to be interesting.
 vocabulary verbatim:
 
 ```
-Flask, Flutter, JTS Topology Suite, Java, JavaScript, Log4j2, Maven,
-MongoDB, Next.js, NextAuth, Pygame, Python, React, Supabase, Tailwind CSS,
-Three.js, TypeScript
+Angular, Docker, Express, Flask, Flutter, JTS Topology Suite, Java,
+JavaScript, Log4j2, Maven, MongoDB, Next.js, NextAuth, Node.js, Playwright,
+Pygame, Python, React, SQL, Selenium, Supabase, Tailwind CSS, Three.js,
+TypeScript
 ```
 
-The list is short on purpose — it only holds things I've actually built with,
-so it will very often be missing what this repo uses. That's expected. When it
-is, name the missing tool at the end of your answer and leave it out of
+The list is short on purpose — it's roughly the set of things I've actually
+built with, so it will often be missing what this repo uses. That's expected.
+When it is, name the missing tool at the end of your answer and leave it out of
 `tools`; I'll add it to `TOOLS` in
 `src/types/projects/ProjectShowcase.ts`, which is what makes the object
 compile. Never substitute the nearest match — a Django project is not a Flask
@@ -71,11 +72,11 @@ and `tools` already cover that.
 
 **`year`** — when the work actually happened, in one of three forms:
 
-| you type | card shows | use it when |
-| --- | --- | --- |
-| `2019` | 2019 | the work fits inside one year |
-| `'2023-2026'` | 2023–2026 | it ran across several |
-| `'2024-present'` | 2024–present | it's still going |
+| you type         | card shows   | use it when                   |
+| ---------------- | ------------ | ----------------------------- |
+| `2019`           | 2019         | the work fits inside one year |
+| `'2023-2026'`    | 2023–2026    | it ran across several         |
+| `'2024-present'` | 2024–present | it's still going              |
 
 Get the bounds from git:
 
@@ -96,15 +97,15 @@ is still going or just recently abandoned.
 
 **`tags`** — zero or more of:
 
-| tag | means |
-| --- | --- |
-| `no-ai` | Written start to finish without AI assistance. |
-| `fullstack` | Has both a frontend and a backend I built. |
-| `community` | Built for or with other people, rather than just for me. |
-| `personal` | Built for myself, for fun or to solve my own problem. |
-| `work` | Built professionally or for a client. |
-| `at-scale` | Has real users, or handles real volume. |
-| `hackathon-winner` | Won something at a hackathon. |
+| tag                | means                                                    |
+| ------------------ | -------------------------------------------------------- |
+| `no-ai`            | Written start to finish without AI assistance.           |
+| `fullstack`        | Has both a frontend and a backend I built.               |
+| `community`        | Built for or with other people, rather than just for me. |
+| `personal`         | Built for myself, for fun or to solve my own problem.    |
+| `work`             | Built professionally or for a client.                    |
+| `at-scale`         | Has real users, or handles real volume.                  |
+| `hackathon-winner` | Won something at a hackathon.                            |
 
 `no-ai` is a claim about how it was written — check the git history for a
 plausible date and commit rhythm rather than assuming. If you can't tell,
@@ -134,11 +135,11 @@ After pasting the object into `src/constant/projects.ts`:
 
 - **Set `featured`.** Three to six featured projects is the target; that's what
   the page opens on.
-- **Add the poster.** Drop a 16:9 image at `public/projects/{slug}.jpg` and set
-  `thumbnail: '/projects/{slug}.jpg'`. Without one the card renders a skeleton
-  in the media slot, which is fine but dull.
-- **Add the preview loop**, if there is one. Record at 1080p in OBS, trim in
-  CapCut, then encode:
+- **Add the media.** Posters and loops are both wired up by one script, and
+  `thumbnail` / `video` are never written by hand — see the section below.
+  Without media a card renders a skeleton in the slot, which is fine but dull.
+- **Encode the preview loop** before running that script. Record at 1080p in
+  OBS, trim in CapCut, then:
 
   ```bash
   ffmpeg -i input.mp4 \
@@ -153,9 +154,72 @@ After pasting the object into `src/constant/projects.ts`:
   playback begin before the file finishes downloading. Target under 800KB, hard
   ceiling 1.5MB — push `-crf` toward 30 if it's over.
 
-  Upload it to the R2 bucket as `projects/{slug}.mp4` — videos never live in
-  this repo, same rule as the about-me series — then set
-  `video: previewVideoSrc('{slug}')`.
+  Cards letterbox with `object-contain`, so a loop that isn't 16:9 is fine —
+  it gets bars rather than a crop. Frame it however it reads best.
 
 - **Check the slug.** There must be a `src/app/projects/{slug}/page.tsx`. The
   build fails if there isn't, which is the intended behaviour.
+
+# Video + Cover Workflow
+
+1. Cut and encode a video
+
+Replace NAME, START, and DURATION. -t is a duration, not an end time — subtract: for 7s→14s, use -ss 7 -t 7.
+
+```bat
+ffmpeg -ss START -i NAME.mp4 -t DURATION -c:v libx264 -crf 26 -preset slow -profile:v high -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -an -movflags +faststart NAME-cut.mp4
+```
+
+If a cut lands slightly off, move -ss to after -i for that file — frame-exact, slower.
+
+Chain several with &&:
+
+```bat
+ffmpeg ... video-a-cut.mp4 && ffmpeg ... video-b-cut.mp4
+```
+
+2. Cover image
+
+Single file — matches the video name, .webp extension:
+
+```bat
+ffmpeg -y -i NAME-cut.mp4 -frames:v 1 -c:v libwebp -quality 80 -compression_level 6 -preset picture NAME-cut.webp
+```
+
+Frame too early? Add -ss SECONDS before -i (relative to the cut, decimals OK).
+
+Batch — run once all videos are final. Save as make-covers.bat in the video folder:
+
+```bat
+@echo off
+for %%f in (*.mp4) do (
+    echo Generating cover for %%~nf
+    ffmpeg -y -loglevel error -i "%%f" -frames:v 1 -c:v libwebp -quality 80 -compression_level 6 -preset picture "%%~nf.webp"
+)
+echo Done.
+pause
+```
+
+Regenerates every cover from every mp4 in the folder. Re-run it any time you re-cut something.
+
+## Wiring the media up
+
+Name each file for its slug — `{slug}.mp4` and `{slug}-cover.webp` (jpg and
+png work too) — put them all in one folder, and run:
+
+```bash
+bash scripts/prepare-project-assets.sh ~/Downloads/demos
+```
+
+It refuses to write anything if a filename doesn't match a route directory,
+which is the whole point: a loop uploaded to R2 under the wrong key fails as a
+silent 404 behind the poster, and nothing in the app would ever tell you.
+
+It puts posters in `public/projects/` (commit them), copies the loops to
+`.r2-staging/projects/` (gitignored), and regenerates
+`src/constant/projectAssets.ts`. Then drag `.r2-staging/projects/` into the R2
+bucket root, next to `about-me/` — videos never live in this repo.
+
+`constant/projects.ts` reads that manifest, so a card can only point at media
+the script actually placed. Don't set `thumbnail` or `video` on a project by
+hand; they'll be overwritten.

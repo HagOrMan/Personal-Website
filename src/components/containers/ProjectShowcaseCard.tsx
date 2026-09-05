@@ -139,7 +139,7 @@ export const ProjectShowcaseCard = ({
       />
 
       {/* Image with parallax-lite scale on hover */}
-      <div className='relative aspect-video w-full overflow-hidden'>
+      <div className='bg-muted relative aspect-video w-full overflow-hidden'>
         {project.thumbnail ? (
           <motion.div
             className='absolute inset-0'
@@ -151,7 +151,10 @@ export const ProjectShowcaseCard = ({
               alt=''
               fill
               sizes='(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
-              className='object-cover'
+              // Contain, matching the spotlight variant: a poster that isn't
+              // 16:9 letterboxes against bg-muted instead of losing its edges.
+              // The hover scale above then eats into the bars first.
+              className='object-contain object-center'
             />
           </motion.div>
         ) : (

@@ -1,11 +1,13 @@
+import {
+  PROJECT_ASSETS,
+  type ProjectAssetEntry,
+} from '@/constant/projectAssets';
 import { compareProjectYears } from '@/lib/projects/year';
 import { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
 /**
  * Preview loops live in Cloudflare R2 next to the about-me videos, never in
- * this repo — same rule as constant/videos.ts. Encode a 4–6s silent loop
- * (see guides/project-metadata.md), upload it to the bucket as
- * projects/{slug}.mp4, then set `video: previewVideoSrc('the-slug')` below.
+ * this repo — same rule as constant/videos.ts.
  */
 const R2_BASE_URL = process.env.NEXT_PUBLIC_R2_BASE_URL ?? '';
 
@@ -14,9 +16,17 @@ export function previewVideoSrc(slug: string): string {
 }
 
 /**
- * Posters are static assets in this repo, unlike the videos: drop the image at
- * public/projects/{slug}.jpg and set `thumbnail: '/projects/{slug}.jpg'`.
- * Until then the card renders a skeleton in the 16:9 slot.
+ * `thumbnail` and `video` are deliberately absent from the entries below:
+ * they're attached at the bottom of this file from the generated manifest, so
+ * a card can only point at media that scripts/prepare-project-assets.sh
+ * actually placed. Hand-writing them let a project claim a loop that was never
+ * uploaded, which fails as a silent 404 behind a poster — the one failure the
+ * cards are designed not to show you.
+ *
+ * To add media: record it, then run
+ *   bash scripts/prepare-project-assets.sh
+ * and upload .r2-staging/projects/ to the bucket. Until a project appears in
+ * the manifest its card renders a skeleton in the 16:9 slot.
  */
 
 /*
@@ -161,10 +171,26 @@ const PROJECT_LIST: TProjectShowcase[] = [
 ];
 
 /**
+ * Attaches whatever the manifest recorded for a project. Both halves are
+ * independently optional: a poster with no loop is the common case, and a loop
+ * with no poster works too — the <video> just fades in over the skeleton.
+ */
+function withAssets(project: TProjectShowcase): TProjectShowcase {
+  const assets: ProjectAssetEntry | undefined = PROJECT_ASSETS[project.slug];
+  if (!assets) return project;
+
+  return {
+    ...project,
+    thumbnail: assets.poster,
+    video: assets.video ? previewVideoSrc(project.slug) : undefined,
+  };
+}
+
+/**
  * Newest first, by the year each project last saw work — anything marked
  * 'present' leads. Array.prototype.sort is stable, so projects that tie keep
  * the authored order above, which is the tiebreak the cards rely on.
  */
-export const projects: TProjectShowcase[] = [...PROJECT_LIST].sort((a, b) =>
-  compareProjectYears(a.year, b.year),
-);
+export const projects: TProjectShowcase[] = [...PROJECT_LIST]
+  .sort((a, b) => compareProjectYears(a.year, b.year))
+  .map(withAssets);

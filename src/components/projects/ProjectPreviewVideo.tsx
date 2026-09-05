@@ -99,7 +99,12 @@ export function ProjectPreviewVideo({
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         className={cn(
-          'absolute inset-0 size-full object-cover',
+          // Contain, not cover: a recording that isn't exactly 16:9 gets
+          // letterboxed against the slot's bg-muted rather than cropped, so
+          // whatever the loop was framed around survives. Must match the
+          // poster's object-fit exactly — the two are stacked and crossfaded,
+          // and a mismatch shows up as the image jumping when playback starts.
+          'absolute inset-0 size-full object-contain object-center',
           'motion-safe:transition-opacity motion-safe:duration-300',
           isPlaying ? 'opacity-100' : 'opacity-0',
           className,

@@ -97,7 +97,9 @@ export const ProjectSpotlightCard = ({
             alt=''
             fill
             sizes='(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw'
-            className='object-cover'
+            // Contain so nothing is cropped — see ProjectPreviewVideo, which
+            // stacks on top of this and has to letterbox the same way.
+            className='object-contain object-center'
           />
         ) : (
           <Skeleton className='size-full animate-none rounded-none' />
