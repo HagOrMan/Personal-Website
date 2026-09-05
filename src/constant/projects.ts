@@ -134,7 +134,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
       'LaTeX',
     ],
     description:
-      'Tracks job applications, their event timelines, and the resume version each used (auto-compiling them from the LaTeX source on GitHub!).',
+      'Tracks job applications, their event timelines, and the resume version each used.',
     year: 2026,
     tags: ['personal', 'fullstack'],
     featured: true,
@@ -190,10 +190,10 @@ const PROJECT_LIST: TProjectShowcase[] = [
   {
     slug: 'monpoke',
     name: 'MonPoke',
-    skills: 'Python, Pygame, trajectory and collision math',
+    skills: 'Python, Pygame, trajectory & collision math',
     tools: ['Python', 'Pygame'],
     description:
-      'Throw pokeballs at wild pokemon to catch them, then browse your collection in a full pokedex.',
+      'Throw pokeballs to catch pokemon with full catch animations, then browse your collection in a full pokedex.',
     year: '2021-2022',
     tags: ['personal', 'no-ai'],
     featured: true,
@@ -219,7 +219,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     skills: 'Python, Pygame, chess rules written from scratch',
     tools: ['Python', 'Pygame'],
     description:
-      "Two-player chess where the board's left and right edges wrap around, so pieces attack through the walls.",
+      "Chess where the board's left and right edges wrap around, so pieces attack through the walls.",
     year: 2021,
     tags: ['personal', 'no-ai'],
     featured: true,
@@ -232,10 +232,10 @@ const PROJECT_LIST: TProjectShowcase[] = [
     // because it's authored second.
     slug: 'flappy-bird',
     name: 'Flappy Bird',
-    skills: 'Python, Pygame, hand-rolled jump physics and collision detection',
+    skills: 'Python, Pygame, custom jump physics and collision detection',
     tools: ['Python', 'Pygame'],
     description:
-      'A Flappy Bird clone with a solo mode and a two-player duel on one keyboard, plus four birds to pick from and animations for jumping and falling.',
+      'A Flappy Bird clone with a solo mode and a two-player duel, with animations for jumping and falling.',
     year: 2020,
     tags: ['personal', 'no-ai'],
     featured: false,
