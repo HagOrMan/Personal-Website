@@ -43,5 +43,3 @@ next-env.d.ts
 
 .vscode
 
-# staged R2 uploads (posters are committed, loops never are)
-/.r2-staging/

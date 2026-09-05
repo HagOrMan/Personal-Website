@@ -3,19 +3,19 @@ import { ProjectPageInProgress } from '@/components/projects/ProjectPageInProgre
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
-export default function IslandBuilder() {
+export default function FlappyBird() {
   return (
     <main className='bg-background page-shell'>
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: 'Home', path: '/' },
           { name: 'Projects', path: '/projects' },
-          { name: 'Island Builder', path: '/projects/island-builder' },
+          { name: 'Flappy Bird', path: '/projects/flappy-bird' },
         ])}
       />
       <PageHeader
-        title='Island Builder'
-        description='Imagine making islands with the click of a button, filled with cities, roads, and even different environments based on surrounding climates.'
+        title='Flappy Bird'
+        description='My take on Flappy Bird in Pygame, with physics written from scratch and a two-player duel mode the original never had.'
       />
       <ProjectPageInProgress />
     </main>

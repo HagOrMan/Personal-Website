@@ -1,7 +1,4 @@
-import {
-  PROJECT_ASSETS,
-  type ProjectAssetEntry,
-} from '@/constant/projectAssets';
+import { PROJECT_MEDIA } from '@/constant/projectAssets';
 import { compareProjectYears } from '@/lib/projects/year';
 import { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
@@ -15,18 +12,22 @@ export function previewVideoSrc(slug: string): string {
   return `${R2_BASE_URL}/projects/${slug}.mp4`;
 }
 
+/** Posters, unlike the loops, are committed static assets. */
+export function posterSrc(slug: string): string {
+  return `/projects/${slug}.webp`;
+}
+
 /**
  * `thumbnail` and `video` are deliberately absent from the entries below:
- * they're attached at the bottom of this file from the generated manifest, so
- * a card can only point at media that scripts/prepare-project-assets.sh
- * actually placed. Hand-writing them let a project claim a loop that was never
- * uploaded, which fails as a silent 404 behind a poster — the one failure the
- * cards are designed not to show you.
+ * they're attached at the bottom of this file from constant/projectAssets.ts,
+ * so media is declared in exactly one place. Setting them here would be
+ * overwritten, and the slug would have to be spelled right in two files
+ * instead of one.
  *
- * To add media: record it, then run
- *   bash scripts/prepare-project-assets.sh
- * and upload .r2-staging/projects/ to the bucket. Until a project appears in
- * the manifest its card renders a skeleton in the 16:9 slot.
+ * To add media: drop the poster at public/projects/{slug}.webp, upload the
+ * loop to R2 as projects/{slug}.mp4, then run
+ * scripts/prepare-project-assets.sh. Until a project is listed in
+ * projectAssets.ts its card renders a skeleton in the 16:9 slot.
  */
 
 /*
@@ -87,6 +88,64 @@ const PROJECT_LIST: TProjectShowcase[] = [
         href: 'https://github.com/McMaster-Engineering-Society/MES-Website-App-Router',
       },
       { kind: 'demo', href: 'https://macengsociety.ca' },
+    ],
+  },
+  {
+    slug: 'finance-tracker',
+    name: 'Finance Tracker',
+    skills: 'Next.js, TypeScript, Supabase, Agentic Development',
+    tools: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Tailwind CSS',
+      'Supabase',
+      'PostgreSQL',
+      'Recharts',
+      'TanStack Query',
+      'Zustand',
+    ],
+    description:
+      'Tracks daily spending and money owed back from group purchases, with charts, reports, and email digests.',
+    year: 2026,
+    // Single-user by construction — an owner allowlist, not a product — so
+    // it's personal rather than at-scale, however much machinery is in it.
+    tags: ['fullstack', 'personal'],
+    featured: true,
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/Finance-Tracker' },
+      // A separately deployed instance with seeded data. The real one holds
+      // my own spending, so the demo is the only thing that can be public.
+      { kind: 'demo', href: 'https://spending-demo.kylehagerman.dev' },
+    ],
+  },
+  {
+    slug: 'job-application-tracker',
+    name: 'Job Application Tracker',
+    skills: 'Next.js Server Actions, a LaTeX resume pipeline',
+    tools: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Supabase',
+      'PostgreSQL',
+      'Mantine',
+      'GitHub Actions',
+      'LaTeX',
+    ],
+    description:
+      'Tracks job applications, their event timelines, and the resume version each used (auto-compiling them from the LaTeX source on GitHub!).',
+    year: 2026,
+    tags: ['personal', 'fullstack'],
+    featured: true,
+    links: [
+      {
+        kind: 'github',
+        href: 'https://github.com/HagOrMan/Job-Application-Tracker',
+      },
+      // Same deal as Finance Tracker: a seeded public instance, since the
+      // live one is my own job search.
+      { kind: 'demo', href: 'https://jobs-demo.kylehagerman.dev' },
     ],
   },
   {
@@ -168,21 +227,33 @@ const PROJECT_LIST: TProjectShowcase[] = [
       { kind: 'github', href: 'https://github.com/HagOrMan/infinity-chess' },
     ],
   },
+  {
+    // Ties with Infinity Chess on both bounds, so this sits below it purely
+    // because it's authored second.
+    slug: 'flappy-bird',
+    name: 'Flappy Bird',
+    skills: 'Python, Pygame, hand-rolled jump physics and collision detection',
+    tools: ['Python', 'Pygame'],
+    description:
+      'A Flappy Bird clone with a solo mode and a two-player duel on one keyboard, plus four birds to pick from and animations for jumping and falling.',
+    year: 2020,
+    tags: ['personal', 'no-ai'],
+    featured: false,
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/Flappy-Bird' },
+    ],
+  },
 ];
 
-/**
- * Attaches whatever the manifest recorded for a project. Both halves are
- * independently optional: a poster with no loop is the common case, and a loop
- * with no poster works too — the <video> just fades in over the skeleton.
- */
+/** Attaches the poster and loop for any project the manifest lists. */
 function withAssets(project: TProjectShowcase): TProjectShowcase {
-  const assets: ProjectAssetEntry | undefined = PROJECT_ASSETS[project.slug];
-  if (!assets) return project;
+  const { slug } = project;
+  if (!PROJECT_MEDIA.includes(slug)) return project;
 
   return {
     ...project,
-    thumbnail: assets.poster,
-    video: assets.video ? previewVideoSrc(project.slug) : undefined,
+    thumbnail: posterSrc(slug),
+    video: previewVideoSrc(slug),
   };
 }
 

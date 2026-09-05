@@ -48,11 +48,15 @@ team of five"`). It never drives a filter, so it's allowed to be interesting.
 vocabulary verbatim:
 
 ```
-Angular, Docker, Express, Flask, Flutter, JTS Topology Suite, Java,
-JavaScript, Log4j2, Maven, MongoDB, Next.js, NextAuth, Node.js, Playwright,
-Pygame, Python, React, SQL, Selenium, Supabase, Tailwind CSS, Three.js,
-TypeScript
+Angular, Docker, Express, Flask, Flutter, GitHub Actions, JTS Topology Suite,
+Java, JavaScript, LaTeX, Log4j2, Mantine, Maven, MongoDB, Next.js, NextAuth,
+Node.js, Playwright, PostgreSQL, Pygame, Python, React, Recharts, SQL,
+Selenium, Supabase, Tailwind CSS, TanStack Query, Three.js, TypeScript,
+Zustand
 ```
+
+Reach for `PostgreSQL` over `SQL` for anything running on Postgres, Supabase
+included — the specific chip is worth more than the generic one.
 
 The list is short on purpose — it's roughly the set of things I've actually
 built with, so it will often be missing what this repo uses. That's expected.
@@ -63,7 +67,9 @@ compile. Never substitute the nearest match — a Django project is not a Flask
 project, and C++ is not C.
 
 Only list tools that are actually load-bearing. A repo with a single Dockerfile
-nobody uses is not a Docker project. Aim for two to five.
+nobody uses is not a Docker project. Beyond that, be generous — `tools` never
+renders on a card, it only feeds the filter, so eight entries read no
+differently than three. Name everything that genuinely shaped the build.
 
 **`description`** — one or two sentences, written for someone who's never
 heard of the project. It gets clamped to two lines on the card, so keep it
@@ -167,7 +173,7 @@ After pasting the object into `src/constant/projects.ts`:
 Replace NAME, START, and DURATION. -t is a duration, not an end time — subtract: for 7s→14s, use -ss 7 -t 7.
 
 ```bat
-ffmpeg -ss START -i NAME.mp4 -t DURATION -c:v libx264 -crf 26 -preset slow -profile:v high -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -an -movflags +faststart NAME-cut.mp4
+ffmpeg -ss START -i NAME.mp4 -t DURATION -c:v libx264 -crf 26 -preset slow -profile:v high -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -an -movflags +faststart NAME.mp4
 ```
 
 If a cut lands slightly off, move -ss to after -i for that file — frame-exact, slower.
@@ -175,7 +181,7 @@ If a cut lands slightly off, move -ss to after -i for that file — frame-exact,
 Chain several with &&:
 
 ```bat
-ffmpeg ... video-a-cut.mp4 && ffmpeg ... video-b-cut.mp4
+ffmpeg ... video-a.mp4 && ffmpeg ... video-b.mp4
 ```
 
 2. Cover image
@@ -183,7 +189,7 @@ ffmpeg ... video-a-cut.mp4 && ffmpeg ... video-b-cut.mp4
 Single file — matches the video name, .webp extension:
 
 ```bat
-ffmpeg -y -i NAME-cut.mp4 -frames:v 1 -c:v libwebp -quality 80 -compression_level 6 -preset picture NAME-cut.webp
+ffmpeg -y -i NAME.mp4 -frames:v 1 -c:v libwebp -quality 80 -compression_level 6 -preset picture NAME.webp
 ```
 
 Frame too early? Add -ss SECONDS before -i (relative to the cut, decimals OK).
@@ -200,26 +206,24 @@ echo Done.
 pause
 ```
 
+OR run this in command prompt:
+
+```cmd
+for %f in (*.mp4) do @(echo Generating cover for %~nf & ffmpeg -y -loglevel error -i "%f" -frames:v 1 -c:v libwebp -quality 80 -compression_level 6 -preset picture "%~nf.webp") & echo Done.
+```
+
 Regenerates every cover from every mp4 in the folder. Re-run it any time you re-cut something.
 
 ## Wiring the media up
 
-Name each file for its slug — `{slug}.mp4` and `{slug}-cover.webp` (jpg and
-png work too) — put them all in one folder, and run:
+Put the poster at `public/projects/{slug}.webp`, upload the loop to the R2
+bucket as `projects/{slug}.mp4`, then:
 
 ```bash
-bash scripts/prepare-project-assets.sh ~/Downloads/demos
+bash scripts/prepare-project-assets.sh
 ```
 
-It refuses to write anything if a filename doesn't match a route directory,
-which is the whole point: a loop uploaded to R2 under the wrong key fails as a
-silent 404 behind the poster, and nothing in the app would ever tell you.
-
-It puts posters in `public/projects/` (commit them), copies the loops to
-`.r2-staging/projects/` (gitignored), and regenerates
-`src/constant/projectAssets.ts`. Then drag `.r2-staging/projects/` into the R2
-bucket root, next to `about-me/` — videos never live in this repo.
-
-`constant/projects.ts` reads that manifest, so a card can only point at media
-the script actually placed. Don't set `thumbnail` or `video` on a project by
-hand; they'll be overwritten.
+That rewrites `PROJECT_MEDIA` in `src/constant/projectAssets.ts` from the
+posters on disk, and refuses to write if one doesn't match a route directory.
+Never set `thumbnail` or `video` on a project object by hand — they're attached
+from that list.

@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ProjectPageInProgress } from '@/components/projects/ProjectPageInProgress';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
@@ -16,6 +17,7 @@ export default function MesWebsite() {
         title='MES Website'
         description='I helped remake the McMaster Engineering Society website from Wix into Next.js, designing and building pages for the whole engineering student body.'
       />
+      <ProjectPageInProgress />
     </main>
   );
 }

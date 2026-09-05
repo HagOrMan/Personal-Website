@@ -48,6 +48,14 @@ export const TAG_ORDER = Object.keys(TAG_META) as ProjectTag[];
  * will claim it, which is safe because collectTools() builds the dropdown from
  * what projects actually declare — an entry nothing uses renders no chip and
  * costs nothing until it's real.
+ *
+ * Being generous here is cheap for the same reason: `tools` never renders on a
+ * card, it only feeds the filter, so a project naming eight of these reads no
+ * differently than one naming three.
+ *
+ * 'PostgreSQL' is the specific one to reach for — every database here is
+ * Postgres via Supabase, and a chip that says so is worth more than one that
+ * says 'SQL'. 'SQL' stays staged for a future project on something else.
  */
 export const TOOLS = [
   'Angular',
@@ -55,25 +63,32 @@ export const TOOLS = [
   'Express',
   'Flask',
   'Flutter',
+  'GitHub Actions',
   'JTS Topology Suite',
   'Java',
   'JavaScript',
+  'LaTeX',
   'Log4j2',
+  'Mantine',
   'Maven',
   'MongoDB',
   'Next.js',
   'NextAuth',
   'Node.js',
   'Playwright',
+  'PostgreSQL',
   'Pygame',
   'Python',
   'React',
+  'Recharts',
   'SQL',
   'Selenium',
   'Supabase',
   'Tailwind CSS',
+  'TanStack Query',
   'Three.js',
   'TypeScript',
+  'Zustand',
 ] as const;
 
 export type ProjectTool = (typeof TOOLS)[number];

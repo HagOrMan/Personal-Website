@@ -3,19 +3,22 @@ import { ProjectPageInProgress } from '@/components/projects/ProjectPageInProgre
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
-export default function IslandBuilder() {
+export default function JobApplicationTracker() {
   return (
     <main className='bg-background page-shell'>
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: 'Home', path: '/' },
           { name: 'Projects', path: '/projects' },
-          { name: 'Island Builder', path: '/projects/island-builder' },
+          {
+            name: 'Job Application Tracker',
+            path: '/projects/job-application-tracker',
+          },
         ])}
       />
       <PageHeader
-        title='Island Builder'
-        description='Imagine making islands with the click of a button, filled with cities, roads, and even different environments based on surrounding climates.'
+        title='Job Application Tracker'
+        description='Keeps my job search in one place: every application, its timeline of events, and the resume version it used (extra cool because it is stored in GitHub).'
       />
       <ProjectPageInProgress />
     </main>

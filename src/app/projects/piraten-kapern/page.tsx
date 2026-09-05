@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ProjectPageInProgress } from '@/components/projects/ProjectPageInProgress';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
@@ -16,6 +17,7 @@ export default function PiratenKapern() {
         title='Piraten Kapern'
         description='A real game that was remade using Java.'
       />
+      <ProjectPageInProgress />
     </main>
   );
 }
