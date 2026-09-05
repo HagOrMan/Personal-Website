@@ -149,6 +149,34 @@ const PROJECT_LIST: TProjectShowcase[] = [
     ],
   },
   {
+    // The poster and loop were already named dino-mind, so the slug follows
+    // them rather than the repo's one-word DinoMind — renaming an R2 object
+    // is more friction than a hyphen is worth.
+    slug: 'dino-mind',
+    name: 'DinoMind | Best Health Hack',
+    skills: 'React Native, Expo, LLM prompt design, team of four in 36 hours',
+    // No plain 'React' on purpose: react is a direct dependency and every
+    // screen is hooks and JSX, but someone filtering React wants the web one,
+    // and React Native is what this actually is.
+    tools: ['React Native', 'Expo', 'TypeScript', 'Cloudflare Workers AI'],
+    description:
+      'A journaling app whose dino companion summarizes your day, reads your mood, and plans your tomorrow.',
+    year: 2024,
+    tags: ['community', 'hackathon-winner'],
+    featured: false,
+    links: [
+      { kind: 'github', href: 'https://github.com/HagOrMan/DinoMind' },
+      // Same reasoning as MediSafe below: a recorded walkthrough, not
+      // something you can click, so the default 'Try it' would oversell it.
+      {
+        kind: 'demo',
+        href: 'https://www.youtube.com/watch?v=Judn3wLojLc',
+        label: 'Watch it',
+      },
+      { kind: 'article', href: 'https://devpost.com/software/dinomind' },
+    ],
+  },
+  {
     slug: 'island-builder',
     name: 'Island Builder',
     skills: 'Java, procedural generation, Dijkstra pathfinding',

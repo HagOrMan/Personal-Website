@@ -59,7 +59,9 @@ export const TAG_ORDER = Object.keys(TAG_META) as ProjectTag[];
  */
 export const TOOLS = [
   'Angular',
+  'Cloudflare Workers AI',
   'Docker',
+  'Expo',
   'Express',
   'Flask',
   'Flutter',
@@ -80,6 +82,7 @@ export const TOOLS = [
   'Pygame',
   'Python',
   'React',
+  'React Native',
   'Recharts',
   'SQL',
   'Selenium',

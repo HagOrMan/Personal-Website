@@ -8,6 +8,7 @@
  * 16:9 slot.
  */
 export const PROJECT_MEDIA: string[] = [
+  'dino-mind',
   'finance-tracker',
   'flappy-bird',
   'hatch-booking-system',
