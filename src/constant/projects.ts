@@ -65,7 +65,11 @@ const PROJECT_LIST: TProjectShowcase[] = [
         kind: 'github',
         href: 'https://github.com/McMaster-Engineering-Society/MES-Website-App-Router',
       },
-      { kind: 'demo', href: 'https://macengsociety.ca/hatch-booking' },
+      {
+        kind: 'demo',
+        href: 'https://macengsociety.ca/hatch-booking',
+        label: 'See it live',
+      },
     ],
   },
   {
