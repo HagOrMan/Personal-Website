@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 
+import { ArrowUpRight } from 'lucide-react';
 import { motion, useInView, useReducedMotion } from 'motion/react';
 
 import { Chip } from '@/components/ui/Chip';
@@ -188,16 +189,49 @@ export function TimelineEntry({
                       href={experience.href}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='animated-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-hidden'
+                      // The org name is already the right accessible name, so
+                      // this only adds the new-tab warning. Sighted pointer
+                      // users get that from the cursor globals.css swaps in;
+                      // nobody else did until the arrow below.
+                      aria-label={`${experience.org} (opens in a new tab)`}
+                      className={cn(
+                        // Baseline-aligned by default, which is what keeps the
+                        // org sitting on the same line as the location beside
+                        // it: an inline-flex box takes its baseline from its
+                        // first item, and that item is the text.
+                        'group inline-flex items-center gap-1',
+                        'animated-underline focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-hidden',
+                        // The colour the underline sweeps in, so the name, the
+                        // rule under it and the arrow all move together rather
+                        // than reading as three separate reactions. Hover and
+                        // focus land on the same place, so the link never
+                        // reacts to a mouse in a way it won't to a keyboard.
+                        'hover:text-primary-rgb-600 focus-visible:text-primary-rgb-600',
+                        'dark:hover:text-primary-rgb-400 dark:focus-visible:text-primary-rgb-400',
+                      )}
                     >
                       {experience.org}
+                      {/* The "this leaves the site" tell, and the only one
+                          that exists on touch - where most of this page is
+                          read. Same glyph and same nudge as the LinkedIn link
+                          in the card's action row; motion-safe only, because a
+                          transform that snaps rather than eases is worse than
+                          no transform at all. */}
+                      <ArrowUpRight
+                        aria-hidden
+                        className='size-3.5 shrink-0 md:size-4 motion-safe:transition-transform motion-safe:group-hover:translate-x-px motion-safe:group-hover:-translate-y-px motion-safe:group-focus-visible:translate-x-px motion-safe:group-focus-visible:-translate-y-px'
+                      />
                     </a>
                   ) : (
                     experience.org
                   )}
                   {experience.location && (
                     <>
-                      {' · '}
+                      {/* Padding rather than the spaces this used to be. The
+                          arrow ends the link much closer to the separator than
+                          a letter did, and at the old width the two ran
+                          together into one smudge. */}
+                      <span className='px-2'>·</span>
                       {experience.location}
                     </>
                   )}
