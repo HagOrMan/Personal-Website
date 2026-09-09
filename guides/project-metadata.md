@@ -81,8 +81,8 @@ and `tools` already cover that.
 | you type         | card shows   | use it when                   |
 | ---------------- | ------------ | ----------------------------- |
 | `2019`           | 2019         | the work fits inside one year |
-| `'2023-2026'`    | 2023–2026    | it ran across several         |
-| `'2024-present'` | 2024–present | it's still going              |
+| `'2023-2026'`    | 2023-2026    | it ran across several         |
+| `'2024-present'` | 2024-Present | it's still going              |
 
 Get the bounds from git:
 

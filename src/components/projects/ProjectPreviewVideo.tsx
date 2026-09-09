@@ -47,7 +47,7 @@ type ProjectPreviewVideoProps = {
 };
 
 /**
- * The 4–6s loop behind a project card's thumbnail. Silent, looping, and never
+ * The 4-6s loop behind a project card's thumbnail. Silent, looping, and never
  * autoplayed on scroll — it only runs on deliberate hover, focus, or a tap of
  * the play button, one at a time across the page, and it stops as soon as it
  * leaves the viewport.

@@ -38,6 +38,12 @@ export function posterSrc(slug: string): string {
  *
  * Authored order is the tiebreak for projects that end in the same year, so
  * moving an entry here changes the page. Sorting happens at the bottom.
+ *
+ * No entry sets `hasDetailPage` yet, so no card renders a "Read more" link:
+ * every /projects/<slug> route is still the placeholder. Add the flag to a
+ * project the moment its page has real content — that one line puts the link
+ * on the card, the route in the sitemap, and the slug under the build-time
+ * route check.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 const PROJECT_LIST: TProjectShowcase[] = [

@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { ArrowRight } from 'lucide-react';
 import {
   motion,
   useMotionTemplate,
@@ -17,7 +18,7 @@ import {
   type AccentKey,
   getAccent,
 } from '@/lib/projects/accents';
-import { projectHref } from '@/lib/projects/paths';
+import { projectDetailHref } from '@/lib/projects/paths';
 import { cn } from '@/lib/utils';
 import { TProjectShowcaseCard } from '@/types/projects/ProjectShowcase';
 
@@ -46,6 +47,8 @@ export const ProjectShowcaseCard = ({
 
   const borderColor = ACCENT_VARS[borderAccent].border;
   const glowColor = ACCENT_VARS[glowAccent].glow;
+
+  const detailHref = projectDetailHref(project);
 
   // -------- Mouse-tracked glow -------- //
   // Raw mouse position relative to the card, smoothed by a spring so the
@@ -173,23 +176,37 @@ export const ProjectShowcaseCard = ({
         />
       </div>
 
-      {/* Content. Deliberately not `relative`: the name's stretched ::after
+      {/* Content. Deliberately not `relative`: the stretched ::after below
           has to resolve against the card, not against this block. It's a flex
           child, so z-10 still applies without positioning. */}
       <div className='z-10 px-4 pt-3 pb-4'>
         <h2 className='text-foreground text-lg font-semibold'>
-          {/* Stretched link: the ::after covers the card, so the whole thing
-              is one click target named after the project. */}
-          <Link
-            href={projectHref(project)}
-            className='group-hover:text-primary transition-colors after:absolute after:inset-0 after:content-[""] focus-visible:outline-hidden'
-          >
-            {project.name}
-          </Link>
+          {project.name}
         </h2>
-        <span className='text-muted-foreground text-sm'>
+        {/* Block, so the link below starts on its own line rather than
+            trailing the last word of the description. */}
+        <span className='text-muted-foreground block text-sm'>
           {project.description}
         </span>
+
+        {/* Only rendered when there's a page to land on. These variants have
+            no footer to hang controls off, so the link stays stretched over
+            the card — but it now announces itself in words underneath the
+            description instead of hiding under a heading that looked the same
+            whether or not it went anywhere. */}
+        {detailHref && (
+          <Link
+            href={detailHref}
+            aria-label={`Read more about ${project.name}`}
+            className='text-primary group/detail mt-2 inline-flex items-center gap-1 text-sm font-medium transition-colors after:absolute after:inset-0 after:content-[""] focus-visible:outline-hidden'
+          >
+            Read more
+            <ArrowRight
+              className='size-3.5 transition-transform duration-200 group-hover/detail:translate-x-0.5'
+              aria-hidden
+            />
+          </Link>
+        )}
       </div>
     </motion.div>
   );

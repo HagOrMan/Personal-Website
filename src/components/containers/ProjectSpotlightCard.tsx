@@ -4,12 +4,13 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Download, ExternalLink, FileText, Github } from 'lucide-react';
+import { ArrowRight, Download, ExternalLink, FileText } from 'lucide-react';
 
+import { GitHubGlyph } from '@/components/icons/GitHubGlyph';
 import { ProjectPreviewVideo } from '@/components/projects/ProjectPreviewVideo';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ACCENT_VARS, getAccent } from '@/lib/projects/accents';
-import { projectHref } from '@/lib/projects/paths';
+import { projectDetailHref } from '@/lib/projects/paths';
 import { formatProjectYear } from '@/lib/projects/year';
 import { cn } from '@/lib/utils';
 import type {
@@ -18,24 +19,33 @@ import type {
   TProjectShowcaseCard,
 } from '@/types/projects/ProjectShowcase';
 
-const LINK_META: Record<
-  ProjectLinkKind,
-  { label: string; Icon: typeof Github }
-> = {
-  github: { label: 'on GitHub', Icon: Github },
+/**
+ * The two props the card ever passes an icon — kept explicit rather than
+ * pinned to `typeof SomeLucideIcon`, so a brand mark that isn't a lucide icon
+ * (GitHubGlyph, since lucide deprecated theirs) sits in this table too.
+ */
+type LinkIcon = React.ComponentType<{
+  className?: string;
+  'aria-hidden'?: boolean;
+}>;
+
+const LINK_META: Record<ProjectLinkKind, { label: string; Icon: LinkIcon }> = {
+  github: { label: 'on GitHub', Icon: GitHubGlyph },
   demo: { label: 'Try it', Icon: ExternalLink },
   article: { label: 'write-up', Icon: FileText },
   download: { label: 'download', Icon: Download },
 };
 
 /**
- * The default project card: preview media on top, name + skills, a clamped
+ * The default project card: preview media on top, name + skills, the
  * description, and a footer of year and actions.
  *
- * The whole card is the link. The project name is the only anchor to the
- * detail page, and its ::after stretches over the card — no nested anchors,
- * so the footer's external links stay real links and screen readers get one
- * meaningful target named after the project rather than a "Read more".
+ * Nothing here is a whole-card link. A card whose only destination is a
+ * detail page can get away with a stretched ::after, but most of these have
+ * a demo and a repo and (sometimes) nothing written up at all — an invisible
+ * link under all of that is a coin flip for the reader. Every destination is
+ * its own labelled control in the footer instead, "Read more" included, so
+ * what a click does is whatever the thing under the cursor says it does.
  */
 export const ProjectSpotlightCard = ({
   project,
@@ -61,6 +71,7 @@ export const ProjectSpotlightCard = ({
 
   const demo = project.links.find((link) => link.kind === 'demo');
   const others = project.links.filter((link) => link.kind !== 'demo');
+  const detailHref = projectDetailHref(project);
 
   return (
     <article
@@ -81,12 +92,8 @@ export const ProjectSpotlightCard = ({
         boxShadow: active ? hoverShadow : restShadow,
       }}
       className={cn(
-        'group relative flex h-full w-full flex-col overflow-hidden rounded-xl border',
+        'relative flex h-full w-full flex-col overflow-hidden rounded-xl border',
         'transition-shadow duration-300',
-        // The ring lives on the card because the link that owns focus is
-        // stretched across all of it — a ring on the anchor alone would only
-        // outline the project name.
-        'has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-offset-2',
         className,
       )}
     >
@@ -116,51 +123,121 @@ export const ProjectSpotlightCard = ({
       </div>
 
       <div className='flex flex-1 flex-col gap-1.5 p-4'>
-        <div className='flex flex-wrap items-baseline gap-x-2'>
-          <h2 className='text-foreground text-lg leading-tight font-semibold'>
-            <Link
-              href={projectHref(project)}
-              // Picks up the card's own accent on hover — the same colour as
-              // its border, so the card reads as one piece while you're on
-              // it. Driven off `active` rather than a hover class because an
-              // accent that varies per card can't live in a class name; the
-              // upside is that keyboard focus lights it up too.
-              style={{ color: active ? borderColor : undefined }}
-              className='transition-colors after:absolute after:inset-0 after:content-[""] focus-visible:outline-hidden'
-            >
-              {project.name}
-            </Link>
+        {/* Name and year share a line; the skills sit on the next one.
+
+            The skills are a sibling of this row rather than a third item
+            inside it, and that's the whole point: anything inside the row is
+            boxed into the width the year leaves behind, so its second line
+            stopped short and left a ragged column of dead space under the
+            date. Out here they get the full width of the card and run under
+            the year like ordinary prose.
+
+            items-baseline so the year sits on the name's own baseline
+            despite the two being different sizes. */}
+        <div className='flex items-baseline justify-between gap-x-3'>
+          {/* Plain text, not a link. The name is the card's label; where you
+              can go from here is the footer's job. */}
+          <h2 className='text-foreground min-w-0 text-lg leading-tight font-semibold'>
+            {project.name}
           </h2>
-          <span className='text-muted-foreground text-sm italic'>
-            {project.skills}
+
+          {/* Lives up here rather than in the footer: the year is metadata
+              about the project, the same as the skills below it, not one
+              more thing you can click. It also stops competing for width
+              with the links, which is what used to strand it on a line of
+              its own on a phone. shrink-0 keeps it whole — the name is what
+              wraps if anything has to. */}
+          <span className='text-muted-foreground shrink-0 text-sm whitespace-nowrap'>
+            {formatProjectYear(project.year)}
           </span>
         </div>
 
-        {/* Clamped to two lines with the height of two lines reserved, so a
-            one-line description doesn't shrink the card out of step with the
-            rest of its row. */}
-        <p className='text-muted-foreground line-clamp-2 min-h-10 text-sm'>
+        <span className='text-muted-foreground block text-sm italic'>
+          {project.skills}
+        </span>
+
+        {/* Unclamped while the grid is one column: a card that owns the full
+            width has room for the whole description, and clipping it there
+            was only ever collateral from a rule the two-column layout needs.
+            From lg up, cards share a row, so three lines with three lines
+            reserved keeps the footers of a row on the same baseline. */}
+        <p className='text-muted-foreground text-sm lg:line-clamp-3 lg:min-h-15'>
           {project.description}
         </p>
 
-        {/* Fixed-height slot: most projects have no links, and a collapsing
-            footer would leave every row of cards a different height. */}
-        <div className='mt-auto flex min-h-9 items-center justify-between gap-2 pt-2'>
-          <span className='text-muted-foreground text-sm whitespace-nowrap'>
-            {formatProjectYear(project.year)}
-          </span>
+        {/* Fixed-height slot: a collapsing footer would leave every row of
+            cards a different height.
 
-          <div className='relative z-[1] flex items-center gap-1'>
-            {demo && <DemoLink link={demo} project={project.name} />}
-            {others.map((link) => (
-              <IconLink key={link.href} link={link} project={project.name} />
-            ))}
-          </div>
+            With the year moved up into the header, this is purely a row of
+            actions, so it's free to wrap without stranding anything — each
+            line holds the right edge on its own.
+
+            Deliberately no min-w-0: a flex row that wraps can't shrink below
+            its widest child, which is what stops a squeeze from being taken
+            out of the buttons themselves.
+
+            "Read more" sits last, in the corner. It's the only link that
+            keeps you on the site, so it reads as where the card ends rather
+            than as one more item in a row of outbound links. */}
+        <div className='mt-auto flex min-h-9 flex-wrap items-center justify-end gap-1 pt-2'>
+          {demo && <DemoLink link={demo} project={project.name} />}
+          {others.map((link) => (
+            <IconLink key={link.href} link={link} project={project.name} />
+          ))}
+          {detailHref && (
+            <DetailLink
+              href={detailHref}
+              project={project.name}
+              // Picks up the card's own accent while you're on the card —
+              // the same colour as its border, so the one link that leads
+              // deeper is also the one thing the card lights up. Inline
+              // rather than a hover class because an accent that varies per
+              // card can't live in a class name; the upside is that
+              // keyboard focus lights it up too.
+              accent={active ? borderColor : undefined}
+            />
+          )}
         </div>
       </div>
     </article>
   );
 };
+
+/**
+ * The only route to a project's detail page, and the only internal link on
+ * the card. Rendered solely when there is a page worth the trip — see
+ * `hasDetailPage` in constant/projects.ts.
+ *
+ * The arrow does the work the old stretched link couldn't: it says out loud
+ * that there is more to read, and it says it in one place instead of leaving
+ * the reader to discover the whole card was clickable.
+ */
+function DetailLink({
+  href,
+  project,
+  accent,
+}: {
+  href: string;
+  project: string;
+  accent?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={`Read more about ${project}`}
+      style={{ color: accent, borderColor: accent }}
+      className='border-border bg-background hover:bg-accent focus-visible:ring-ring group/detail inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+    >
+      Read more
+      {/* Nudges forward on hover — the arrow already points at the page, this
+          just gives it somewhere to go. */}
+      <ArrowRight
+        className='size-3.5 transition-transform duration-200 group-hover/detail:translate-x-0.5'
+        aria-hidden
+      />
+    </Link>
+  );
+}
 
 function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
   const { label, Icon } = LINK_META.demo;
@@ -171,7 +248,7 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
       target='_blank'
       rel='noopener noreferrer'
       aria-label={`${project} — ${link.label ?? label} (opens in a new tab)`}
-      className='border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      className='border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
     >
       {link.label ?? label}
       <Icon className='size-3.5' aria-hidden />

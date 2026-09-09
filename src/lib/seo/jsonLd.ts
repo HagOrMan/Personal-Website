@@ -1,6 +1,6 @@
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import type { PostMeta } from '@/lib/blog/github';
-import { projectHref } from '@/lib/projects/paths';
+import { projectDetailHref } from '@/lib/projects/paths';
 import type { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
 import { absoluteUrl, SITE, SITE_URL } from '../seo';
@@ -68,16 +68,30 @@ export function buildBlogPostingJsonLd(post: PostMeta) {
   };
 }
 
+/**
+ * `url` is whatever the reader would actually get sent to: the detail page if
+ * one is written, otherwise the live demo, otherwise the repo. A project with
+ * none of those is listed by name alone — position and name are all an
+ * ItemList entry needs, and pointing at a page that says "still working on
+ * this" would be worse than pointing nowhere.
+ */
 export function buildProjectItemListJsonLd(projects: TProjectShowcase[]) {
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: projects.map((project, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: project.name,
-      url: absoluteUrl(projectHref(project)),
-    })),
+    itemListElement: projects.map((project, index) => {
+      const detail = projectDetailHref(project);
+      const external =
+        project.links.find((link) => link.kind === 'demo') ??
+        project.links.find((link) => link.kind === 'github');
+
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: project.name,
+        url: detail ? absoluteUrl(detail) : external?.href,
+      };
+    }),
   };
 }
 

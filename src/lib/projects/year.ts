@@ -45,9 +45,9 @@ export function parseProjectYear(value: ProjectYear): ParsedProjectYear {
 export function formatProjectYear(value: ProjectYear): string {
   const { start, end, ongoing } = parseProjectYear(value);
 
-  if (ongoing) return `${start}–present`;
+  if (ongoing) return `${start}-Present`;
   if (end === start) return `${start}`;
-  return `${start}–${end}`;
+  return `${start}-${end}`;
 }
 
 /**

@@ -131,7 +131,10 @@ export type TProjectShowcase = {
   skills: string;
   /** The filter key. Normalised, exact-matched, drives the Tools dropdown. */
   tools: ProjectTool[];
-  /** One or two sentences. Clamped to two lines on the card. */
+  /**
+   * One or two sentences. Renders in full while cards are a single column,
+   * and clamps once two share a row — see ProjectSpotlightCard.
+   */
   description: string;
   /** 2019, '2023-2026', or '2024-present' — see lib/projects/year.ts. */
   year: ProjectYear;
@@ -139,8 +142,20 @@ export type TProjectShowcase = {
   featured: boolean;
   /** Poster image, also the <video> poster. Cards fall back to a skeleton. */
   thumbnail?: string;
-  /** 4–6s silent loop. Omit until one exists — the card just shows the poster. */
+  /** 4-6s silent loop. Omit until one exists — the card just shows the poster. */
   video?: string;
+  /**
+   * Whether /projects/<slug> has something worth reading yet. Omitting it
+   * means no, which is the honest default: the card renders no "Read more",
+   * the route stays out of the sitemap, and the build stops asserting that
+   * the route exists at all.
+   *
+   * Deliberately a flag rather than a commented-out link — the absence of a
+   * write-up is something this config states, not something the card code
+   * has to remember. Flip it to true in the same commit the page gets real
+   * content.
+   */
+  hasDetailPage?: boolean;
   links: ProjectLink[];
 };
 

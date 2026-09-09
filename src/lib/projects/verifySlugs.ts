@@ -6,10 +6,15 @@ import type { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 import 'server-only';
 
 /**
- * Every slug in constant/projects.ts must have a real /projects/[slug] route.
- * The projects index is statically generated, so calling this from that page
- * runs it during `pnpm build` — a card that would 404 fails the build instead
- * of shipping.
+ * Every slug that claims `hasDetailPage` must have a real /projects/[slug]
+ * route. The projects index is statically generated, so calling this from
+ * that page runs it during `pnpm build` — a "Read more" that would 404 fails
+ * the build instead of shipping.
+ *
+ * Projects without the flag are skipped: nothing links to them, so a missing
+ * route is no longer a broken promise — it's just a project whose write-up
+ * hasn't been started. That's what makes the flag safe to turn on last: the
+ * build catches you flipping it before the page exists.
  *
  * Detail pages are hand-written and out of scope for the index: this only
  * checks that the directory exists, never what's inside it.
@@ -31,13 +36,14 @@ export function assertProjectRoutesExist(projects: TProjectShowcase[]): void {
   }
 
   const missing = projects
+    .filter((project) => project.hasDetailPage)
     .map((project) => project.slug)
     .filter((slug) => !routes.includes(slug));
 
   if (missing.length > 0) {
     throw new Error(
-      `[projects] No detail page found for ${missing.length === 1 ? 'slug' : 'slugs'}: ${missing.join(', ')}. ` +
-        `Add src/app/projects/<slug>/page.tsx, or fix the slug in src/constant/projects.ts.`,
+      `[projects] hasDetailPage is set but no route exists for ${missing.length === 1 ? 'slug' : 'slugs'}: ${missing.join(', ')}. ` +
+        `Add src/app/projects/<slug>/page.tsx, fix the slug, or drop hasDetailPage in src/constant/projects.ts.`,
     );
   }
 }

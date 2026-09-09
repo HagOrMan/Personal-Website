@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { projects } from '@/constant/projects';
 import { listPosts } from '@/lib/blog/github';
-import { projectHref } from '@/lib/projects/paths';
+import { projectDetailHref } from '@/lib/projects/paths';
 import { absoluteUrl } from '@/lib/seo';
 
 const STATIC_ROUTES: Array<{
@@ -21,12 +21,26 @@ const STATIC_ROUTES: Array<{
   { path: '/ocean', priority: 0.3, changeFrequency: 'yearly' },
 ];
 
-/** Derived, so adding a project can't leave the sitemap behind. */
-const PROJECT_ROUTES = projects.map((project) => ({
-  path: projectHref(project),
-  priority: project.featured ? 0.6 : 0.5,
-  changeFrequency: 'yearly' as const,
-}));
+/**
+ * Derived, so adding a project can't leave the sitemap behind.
+ *
+ * Only projects that actually have a write-up are listed: a route whose page
+ * says "still working on this" is thin content, and submitting eleven of them
+ * asks Google to judge the site on its emptiest pages. They're unlinked and
+ * unlisted until there's something on them — see `hasDetailPage`.
+ */
+const PROJECT_ROUTES = projects.flatMap((project) => {
+  const path = projectDetailHref(project);
+  if (!path) return [];
+
+  return [
+    {
+      path,
+      priority: project.featured ? 0.6 : 0.5,
+      changeFrequency: 'yearly' as const,
+    },
+  ];
+});
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries = [...STATIC_ROUTES, ...PROJECT_ROUTES].map(

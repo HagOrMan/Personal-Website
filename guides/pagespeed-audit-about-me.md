@@ -3,15 +3,15 @@
 **Run:** Aug 31, 2026, 10:28 PM EDT · Lighthouse 13.4.1 · Emulated Moto G Power · Slow 4G · HeadlessChromium 151
 **Commit under test:** `6bdfb8b` (Aug 31, 2026, 5:44 PM EDT) — the run is ~4.5 h later, so this is the deployed build.
 
-| Metric | Value | Verdict |
-| --- | --- | --- |
-| Performance | **75** | mid |
-| First Contentful Paint | 1.5 s | mid |
-| Largest Contentful Paint | **4.1 s** | bad |
-| Total Blocking Time | 340 ms | mid |
-| Cumulative Layout Shift | 0 | perfect |
-| Speed Index | **5.1 s** | bad |
-| Accessibility / Best Practices / SEO | 96 / 100 / 100 | fine |
+| Metric                               | Value          | Verdict |
+| ------------------------------------ | -------------- | ------- |
+| Performance                          | **75**         | mid     |
+| First Contentful Paint               | 1.5 s          | mid     |
+| Largest Contentful Paint             | **4.1 s**      | bad     |
+| Total Blocking Time                  | 340 ms         | mid     |
+| Cumulative Layout Shift              | 0              | perfect |
+| Speed Index                          | **5.1 s**      | bad     |
+| Accessibility / Best Practices / SEO | 96 / 100 / 100 | fine    |
 
 This is a milder version of the same disease as `/` — a Three.js canvas that never stops
 rendering — plus three problems the home page doesn't have. See
@@ -26,42 +26,42 @@ rendering — plus three problems the home page doesn't have. See
 Before anything else, because it changes how you read the rest of this document. I checked
 `HEAD` (`6bdfb8b`) directly:
 
-| Fix from `pagespeed-audit.md` | In tree? |
-| --- | --- |
-| `browserslist` in `package.json` | no |
-| `next/dynamic` anywhere in `src/` | no |
-| `useIsOnScreen` in `screenUtils.ts` | no |
-| `frameloop` gating in `OceanParticles.tsx` | no |
-| `primeVideo` / intent-driven preconnect in `page.tsx` | no |
+| Fix from `pagespeed-audit.md`                         | In tree? |
+| ----------------------------------------------------- | -------- |
+| `browserslist` in `package.json`                      | no       |
+| `next/dynamic` anywhere in `src/`                     | no       |
+| `useIsOnScreen` in `screenUtils.ts`                   | no       |
+| `frameloop` gating in `OceanParticles.tsx`            | no       |
+| `primeVideo` / intent-driven preconnect in `page.tsx` | no       |
 
 The "Changes applied" section of `pagespeed-audit.md` describes work that is not currently
 checked in. Everything below is measured against that baseline. Three of this page's
-findings (#6, #7, #8) are the *same* findings as the home page's, re-flagged for the same
+findings (#6, #7, #8) are the _same_ findings as the home page's, re-flagged for the same
 reason.
 
 ### 2. The main-thread problem is real, but 14× smaller than the home page's
 
-| Category | `/about-me` | `/` (for contrast) |
-| --- | --- | --- |
-| **Other** | **2,928 ms** | 40,079 ms |
-| Script Evaluation | 731 ms | 707 ms |
-| Script Parsing & Compilation | 177 ms | 88 ms |
-| Style & Layout | 90 ms | 104 ms |
-| Rendering | 30 ms | 70 ms |
-| Parse HTML & CSS | 13 ms | 8 ms |
-| **Total** | **4.0 s** | 41.1 s |
+| Category                     | `/about-me`  | `/` (for contrast) |
+| ---------------------------- | ------------ | ------------------ |
+| **Other**                    | **2,928 ms** | 40,079 ms          |
+| Script Evaluation            | 731 ms       | 707 ms             |
+| Script Parsing & Compilation | 177 ms       | 88 ms              |
+| Style & Layout               | 90 ms        | 104 ms             |
+| Rendering                    | 30 ms        | 70 ms              |
+| Parse HTML & CSS             | 13 ms        | 8 ms               |
+| **Total**                    | **4.0 s**    | 41.1 s             |
 
-Same shape: "Other" — per-frame render/raster work the JS *commands* rather than work the
-JS *is* — is 73% of the main thread. It's smaller here only because the canvas is 96 px
+Same shape: "Other" — per-frame render/raster work the JS _commands_ rather than work the
+JS _is_ — is 73% of the main thread. It's smaller here only because the canvas is 96 px
 instead of full-screen. It is still the single biggest line item, and it is still infinite.
 
 ### 3. LCP is not a network problem
 
-| Subpart | Duration |
-| --- | --- |
-| Time to first byte | 0 ms |
-| Resource load delay | 270 ms |
-| Resource load duration | 350 ms |
+| Subpart                  | Duration     |
+| ------------------------ | ------------ |
+| Time to first byte       | 0 ms         |
+| Resource load delay      | 270 ms       |
+| Resource load duration   | 350 ms       |
 | **Element render delay** | **1,800 ms** |
 
 The image's bytes are on the device at roughly 620 ms. LCP fires at 4.1 s. Everything
@@ -69,7 +69,7 @@ between those two numbers is the browser failing to produce a frame, not the net
 
 > **Caveat, stated plainly:** those subparts sum to 2,420 ms, not the reported 4,100 ms,
 > and a 0 ms TTFB is not a real measurement. Don't trust the absolute values here; the
-> *shape* — network done early, paint late — is what the rest of the report corroborates,
+> _shape_ — network done early, paint late — is what the rest of the report corroborates,
 > and it's what the fixes target.
 
 ---
@@ -80,9 +80,9 @@ between those two numbers is the browser failing to produce a frame, not the net
 
 **Owns:** the "Other: 2,928 ms", and most of what's blocking the LCP frame.
 
-**The geometry.** `CORE_COUNT = 800` + `SPRAY_COUNT = 750` (lines 56–57) = 1,550 point
+**The geometry.** `CORE_COUNT = 800` + `SPRAY_COUNT = 750` (lines 56-57) = 1,550 point
 sprites. Point size is `17.0 * uPixelRatio` before falloff and jitter (line 147), and
-`uPixelRatio` reads raw `window.devicePixelRatio` with no cap (lines 372–373).
+`uPixelRatio` reads raw `window.devicePixelRatio` with no cap (lines 372-373).
 
 **On the audited device.** Lighthouse's own DOM-size audit hands you the measurement:
 
@@ -92,7 +92,7 @@ sprites. Point size is `17.0 * uPixelRatio` before falloff and jitter (line 147)
 ```
 
 168 / 96 = **DPR 1.75, uncapped**. So the backing store is 28,224 pixels and each particle
-is ~22–37 device px across — call it ~700 px² of sprite. 1,550 × 700 ≈ **1.1 M shaded
+is ~22-37 device px across — call it ~700 px² of sprite. 1,550 × 700 ≈ **1.1 M shaded
 fragments per frame over a 28 K-pixel canvas: roughly 38× overdraw**, additively blended
 with `depthWrite: false`, so there is no early-Z rejection to save any of it. Every
 fragment runs a `distance()`, a `discard`, two `mix()`es and a `pow()`.
@@ -118,9 +118,9 @@ called here. `<Canvas>` (line 435) takes no `frameloop` and no `dpr` — note th
 The LCP element is the mobile "Hear it from me" poster button.
 
 **Discovery is not the problem — I traced the chain.** `useMediaQuery` seeds `false` on the
-server *and* on the first client render (`screenUtils.ts:5`), so `!isDesktop` is `true` and
+server _and_ on the first client render (`screenUtils.ts:5`), so `!isDesktop` is `true` and
 the button server-renders. `priority` (line 115) emits the `fetchpriority="high"` preload.
-Lighthouse agrees: *"Request is discoverable in initial document."* Nothing to fix there.
+Lighthouse agrees: _"Request is discoverable in initial document."_ Nothing to fix there.
 
 **So what's left is paint scheduling.** The long-task list brackets the LCP timestamp
 almost exactly:
@@ -165,7 +165,7 @@ that's the top of the page still resolving well past 2 s.
 
 Stack the `WaveSpray` wrapper on top of it — a `transition-opacity duration-1000` that only
 starts once the canvas reports `onCreated` (lines 430, 440), i.e. after Three.js has
-compiled at ~3 s — and the last visual change on the page is somewhere around 4–5 s.
+compiled at ~3 s — and the last visual change on the page is somewhere around 4-5 s.
 
 **That is your Speed Index.** SI 5.1 s is not measuring slow bytes; it is measuring a page
 whose top third is deliberately withheld and then faded in on a chain of client-side timers.
@@ -179,22 +179,22 @@ This one is site-wide — `PageHeader` is on every sub-page.
 
 `next/dynamic` appears nowhere in `src/`. So on a 412 px phone, the initial bundle includes:
 
-| Statically imported | Rendered on mobile? | What it drags in |
-| --- | --- | --- |
-| `WaveSpray` (`about-me/page.tsx:2`) | yes, 96 px of it | `three` + `@react-three/fiber` + `@react-three/drei` |
-| `VideoStickyShell` (line 227) | **no** — behind `isDesktop &&` | `VideoExperience` (534 lines) → Radix Dialog, `VideoControlBar`, `VideoEndCard`, `VideoTableOfContents`, `VideoTranscriptPanel`, `useVideoExperience` — ~1,200 lines total |
-| `VideoModalShell` (line 236) | mounts with `open={false}` | Radix Dialog Root + `AnimatePresence` + the same `VideoExperience` tree, plus a preconnect (#6) |
+| Statically imported                 | Rendered on mobile?            | What it drags in                                                                                                                                                           |
+| ----------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WaveSpray` (`about-me/page.tsx:2`) | yes, 96 px of it               | `three` + `@react-three/fiber` + `@react-three/drei`                                                                                                                       |
+| `VideoStickyShell` (line 227)       | **no** — behind `isDesktop &&` | `VideoExperience` (534 lines) → Radix Dialog, `VideoControlBar`, `VideoEndCard`, `VideoTableOfContents`, `VideoTranscriptPanel`, `useVideoExperience` — ~1,200 lines total |
+| `VideoModalShell` (line 236)        | mounts with `open={false}`     | Radix Dialog Root + `AnimatePresence` + the same `VideoExperience` tree, plus a preconnect (#6)                                                                            |
 
 `VideoStickyShell` is never rendered on this device at all, and its cost is paid in full.
 
 Mapping to the report's "Reduce unused JavaScript — 131 KiB of 226.7 KiB":
 
-| Chunk | Transfer | Unused | Long tasks | Almost certainly |
-| --- | --- | --- | --- | --- |
-| `e8867c6f` | 100.1 KiB | **84.3 KiB** | 176 ms @ 3,001 ms | three.js |
-| `7566a6ad` | 85.2 KiB | 24.1 KiB | — | react-dom |
-| `3166` | 41.5 KiB | 22.7 KiB | 72 ms @ 4,299 ms | motion |
-| `7460` | — | — | 86 / 57 / 53 ms @ 5.1–7.1 s | the page + video tree |
+| Chunk      | Transfer  | Unused       | Long tasks                  | Almost certainly      |
+| ---------- | --------- | ------------ | --------------------------- | --------------------- |
+| `e8867c6f` | 100.1 KiB | **84.3 KiB** | 176 ms @ 3,001 ms           | three.js              |
+| `7566a6ad` | 85.2 KiB  | 24.1 KiB     | —                           | react-dom             |
+| `3166`     | 41.5 KiB  | 22.7 KiB     | 72 ms @ 4,299 ms            | motion                |
+| `7460`     | —         | —            | 86 / 57 / 53 ms @ 5.1-7.1 s | the page + video tree |
 
 84 KiB unused out of a 100 KiB chunk is the signature of a library imported for one small
 thing. `pagespeed-audit.md` already prescribed `dynamic()` for exactly `OceanScene` and
@@ -205,8 +205,8 @@ for `WaveSpray` and the whole video tree.
 
 ### 5. The poster misses its srcset bucket by 8 pixels · `AboutMeClient.tsx:111-116`
 
-Lighthouse: *"This image file is larger than it needs to be (640x1135) for its displayed
-dimensions (385x685)."* Here is the exact arithmetic, because the fix depends on it.
+Lighthouse: _"This image file is larger than it needs to be (640x1135) for its displayed
+dimensions (385x685)."_ Here is the exact arithmetic, because the fix depends on it.
 
 ```
 sizes='224px'  ×  DPR 1.75  =  392 device px needed
@@ -243,8 +243,8 @@ Called during render, unconditionally on mount, regardless of `open`. On mobile 
 only opens on a deliberate tap, so for every visitor who doesn't tap, the browser opens a
 DNS + TLS connection to `media.kylehagerman.dev` and never sends a byte over it.
 
-Worth noting: the comment directly above it (line 42) says *"see primeVideoPlayback calls at
-each trigger button"* — there is no such call site anywhere in the tree. The comment
+Worth noting: the comment directly above it (line 42) says _"see primeVideoPlayback calls at
+each trigger button"_ — there is no such call site anywhere in the tree. The comment
 describes the intended design; the wiring isn't there.
 
 Same finding as home-page #8, same root cause.
@@ -281,7 +281,7 @@ part of the App Router client runtime:
 
 ```js
 // node_modules/next/dist/client/app-globals.js
-require("../build/polyfills/polyfill-module");
+require('../build/polyfills/polyfill-module');
 ```
 
 **A `browserslist` key in `package.json` governs SWC's output for your code and your
@@ -303,7 +303,7 @@ useEffect(() => {
   const listener = () => setMatches(media.matches);
   media.addEventListener('change', listener);
   return () => media.removeEventListener('change', listener);
-}, [matches, query]);   // ← `matches`
+}, [matches, query]); // ← `matches`
 ```
 
 `matches` in the dependency array means every match change tears the listener down and
@@ -322,7 +322,7 @@ Small. Free to fix. Same as home-page Tier 3.
 **1.1 Gate the WaveSpray render loop.** The single biggest item. `frameloop` on the
 `<Canvas>` is the lever that actually works — returning early from `useFrame` doesn't help,
 because R3F still calls `gl.render()` every tick, and drawing 1,550 additively blended points
-*is* the cost.
+_is_ the cost.
 
 ```tsx
 // Wavespray.tsx — needs an IntersectionObserver + visibilitychange hook.
@@ -358,12 +358,16 @@ const WaveSpray = dynamic(
 );
 
 const VideoModalShell = dynamic(
-  () => import('@/components/video/VideoModalShell').then((m) => m.VideoModalShell),
+  () =>
+    import('@/components/video/VideoModalShell').then((m) => m.VideoModalShell),
   { ssr: false },
 );
 
 const VideoStickyShell = dynamic(
-  () => import('@/components/video/VideoStickyShell').then((m) => m.VideoStickyShell),
+  () =>
+    import('@/components/video/VideoStickyShell').then(
+      (m) => m.VideoStickyShell,
+    ),
   { ssr: false },
 );
 ```
@@ -384,7 +388,7 @@ leg of it, so the SSR HTML has readable text:
 
 ```tsx
 const itemVariants: Variants = {
-  hidden: { y: 12 },              // was { opacity: 0, y: 12 }
+  hidden: { y: 12 }, // was { opacity: 0, y: 12 }
   visible: { y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 ```
@@ -430,14 +434,14 @@ for a frame. 1.3 removes the 176 ms Three.js compile task from that same window.
 those should pull LCP from 4.1 s toward FCP.
 
 Tier 2.1 is the Speed Index fix; SI 5.1 s is almost entirely "the visible page is still
-resolving at 4–5 s", and it is worth 6 points on its own.
+resolving at 4-5 s", and it is worth 6 points on its own.
 
 **75 → high 80s from Tier 1, low-to-mid 90s with Tier 2.** LCP (+12), TBT (+22) and SI (+6)
 are 40 of the 100 points, and all three respond to the same handful of changes.
 
 ---
 
-## Appendix: what is *not* wrong
+## Appendix: what is _not_ wrong
 
 Worth stating plainly, because these are the things people reach for first:
 
