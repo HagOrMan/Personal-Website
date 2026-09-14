@@ -2,13 +2,7 @@
 
 import { type CSSProperties, type ReactNode, useRef } from 'react';
 
-import {
-  motion,
-  useInView,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from 'motion/react';
+import { motion, useInView, useReducedMotion } from 'motion/react';
 
 import { ACCENT_VARS } from '@/lib/projects/accents';
 import { cn } from '@/lib/utils';
@@ -16,7 +10,6 @@ import { cn } from '@/lib/utils';
 import {
   mediaVariants,
   RIBBON_IN_VIEW_MARGIN,
-  RIBBON_PARALLAX_PX,
   ribbonAccent,
   ribbonSide,
   rowContainerVariants,
@@ -85,19 +78,6 @@ export function RibbonRow({
   // isn't there, a row without media runs full width and the alternation
   // simply skips a beat.
   const hasMedia = media != null;
-
-  // Drives the parallax. Runs from the row entering the bottom of the screen
-  // to it leaving the top, so the drift is spread over the whole time the row
-  // is readable rather than being spent in the first inch of it.
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [RIBBON_PARALLAX_PX, -RIBBON_PARALLAX_PX],
-  );
 
   return (
     <>
@@ -189,33 +169,28 @@ export function RibbonRow({
             variants={mediaVariants(reduced)}
             className={cn(!hasMedia && 'hidden', !mediaOnLeft && 'md:order-2')}
           >
-            {/* Nested so the parallax gets an element of its own: the variant
-                above animates this half's opacity and scale, and a MotionValue
-                on the same element would be fighting it for the transform. */}
-            <motion.div style={reduced ? undefined : { y: parallaxY }}>
-              <div
-                className='ribbon-fade relative overflow-hidden'
-                style={
-                  // Pushes the mask's opaque centre toward the text, so the
-                  // heavy falloff lands on the edge facing out of the page
-                  // and the side facing the words stays crisp.
-                  {
-                    '--ribbon-focus-md': mediaOnLeft ? '66%' : '34%',
-                  } as CSSProperties
-                }
-              >
-                {media}
+            <div
+              className='ribbon-fade relative overflow-hidden'
+              style={
+                // Pushes the mask's opaque centre toward the text, so the
+                // heavy falloff lands on the edge facing out of the page
+                // and the side facing the words stays crisp.
+                {
+                  '--ribbon-focus-md': mediaOnLeft ? '66%' : '34%',
+                } as CSSProperties
+              }
+            >
+              {media}
 
-                {/* The glint. One pass on hover or focus, never a loop — see
-                    the keyframes. Pure white at low alpha in both themes:
-                    it's meant to read as light crossing the surface, and
-                    tinting it would make it a colour wash instead. */}
-                <div
-                  aria-hidden
-                  className='motion-safe:group-hover/row:animate-ribbon-glint motion-safe:group-focus-within/row:animate-ribbon-glint pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0'
-                />
-              </div>
-            </motion.div>
+              {/* The glint. One pass on hover or focus, never a loop — see
+                  the keyframes. Pure white at low alpha in both themes:
+                  it's meant to read as light crossing the surface, and
+                  tinting it would make it a colour wash instead. */}
+              <div
+                aria-hidden
+                className='motion-safe:group-hover/row:animate-ribbon-glint motion-safe:group-focus-within/row:animate-ribbon-glint pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0'
+              />
+            </div>
           </motion.div>
 
           <motion.div

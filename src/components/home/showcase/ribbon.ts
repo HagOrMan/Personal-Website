@@ -44,9 +44,6 @@ export function ribbonAccent(index: number): AccentKey {
 export const RIBBON_IN_VIEW_MARGIN: UseInViewOptions['margin'] =
   '-12% 0px -12% 0px';
 
-/** How far the media drifts against the page over a full pass of the row. */
-export const RIBBON_PARALLAX_PX = 26;
-
 /** Shared easing — a soft overshoot-free settle. */
 const EASE = [0.22, 1, 0.36, 1] as const;
 
