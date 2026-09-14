@@ -12,6 +12,7 @@ import { animate, motion, useScroll, useTransform } from 'motion/react';
 
 // import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
 import { HomeIconPopOverlay } from '@/components/home/HomeIconPopOverlay';
+import { HomeShowcase } from '@/components/home/showcase/HomeShowcase';
 import GitHubIcon from '@/components/icons/GithubIcon';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { ReferencesSection } from '@/components/references/ReferencesSection';
@@ -548,24 +549,14 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Recommendations */}
+        {/* Where I've worked, then what I've built - one alternating ribbon
+            across both, see HomeShowcase. */}
+        <HomeShowcase />
+
+        {/* Recommendations, last: they're corroboration, and corroboration
+            before the claim asks a stranger to care what people say about
+            someone they haven't been told anything about yet. */}
         <ReferencesSection />
-
-        {/* Experience */}
-        {/* <section className='mx-auto flex min-h-screen w-full max-w-5xl flex-col items-start justify-center p-10'>
-          <h2 className='mb-8 text-3xl font-bold'>EXPERIENCE</h2>
-          <div className='h-[500px] w-full rounded-xl border border-black/10 p-6 dark:border-white/10'>
-            <p>Co-op</p>
-          </div>
-        </section> */}
-
-        {/* Projects */}
-        {/* <section className='flex min-h-screen w-full flex-col items-end justify-center p-10'>
-          <div className='w-1/2'>
-            <h2 className='mb-4 text-3xl font-bold'>PROJECTS</h2>
-            <p>This?</p>
-          </div>
-        </section> */}
       </main>
 
       {videoMounted && (

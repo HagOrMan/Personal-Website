@@ -4,9 +4,9 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRight, Download, ExternalLink, FileText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
-import { GitHubGlyph } from '@/components/icons/GitHubGlyph';
+import { LINK_META } from '@/components/projects/linkMeta';
 import { ProjectPreviewVideo } from '@/components/projects/ProjectPreviewVideo';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ACCENT_VARS, getAccent } from '@/lib/projects/accents';
@@ -15,26 +15,8 @@ import { formatProjectYear } from '@/lib/projects/year';
 import { cn } from '@/lib/utils';
 import type {
   ProjectLink,
-  ProjectLinkKind,
   TProjectShowcaseCard,
 } from '@/types/projects/ProjectShowcase';
-
-/**
- * The two props the card ever passes an icon — kept explicit rather than
- * pinned to `typeof SomeLucideIcon`, so a brand mark that isn't a lucide icon
- * (GitHubGlyph, since lucide deprecated theirs) sits in this table too.
- */
-type LinkIcon = React.ComponentType<{
-  className?: string;
-  'aria-hidden'?: boolean;
-}>;
-
-const LINK_META: Record<ProjectLinkKind, { label: string; Icon: LinkIcon }> = {
-  github: { label: 'on GitHub', Icon: GitHubGlyph },
-  demo: { label: 'Try it', Icon: ExternalLink },
-  article: { label: 'write-up', Icon: FileText },
-  download: { label: 'download', Icon: Download },
-};
 
 /**
  * The default project card: preview media on top, name + skills, the
@@ -248,7 +230,9 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
       target='_blank'
       rel='noopener noreferrer'
       aria-label={`${project} — ${link.label ?? label} (opens in a new tab)`}
-      className='border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      // No cursor utility on purpose — a `cursor-pointer` class outranks the
+      // base-layer a[target='_blank'] rule and takes the new-tab cursor away.
+      className='border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
     >
       {link.label ?? label}
       <Icon className='size-3.5' aria-hidden />
@@ -265,7 +249,8 @@ function IconLink({ link, project }: { link: ProjectLink; project: string }) {
       target='_blank'
       rel='noopener noreferrer'
       aria-label={`${project} ${link.label ?? label} (opens in a new tab)`}
-      className='text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring inline-flex size-8 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      // Same as DemoLink: no cursor utility, so the new-tab cursor survives.
+      className='text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring inline-flex size-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
     >
       <Icon className='size-4' aria-hidden />
     </a>

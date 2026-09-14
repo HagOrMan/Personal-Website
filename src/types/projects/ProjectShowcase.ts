@@ -1,3 +1,5 @@
+import type { HomeSlot } from '@/types/home';
+
 /**
  * Tag keys are slugs rather than display labels because they go straight into
  * the `?tags=` query param — `no-ai` beats `No%20AI` in a shared link. The
@@ -156,6 +158,13 @@ export type TProjectShowcase = {
    * content.
    */
   hasDetailPage?: boolean;
+  /**
+   * Slot in the homepage ribbon, or unset for the projects that only live on
+   * /projects. Deliberately not `featured`: that one is a looser "worth
+   * pointing at" flag six projects set, and it only moves sitemap priority.
+   * This is the two that get previewed under the hero, in the order given.
+   */
+  homeSlot?: HomeSlot;
   links: ProjectLink[];
 };
 

@@ -20,6 +20,8 @@
  * a broken image, so a half-filled entry still renders - see LogoMark.
  */
 
+import type { HomeSlot } from '@/types/home';
+
 export type ExperienceKind = 'coop' | 'volunteering';
 
 /**
@@ -55,6 +57,12 @@ export interface ExperiencePhoto {
 export interface Experience {
   /** Stable slug. Becomes the DOM id, so it's also the deep link: /experience#scotiabank */
   id: string;
+  /**
+   * Slot in the homepage ribbon, or unset for the entries that only appear on
+   * this timeline. See types/home.ts — the number is the running order there,
+   * which is not the order this page sorts into.
+   */
+  homeSlot?: HomeSlot;
   kind: ExperienceKind;
   org: string;
   role: string;
@@ -107,6 +115,9 @@ export const experiences: Experience[] = [
   // ----------------------------- Coop -----------------------------
   {
     id: 'scotiabank',
+    // Opens the homepage ribbon: the deepest IC work I have, and the one
+    // entry that most directly answers "has he shipped anything real".
+    homeSlot: 1,
     kind: 'coop',
     org: 'Scotiabank',
     role: 'Global Equity Trading Developer, Co-op',
@@ -217,6 +228,11 @@ export const experiences: Experience[] = [
   // ----------------------------- Volunteering -----------------------------
   {
     id: 'mcmaster-engineering-society',
+    // Follows Scotiabank because it says something different rather than
+    // something more: leading 20 devs and scaling a platform, against
+    // Scotia's depth on one system. It also carries the Hatch booking story,
+    // which is why that project isn't in the ribbon's other half.
+    homeSlot: 2,
     kind: 'volunteering',
     org: 'McMaster Engineering Society',
     role: 'Infrastructure Technology Manager',

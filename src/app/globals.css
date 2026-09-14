@@ -119,6 +119,9 @@
   --animate-shimmer: shimmer 1.3s linear infinite;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
+  /* One pass, not a loop - see the keyframes below. */
+  --animate-ribbon-glint: ribbon-glint 900ms ease-out;
+  --animate-shimmer-heading: shimmer-heading 6s linear infinite;
 
   @keyframes flicker {
     0%,
@@ -150,6 +153,63 @@
     }
     100% {
       background-position: 700px 0;
+    }
+  }
+
+  /* A single band of light crossing the homepage ribbon's media on hover.
+     Deliberately one pass with no fill mode rather than an infinite loop: the
+     media it crosses is a project's preview loop, which starts playing on the
+     same hover, and a permanent glint would still be sweeping over it while
+     the video ran. It wipes, then hands over.
+
+     No `forwards`, so the element returns to its resting opacity: 0 and the
+     animation is free to run again the next time it's pointed at. */
+  @keyframes ribbon-glint {
+    from {
+      opacity: 0;
+      transform: translateX(-160%) skewX(-14deg);
+    }
+    35% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateX(320%) skewX(-14deg);
+    }
+  }
+
+  /* The slow sweep across a ribbon section's heading. Slow because this is the
+     only thing on the page moving of its own accord once the hero's intro has
+     played out, and anything quicker turns a heading into a distraction.
+
+     The range is 100%..0% and must stay inside it. Percentage
+     background-positions resolve against (image width - box width), so 0%
+     puts the image's left edge on the box's left edge and 100% puts its right
+     edge on the box's right edge - the two extremes that still cover the text
+     completely. Anything outside that range slides the gradient clear of the
+     box, and since the text is painted *through* this gradient
+     (background-clip: text; color: transparent), an uncovered heading isn't a
+     heading in the base colour - it's an invisible one.
+
+     Those two constraints - never uncover the text, but carry the glint fully
+     off both ends - are what set the 300% size and the 50% glint stop. For an
+     image `s` times the box width with the glint at fraction `g`, the glint
+     sweeps from `g·s - (s-1)` to `g·s`, in box widths. Wanting that to start
+     at or before 0 and finish at or past 1 needs 1/s ≤ g ≤ 1 - 1/s, which has
+     no solution until s ≥ 2. At s = 3, g = 0.5 sits in the middle of the
+     allowed range and sweeps -50% to 150%.
+
+     The old 220%/42% was outside that: the glint stopped at 92% - still lit,
+     still on the last letter - and then jumped back to -28%, which is the
+     abrupt restart. Now both ends of the cycle are the heading at rest in its
+     base colour, so the loop closes on itself invisibly and there's a short
+     beat of stillness between passes. */
+  @keyframes shimmer-heading {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: 0% 0;
     }
   }
 
@@ -290,6 +350,78 @@
   }
 }
 
+/**
+ * A section heading on the homepage ribbon, with a glint travelling through
+ * it. The text itself stays --foreground in both themes and only the glint is
+ * coloured, so this reads as an ordinary heading that something passes
+ * across, rather than as a permanently purple heading.
+ *
+ * The resting background-position is centred, which puts the glint through
+ * the middle of the word. That's what someone with reduced motion sees - a
+ * static two-tone heading - so the effect degrades to a still of itself
+ * instead of to nothing.
+ *
+ * The size and the glint's stop are load-bearing and set together - see the
+ * geometry worked out by the @keyframes above before changing either.
+ */
+@utility shimmer-heading {
+  background-image: linear-gradient(
+    100deg,
+    var(--shimmer-base) 40%,
+    var(--shimmer-glint) 50%,
+    var(--shimmer-base) 60%
+  );
+  background-size: 300% 100%;
+  background-position: 50% 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: var(--animate-shimmer-heading);
+  }
+  /* Forced-colours modes drop background-image but keep `color`, which would
+     leave a transparent - invisible - section heading. Hand the colour back
+     and let the effect go. */
+  @media (forced-colors: active) {
+    background-image: none;
+    color: CanvasText;
+  }
+}
+
+/**
+ * Dissolves the ribbon's media into the page instead of ending it on a
+ * rounded rectangle - the thing that would otherwise make each row read as a
+ * card, which is exactly what this layout is avoiding.
+ *
+ * A mask rather than a gradient overlay in --background, because the aurora
+ * blob sits *behind* the media: an overlay would paint over the glow as well
+ * as the image and leave a visible flat patch where the two meet.
+ *
+ * --ribbon-focus-md pushes the opaque centre toward the text, so the falloff
+ * is heaviest on the edge facing out of the page and the side facing the copy
+ * stays crisp. It only applies from md up, where there are two halves for
+ * that to mean anything; stacked on a phone the fade is symmetric.
+ */
+@utility ribbon-fade {
+  --ribbon-focus-x: 50%;
+  -webkit-mask-image: radial-gradient(
+    125% 130% at var(--ribbon-focus-x) 45%,
+    #000 48%,
+    rgba(0, 0, 0, 0.72) 74%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    125% 130% at var(--ribbon-focus-x) 45%,
+    #000 48%,
+    rgba(0, 0, 0, 0.72) 74%,
+    transparent 100%
+  );
+  @media (width >= 48rem) {
+    --ribbon-focus-x: var(--ribbon-focus-md, 50%);
+  }
+}
+
 @layer utilities {
   :root {
     /* #region  /**=========== Shadcn Variables =========== */
@@ -413,6 +545,24 @@
 
     --accent-nebula-border: var(--color-nebula-700);
     --accent-nebula-glow: var(--color-nebula-500);
+
+    /* Text sitting *on* the page background, as opposed to the border and
+       glow above, which only ever sit against each other. A 1px border can
+       be far lower contrast than a 12px uppercase eyebrow and still read, so
+       these are tuned separately rather than borrowing -border.
+
+       Lush is the odd one out at 800: lush-700 is a mid teal that only just
+       clears 4.5:1 on the near-white background, and the eyebrow is small
+       uppercase text, which is exactly where that margin matters. */
+    --accent-lush-text: var(--color-lush-800);
+    --accent-breeze-text: var(--color-breeze-700);
+    --accent-nebula-text: var(--color-nebula-700);
+    /* #endregion */
+
+    /* #region /**=========== Heading Shimmer =========== */
+    /* Base is the ordinary heading colour, so only the glint is an effect. */
+    --shimmer-base: hsl(var(--foreground));
+    --shimmer-glint: var(--color-lush-600);
     /* #endregion */
   }
 
@@ -500,6 +650,30 @@
 
     --accent-nebula-border: var(--color-nebula-500);
     --accent-nebula-glow: var(--color-nebula-400);
+
+    /* The three don't move by the same amount, because they didn't start in
+       the same place. Against a --background of 190 50% 5%:
+
+         nebula-500 (89 79 255)  is a deep blue-violet and the worst offender
+                                 - dark text on a dark ground. 300 is the
+                                 first shade that reads as lit rather than as
+                                 a smudge, so it moves two steps.
+         breeze-500 (9 172 238)  is legible but sits low; 300 brings it in
+                                 line with nebula's new weight.
+         lush-500   (0 209 176)  is already bright - teal carries far more
+                                 luminance per unit of saturation - so it
+                                 only needs one step, and 300 would have made
+                                 it the loudest thing in the row. */
+    --accent-lush-text: var(--color-lush-400);
+    --accent-breeze-text: var(--color-breeze-300);
+    --accent-nebula-text: var(--color-nebula-300);
+    /* #endregion */
+
+    /* #region /**=========== Heading Shimmer (Dark Mode) =========== */
+    /* A lighter glint - nebula-500 is close enough to the dark background
+       that the sweep would read as the heading dimming rather than lighting. */
+    --shimmer-base: hsl(var(--foreground));
+    --shimmer-glint: var(--color-lush-400);
     /* #endregion */
   }
 

@@ -20,3 +20,26 @@ export const PROJECT_MEDIA: string[] = [
   'monpoke',
   'piraten-kapern',
 ];
+
+/**
+ * A poster's own pixel dimensions, for the one place that lays a poster out at
+ * its own aspect ratio instead of inside a fixed frame: the homepage ribbon.
+ *
+ * There, the media has no card around it — the fade mask, the accent glow and
+ * the hover glint are all sized to the media's box, so a box that isn't the
+ * shape of the artwork inside it puts every one of them slightly off. These
+ * two posters make the point on their own: finance-tracker is 2.1:1 and
+ * monpoke is square, and in a shared 16:10 frame one of them is always
+ * floating in dead space that the effects treat as part of the image.
+ *
+ * Hand-maintained, and safe to be: prepare-project-assets.sh only rewrites the
+ * lines inside PROJECT_MEDIA above, and reading image headers is well past
+ * what a bash listing should be doing. Only slugs that need it belong here —
+ * anything missing falls back to a fixed frame, which is correct, just less
+ * snug. The /projects cards use that fixed frame for everything by design,
+ * since a grid wants a common shape.
+ */
+export const POSTER_SIZE: Record<string, { width: number; height: number }> = {
+  'finance-tracker': { width: 1908, height: 910 },
+  monpoke: { width: 624, height: 626 },
+};

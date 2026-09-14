@@ -102,6 +102,9 @@ const PROJECT_LIST: TProjectShowcase[] = [
   },
   {
     slug: 'finance-tracker',
+    // Leads the homepage's projects half: the most recent thing here, and one
+    // of the few with a demo a stranger can actually click.
+    homeSlot: 1,
     name: 'Finance Tracker',
     skills: 'Next.js, TypeScript, Supabase, Agentic Development',
     tools: [
@@ -227,6 +230,11 @@ const PROJECT_LIST: TProjectShowcase[] = [
   },
   {
     slug: 'monpoke',
+    // The contrast, and that's the whole reason it's here over the Job
+    // Application Tracker: pairing that with Finance Tracker would put two
+    // Next.js/Supabase trackers side by side and read as one project twice.
+    // This one is old, has no AI in it, and is trajectory maths for fun.
+    homeSlot: 2,
     name: 'MonPoke',
     skills: 'Python, Pygame, trajectory & collision math',
     tools: ['Python', 'Pygame'],
