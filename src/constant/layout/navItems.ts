@@ -66,6 +66,10 @@ export const navbarItems: NavbarItem[] = [
     title: 'About Me',
     link: '/about-me',
   },
+  {
+    title: 'Gallery',
+    link: '/gallery',
+  },
   // {
   //   title: 'Resume',
   //   link: '/resume',

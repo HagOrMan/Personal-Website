@@ -17,6 +17,7 @@ const STATIC_ROUTES: Array<{
   { path: '/experience', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/contact', priority: 0.7, changeFrequency: 'yearly' },
   { path: '/resume', priority: 0.6, changeFrequency: 'yearly' },
+  { path: '/gallery', priority: 0.6, changeFrequency: 'monthly' },
   // Project detail pages come from constant/projects.ts — see PROJECT_ROUTES.
   { path: '/ocean', priority: 0.3, changeFrequency: 'yearly' },
 ];
