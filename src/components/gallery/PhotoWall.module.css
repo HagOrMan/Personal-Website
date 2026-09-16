@@ -1,0 +1,89 @@
+/*
+ * Justified rows, no JavaScript.
+ *
+ * Each tile's width is set proportional to its aspect ratio, which makes every
+ * tile in a flex line resolve to the same height while keeping its true shape.
+ * Nothing is cropped and every row fills the container width exactly.
+ *
+ * Two details that are load-bearing:
+ *
+ * 1. flex-grow is multiplied by 100. Free space is only fully distributed when
+ *    a line's flex-grow factors sum to at least 1. A lone portrait tile has an
+ *    aspect ratio of ~0.75, so without the multiplier it stops short and
+ *    leaves a gap at the end of its row. Dropping the multiplier broke 6-8
+ *    rows out of 33 at phone widths. It cancels out of the proportion and
+ *    changes nothing else, so leave it alone.
+ *
+ * 2. --row-h is a target, not a guarantee. Rows end up taller or shorter
+ *    depending on what fits, and the spread between the shortest and tallest
+ *    row tracks the container-width-to-row-height ratio:
+ *
+ *      ratio 8.4 -> 27% spread      ratio 5.0 -> 63% spread
+ *      ratio 7.1 -> 25% spread      ratio 3.9 -> 124% spread
+ *      ratio 5.7 -> 35% spread
+ *
+ *    The ladder below exists only to hold that ratio near or above 6.8 at
+ *    every width, which keeps the spread in the 15-40% band. If you change a
+ *    --row-h value, move its breakpoint with it. It is also why the mobile
+ *    breakpoint cannot go much below 700px: at that width no row height keeps
+ *    the ratio up without shrinking photos to thumbnails, so the layout
+ *    switches to two columns instead.
+ */
+
+.wall {
+  --gap: 4px;
+  --row-h: 180px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+
+/* 940-1279px */
+@media (max-width: 1279px) { .wall { --row-h: 150px; } }
+/* 700-939px */
+@media (max-width: 939px)  { .wall { --row-h: 120px; } }
+
+.tile {
+  flex-grow: calc(var(--ar) * 100);
+  flex-basis: calc(var(--ar) * var(--row-h));
+  aspect-ratio: var(--ar);
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  background-color: var(--tile-color);
+  background-image: var(--tile-blur);
+  background-size: cover;
+  background-position: center;
+}
+
+.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+ * Without these, the final row stretches on its own to fill the full width and
+ * ends up several times taller than every row above it. The spacers occupy
+ * that space and collapse to zero height.
+ */
+.spacer {
+  flex-grow: calc(var(--ar) * 100);
+  flex-basis: calc(var(--ar) * var(--row-h));
+  height: 0;
+}
+
+@media (max-width: 699px) {
+  .wall {
+    display: block;
+    columns: 2;
+    column-gap: var(--gap);
+  }
+  .tile {
+    width: 100%;
+    margin-bottom: var(--gap);
+    break-inside: avoid;
+  }
+  .spacer { display: none; }
+}
