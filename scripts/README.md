@@ -157,8 +157,8 @@ its URL.
   long-lived `cache-control` (or `cf-cache-status: HIT` on a second request).
 - View source on `/gallery` shows the `<picture>` markup inline - no client
   fetch.
-- DevTools Network at desktop width loads 480 or 800 files for typical tiles,
-  never 2400 or 3200.
+- DevTools Network at desktop width loads 800 or 1200 files for typical tiles
+  on a retina display, 480 or 800 at 1x - never 2400 or 3200.
 - No layout shift on load; every tile carries `aspect-ratio` and intrinsic
   `width`/`height`.
 

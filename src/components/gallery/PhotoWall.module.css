@@ -16,32 +16,41 @@
  *
  * 2. --row-h is a target, not a guarantee. Rows end up taller or shorter
  *    depending on what fits, and the spread between the shortest and tallest
- *    row tracks the container-width-to-row-height ratio:
+ *    row grows as the container-width-to-row-height ratio falls:
  *
  *      ratio 8.4 -> 27% spread      ratio 5.0 -> 63% spread
  *      ratio 7.1 -> 25% spread      ratio 3.9 -> 124% spread
  *      ratio 5.7 -> 35% spread
  *
- *    The ladder below exists only to hold that ratio near or above 6.8 at
- *    every width, which keeps the spread in the 15-40% band. If you change a
- *    --row-h value, move its breakpoint with it. It is also why the mobile
- *    breakpoint cannot go much below 700px: at that width no row height keeps
- *    the ratio up without shrinking photos to thumbnails, so the layout
- *    switches to two columns instead.
+ *    Those figures were measured against a deliberately varied pool - 4:3,
+ *    3:4, 16:9, square and 2.4 panoramas. Spread is driven by how much the
+ *    aspect ratios differ, so a narrower mix lands well below them. The
+ *    current set is entirely 4:3 and 3:4, which is why the ladder can run
+ *    taller rows than that table alone would suggest.
+ *
+ *    The ladder below sits at a ratio of roughly 4.3 to 6.6 across desktop
+ *    widths: chosen for photos big enough to actually look at, accepting more
+ *    row-to-row variation than the 15-40% band the old 180/150/120 ladder
+ *    held. If you add panoramas or 16:9 crops later and rows start looking
+ *    uneven, step these values back down rather than moving the breakpoints.
+ *
+ *    The mobile breakpoint still cannot go much below 700px: at that width no
+ *    row height keeps the ratio up without shrinking photos to thumbnails, so
+ *    the layout switches to two columns instead.
  */
 
 .wall {
   --gap: 4px;
-  --row-h: 180px;
+  --row-h: 270px;
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap);
 }
 
 /* 940-1279px */
-@media (max-width: 1279px) { .wall { --row-h: 150px; } }
+@media (max-width: 1279px) { .wall { --row-h: 225px; } }
 /* 700-939px */
-@media (max-width: 939px)  { .wall { --row-h: 120px; } }
+@media (max-width: 939px)  { .wall { --row-h: 180px; } }
 
 .tile {
   flex-grow: calc(var(--ar) * 100);

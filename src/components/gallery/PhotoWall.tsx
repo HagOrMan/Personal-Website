@@ -28,18 +28,22 @@ type Photo = {
 };
 
 /*
- * At a 180px row height tiles render 101-563px wide, median ~245px. Because
- * the row height is a fixed pixel value, a tile's width barely moves with the
- * viewport - so `sizes` has to be in px. A `vw` value would have the browser
- * pull a multi-megabyte file for a 165px slot.
+ * At the 270px desktop row height tiles render roughly 200-360px wide before
+ * rows stretch to fill, on a photo set running 0.75 to 1.33 in aspect ratio.
+ * Because the row height is a fixed pixel value, a tile's width barely moves
+ * with the viewport - so `sizes` has to be in px. A `vw` value would have the
+ * browser pull a multi-megabyte file for a 250px slot.
  *
- * Width is roughly aspectRatio * rowHeight. The 250 (rather than 180) is
+ * Width is roughly aspectRatio * rowHeight. The 375 (rather than 270) is
  * headroom, since rows grow past the target, and it is tuned for the widest
  * step of the ladder in PhotoWall.module.css - narrower viewports use a
  * shorter row and simply fetch a slightly larger file than they need. Below
  * 700px the wall drops to two columns, which are wider than this.
+ *
+ * It scales with --row-h: raise one and raise the other in proportion, or the
+ * browser picks files too small for the slot and the wall goes soft.
  */
-const slotWidth = (photo: Photo) => Math.round(photo.aspectRatio * 250);
+const slotWidth = (photo: Photo) => Math.round(photo.aspectRatio * 375);
 
 const sizesFor = (photo: Photo) =>
   `(max-width: 699px) 50vw, ${slotWidth(photo)}px`;
