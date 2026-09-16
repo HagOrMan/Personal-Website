@@ -11,7 +11,7 @@ export default function Gallery() {
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
             <WaveSpray
-              colorStart='--tw-color-lush-500'
+              colorStart='--tw-color-lush-600'
               colorEnd='--tw-color-nebula-400'
             />
           </div>
