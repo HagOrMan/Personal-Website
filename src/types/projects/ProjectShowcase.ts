@@ -1,3 +1,5 @@
+import type { HomeSlot } from '@/types/home';
+
 /**
  * Tag keys are slugs rather than display labels because they go straight into
  * the `?tags=` query param — `no-ai` beats `No%20AI` in a shared link. The
@@ -48,32 +50,50 @@ export const TAG_ORDER = Object.keys(TAG_META) as ProjectTag[];
  * will claim it, which is safe because collectTools() builds the dropdown from
  * what projects actually declare — an entry nothing uses renders no chip and
  * costs nothing until it's real.
+ *
+ * Being generous here is cheap for the same reason: `tools` never renders on a
+ * card, it only feeds the filter, so a project naming eight of these reads no
+ * differently than one naming three.
+ *
+ * 'PostgreSQL' is the specific one to reach for — every database here is
+ * Postgres via Supabase, and a chip that says so is worth more than one that
+ * says 'SQL'. 'SQL' stays staged for a future project on something else.
  */
 export const TOOLS = [
   'Angular',
+  'Cloudflare Workers AI',
   'Docker',
+  'Expo',
   'Express',
   'Flask',
   'Flutter',
+  'GitHub Actions',
   'JTS Topology Suite',
   'Java',
   'JavaScript',
+  'LaTeX',
   'Log4j2',
+  'Mantine',
   'Maven',
   'MongoDB',
   'Next.js',
   'NextAuth',
   'Node.js',
   'Playwright',
+  'PostgreSQL',
   'Pygame',
   'Python',
   'React',
+  'React Native',
+  'Recharts',
   'SQL',
   'Selenium',
   'Supabase',
   'Tailwind CSS',
+  'TanStack Query',
   'Three.js',
   'TypeScript',
+  'Zustand',
 ] as const;
 
 export type ProjectTool = (typeof TOOLS)[number];
@@ -113,7 +133,10 @@ export type TProjectShowcase = {
   skills: string;
   /** The filter key. Normalised, exact-matched, drives the Tools dropdown. */
   tools: ProjectTool[];
-  /** One or two sentences. Clamped to two lines on the card. */
+  /**
+   * One or two sentences. Renders in full while cards are a single column,
+   * and clamps once two share a row — see ProjectSpotlightCard.
+   */
   description: string;
   /** 2019, '2023-2026', or '2024-present' — see lib/projects/year.ts. */
   year: ProjectYear;
@@ -121,8 +144,27 @@ export type TProjectShowcase = {
   featured: boolean;
   /** Poster image, also the <video> poster. Cards fall back to a skeleton. */
   thumbnail?: string;
-  /** 4–6s silent loop. Omit until one exists — the card just shows the poster. */
+  /** 4-6s silent loop. Omit until one exists — the card just shows the poster. */
   video?: string;
+  /**
+   * Whether /projects/<slug> has something worth reading yet. Omitting it
+   * means no, which is the honest default: the card renders no "Read more",
+   * the route stays out of the sitemap, and the build stops asserting that
+   * the route exists at all.
+   *
+   * Deliberately a flag rather than a commented-out link — the absence of a
+   * write-up is something this config states, not something the card code
+   * has to remember. Flip it to true in the same commit the page gets real
+   * content.
+   */
+  hasDetailPage?: boolean;
+  /**
+   * Slot in the homepage ribbon, or unset for the projects that only live on
+   * /projects. Deliberately not `featured`: that one is a looser "worth
+   * pointing at" flag six projects set, and it only moves sitemap priority.
+   * This is the two that get previewed under the hero, in the order given.
+   */
+  homeSlot?: HomeSlot;
   links: ProjectLink[];
 };
 

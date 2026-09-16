@@ -11,6 +11,7 @@ import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
+import { PostMedia } from '@/components/blog/PostMedia';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
 import { ScrollToHash } from '@/components/blog/ScrollToHash';
@@ -240,6 +241,9 @@ export default async function BlogPostPage({
               remarkPlugins={[remarkGfm]}
               rehypePlugins={rehypePluginsFor(post)}
               components={{
+                // An image reference can point at a PDF, a video, or any
+                // other file; an <img> can only ever render a real image.
+                img: PostMedia,
                 // Links to other posts get a hover preview; everything else
                 // (external links, in-page anchors, asset links) renders
                 // exactly as before, keeping the target/rel that
