@@ -3,10 +3,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { shaderMaterial } from '@react-three/drei';
-import { Canvas, extend, useFrame } from '@react-three/fiber';
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { useResolvedTheme } from '@/context/ThemeContext';
+import { useIsOnScreen, usePrefersReducedMotion } from '@/lib/screenUtils';
 import { getCssColorAsThreeColor } from '@/lib/threeJsUtils';
 import { cn } from '@/lib/utils';
 
@@ -50,11 +51,48 @@ const defaultWaveSpeed = 0.9;
 const defaultWaveAmplitude = 0.55;
 const defaultWaveFrequency = 1.6;
 const defaultSprayRange = 0.9;
+const defaultSprayFalloff = 1.2; // dark-mode default (gentle falloff)
+const defaultSprayBrightness = 0.4; // dark-mode default (spray glints toward white)
+
+/**
+ * The largest step the wave clock will take in a single frame, in seconds.
+ *
+ * R3F hands useFrame the wall-clock time since the last frame. Under
+ * frameloop 'always' that's a frame time, and under 'never' the clock is
+ * stopped and restarted so resuming is clean - but under 'demand' (reduced
+ * motion) the clock keeps running while frames don't, so the one frame a
+ * theme switch asks for can arrive minutes after the last one and carry the
+ * entire gap. Fed straight into the offset below, that teleports the wave to
+ * an unrelated phase.
+ *
+ * A tenth of a second is well past a real frame (that's 10fps) so nothing
+ * healthy is ever clamped. A genuinely slow device runs its wave slightly
+ * slow instead of skipping, which is the right way round.
+ */
+const MAX_FRAME_DELTA = 0.1;
 
 // How many particles ride the wave itself vs. spray off of it.
 // The core particles have aSpread == 0, so they trace the sine line exactly.
-const CORE_COUNT = 800;
-const SPRAY_COUNT = 750;
+//
+// Down from 800/750, but not evenly - these two saturate at very different
+// rates. The core is a dense band tracing one sine curve, so past a few
+// hundred points it's a solid line and more of them add nothing. The spray
+// is a haze: its perceived density is roughly linear in particle count,
+// spread over a much larger area and thinned further by the per-particle
+// lifecycle fade. An even cut took the spray visibly below the intended
+// effect while the core looked unchanged, so the core absorbs most of it.
+//
+// On the per-frame budget: at the 96px slot this renders into, each sprite
+// averages ~700 device px² at the old uncapped DPR 1.75, so the original
+// 1,550 shaded ~1.1M fragments over a 28K-pixel canvas - ~38x overdraw,
+// additively blended with depthWrite:false so there's no early-Z to reject
+// any of it. dpr={[1, 1.5]} on the Canvas is worth a flat 26% of that on its
+// own, because gl_PointSize scales with uPixelRatio too, so sprite area
+// shrinks with the backing store. These counts land at ~591K fragments, a
+// little over half the audited load - and the frameloop gating, not the
+// count, is what actually took this off the main thread.
+const CORE_COUNT = 500;
+const SPRAY_COUNT = 650;
 const WAVE_WIDTH = 7; // world units the wave spans horizontally
 
 type WaveSprayMaterialType = THREE.ShaderMaterial & {
@@ -198,8 +236,8 @@ const WaveSprayShaderMaterial = shaderMaterial(
     uWaveAmplitude: defaultWaveAmplitude,
     uWaveFrequency: defaultWaveFrequency,
     uSprayRange: defaultSprayRange,
-    uSprayFalloff: 1.2, // dark-mode default (gentle falloff)
-    uSprayBrightness: 0.4, // dark-mode default (spray glints toward white)
+    uSprayFalloff: defaultSprayFalloff,
+    uSprayBrightness: defaultSprayBrightness,
   },
   vertexShader,
   fragmentShader,
@@ -210,11 +248,27 @@ extend({ WaveSprayShaderMaterial });
 interface WaveSprayPointsProps {
   colorStart?: string;
   colorEnd?: string;
+  /**
+   * True when this scene only ever gets a single frame (reduced motion - see
+   * the frameloop in WaveSpray). Every easing factor collapses to 1 so that
+   * one frame lands on the final colour/physics values instead of a few
+   * percent of the way there.
+   */
+  snap: boolean;
 }
 
-const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
+const WaveSprayPoints = ({
+  colorStart,
+  colorEnd,
+  snap,
+}: WaveSprayPointsProps) => {
   const materialRef = useRef<WaveSprayMaterialType>(null);
   const { resolvedTheme } = useResolvedTheme();
+
+  // This root's own invalidate, not the module-level one (which invalidates
+  // every root on the page).
+  const invalidate = useThree((state) => state.invalidate);
+  const frameloop = useThree((state) => state.frameloop);
 
   // Same accumulated-offset trick as OceanScene so theme changes don't
   // make the wave jump backwards when speed changes.
@@ -232,8 +286,49 @@ const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
   const targetAmplitude = useRef(defaultWaveAmplitude);
   const targetFrequency = useRef(defaultWaveFrequency);
   const targetSprayRange = useRef(defaultSprayRange);
-  const targetSprayFalloff = useRef(1.2);
-  const targetSprayBrightness = useRef(0.4);
+  const targetSprayFalloff = useRef(defaultSprayFalloff);
+  const targetSprayBrightness = useRef(defaultSprayBrightness);
+
+  /**
+   * A mirror of where the lerp below has actually got to, kept because the
+   * material it lives on doesn't survive a theme switch.
+   *
+   * Everything the easing builds up - speed, amplitude, frequency, spray
+   * range/falloff/brightness, alpha, colours - is stored as uniforms *on the
+   * material instance*, and the material is keyed on blendingMode (see the
+   * note on it further down), so every light/dark toggle throws that instance
+   * away and builds a fresh one back at the shaderMaterial() defaults.
+   *
+   * Those defaults are the dark-mode settings, near enough. In dark mode the
+   * reset barely shows. In light mode it puts frequency back to 1.6 instead
+   * of 1.2, speed to 0.9 instead of 1.7 and alpha boost to 1.5 instead of
+   * 4.0 - and frequency multiplies pos.x in the vertex shader, so a wrong
+   * frequency is a wrong *spatial phase* across the whole wave, not just a
+   * wrong look. Getting back out of it takes a hundred-odd frames of lerp,
+   * which only happens if frames are running. Toggle the theme while this
+   * decoration is scrolled away and frameloop is 'never', so none are: you
+   * scroll back up to a wave at the wrong phase that then visibly writhes
+   * into place.
+   *
+   * Mirroring the values here and writing them back onto the replacement
+   * makes the swap lossless: the new material picks up exactly where the old
+   * one left off, the easing continues toward whatever the new theme's
+   * targets are, and there are no defaults to be stranded on.
+   *
+   * uTimeOffset isn't in here - timeOffsetRef already outlives the material
+   * and useFrame writes it back on the first frame either way.
+   */
+  const liveRef = useRef({
+    speed: defaultWaveSpeed,
+    amplitude: defaultWaveAmplitude,
+    frequency: defaultWaveFrequency,
+    sprayRange: defaultSprayRange,
+    sprayFalloff: defaultSprayFalloff,
+    sprayBrightness: defaultSprayBrightness,
+    alphaBoost: defaultAlphaBoost,
+    colorStart: new THREE.Color(defaultLushColour),
+    colorEnd: new THREE.Color(defaultBreezeColour),
+  });
 
   // Build the particle attributes once. Core particles trace the line,
   // spray particles carry a signed spread biased toward the line (pow)
@@ -319,58 +414,107 @@ const WaveSprayPoints = ({ colorStart, colorEnd }: WaveSprayPointsProps) => {
     if (materialRef.current) {
       materialRef.current.needsUpdate = true;
     }
-  }, [resolvedTheme, colorStart, colorEnd]);
+
+    // These targets live in refs, so React never re-renders and R3F never
+    // learns anything changed. Under frameloop='demand' that would strand a
+    // theme switch on the old colours - ask for the one frame that applies
+    // them. A no-op under 'always'.
+    invalidate();
+  }, [resolvedTheme, colorStart, colorEnd, invalidate]);
+
+  // R3F's setFrameloop doesn't schedule a frame of its own, so coming back
+  // from 'never' to 'demand' (a reduced-motion visitor scrolling the header
+  // back into view) would resume a loop that then renders nothing. Ask for
+  // the one frame that repaints it.
+  useEffect(() => {
+    if (frameloop === 'demand') invalidate();
+  }, [frameloop, invalidate]);
+
+  /**
+   * Hands the mirrored values to whichever material instance is current.
+   *
+   * Keyed on blendingMode because that's what replaces the material: React
+   * mounts the new one during the same commit that changes the key, so by the
+   * time this runs, materialRef points at the replacement and it's sitting on
+   * its constructor defaults. On first mount this writes the defaults back
+   * over themselves, which is a no-op worth having for the simpler code.
+   *
+   * The invalidate() matters under frameloop 'demand' (reduced motion), where
+   * nothing would otherwise ask for the frame that shows this.
+   */
+  useEffect(() => {
+    const mat = materialRef.current;
+    if (!mat) return;
+
+    const live = liveRef.current;
+    mat.uWaveSpeed = live.speed;
+    mat.uWaveAmplitude = live.amplitude;
+    mat.uWaveFrequency = live.frequency;
+    mat.uSprayRange = live.sprayRange;
+    mat.uSprayFalloff = live.sprayFalloff;
+    mat.uSprayBrightness = live.sprayBrightness;
+    mat.uAlphaBoost = live.alphaBoost;
+    mat.uColorStart.copy(live.colorStart);
+    mat.uColorEnd.copy(live.colorEnd);
+
+    invalidate();
+  }, [blendingMode, invalidate]);
 
   useFrame((_, delta) => {
     if (!materialRef.current) return;
     const mat = materialRef.current;
 
-    mat.uWaveSpeed = THREE.MathUtils.lerp(
-      mat.uWaveSpeed,
-      targetSpeed.current,
-      0.025,
-    );
-    mat.uWaveAmplitude = THREE.MathUtils.lerp(
-      mat.uWaveAmplitude,
-      targetAmplitude.current,
-      0.03,
-    );
-    mat.uWaveFrequency = THREE.MathUtils.lerp(
-      mat.uWaveFrequency,
-      targetFrequency.current,
-      0.05,
-    );
-    mat.uSprayRange = THREE.MathUtils.lerp(
-      mat.uSprayRange,
-      targetSprayRange.current,
-      0.03,
-    );
-    mat.uSprayFalloff = THREE.MathUtils.lerp(
+    // When only one frame is coming, every easing factor has to be 1 or the
+    // wave freezes partway to its targets.
+    const ease = (current: number, target: number, factor: number) =>
+      THREE.MathUtils.lerp(current, target, snap ? 1 : factor);
+
+    mat.uWaveSpeed = ease(mat.uWaveSpeed, targetSpeed.current, 0.025);
+    mat.uWaveAmplitude = ease(mat.uWaveAmplitude, targetAmplitude.current, 0.03);
+    mat.uWaveFrequency = ease(mat.uWaveFrequency, targetFrequency.current, 0.05);
+    mat.uSprayRange = ease(mat.uSprayRange, targetSprayRange.current, 0.03);
+    mat.uSprayFalloff = ease(
       mat.uSprayFalloff,
       targetSprayFalloff.current,
       0.05,
     );
-    mat.uSprayBrightness = THREE.MathUtils.lerp(
+    mat.uSprayBrightness = ease(
       mat.uSprayBrightness,
       targetSprayBrightness.current,
       0.05,
     );
 
-    timeOffsetRef.current += delta * mat.uWaveSpeed;
+    // Step capped so a frame arriving after a long gap can't fling the wave
+    // to an unrelated phase - see MAX_FRAME_DELTA.
+    timeOffsetRef.current += Math.min(delta, MAX_FRAME_DELTA) * mat.uWaveSpeed;
     mat.uTimeOffset = timeOffsetRef.current;
 
-    mat.uColorStart.lerp(targetStart.current, 0.05);
-    mat.uColorEnd.lerp(targetEnd.current, 0.05);
+    mat.uColorStart.lerp(targetStart.current, snap ? 1 : 0.05);
+    mat.uColorEnd.lerp(targetEnd.current, snap ? 1 : 0.05);
 
-    mat.uAlphaBoost = THREE.MathUtils.lerp(
-      mat.uAlphaBoost,
-      targetAlphaBoost.current,
-      0.05,
-    );
+    mat.uAlphaBoost = ease(mat.uAlphaBoost, targetAlphaBoost.current, 0.05);
+
+    // Last thing each frame: record where the easing got to, so the next
+    // material to be built can start from here rather than from the
+    // defaults. See liveRef.
+    const live = liveRef.current;
+    live.speed = mat.uWaveSpeed;
+    live.amplitude = mat.uWaveAmplitude;
+    live.frequency = mat.uWaveFrequency;
+    live.sprayRange = mat.uSprayRange;
+    live.sprayFalloff = mat.uSprayFalloff;
+    live.sprayBrightness = mat.uSprayBrightness;
+    live.alphaBoost = mat.uAlphaBoost;
+    live.colorStart.copy(mat.uColorStart);
+    live.colorEnd.copy(mat.uColorEnd);
   });
 
-  const pixelRatio =
-    typeof window !== 'undefined' ? window.devicePixelRatio : 1;
+  // The renderer's ratio, not the display's. `dpr={[1, 1.5]}` on the Canvas
+  // caps the backing store, and the sprite size in the vertex shader is
+  // multiplied by this - reading raw window.devicePixelRatio here (as this
+  // used to) would size sprites for a 1.75x buffer that no longer exists,
+  // so they'd render ~17% too large against the capped canvas.
+  const pixelRatio = useThree((state) => state.viewport.dpr);
 
   return (
     <points>
@@ -424,8 +568,27 @@ export const WaveSpray = ({
 }: WaveSprayProps) => {
   const [isReady, setIsReady] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onScreen = useIsOnScreen(containerRef);
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // The loop itself has to stop - returning early from useFrame would not
+  // have helped, because R3F still calls gl.render() every tick and drawing
+  // hundreds of additively blended points *is* the cost. This decoration sits
+  // beside the <h1>, so it leaves the viewport within one screen of scrolling.
+  //
+  //   never  - scrolled past, or the tab is backgrounded: no frames at all
+  //   demand - reduced motion: one static frame, no ongoing animation
+  //   always - visible, and motion is welcome: the wave as designed
+  const frameloop = !onScreen
+    ? 'never'
+    : prefersReducedMotion
+      ? 'demand'
+      : 'always';
+
   return (
     <div
+      ref={containerRef}
       className={cn(
         'h-full w-full transition-opacity duration-1000 ease-in-out',
         isReady ? 'opacity-100' : 'opacity-0',
@@ -437,9 +600,18 @@ export const WaveSpray = ({
         // Straight-on camera => reads as flat/2D
         camera={{ position: [0, 0, 3.2], fov: 55 }}
         gl={{ alpha: true }} // transparent so the slot's bg shows through
+        frameloop={frameloop}
+        // Uncapped, this took raw devicePixelRatio - 1.75 on the audited
+        // phone, so a 96px slot got a 168x168 backing store. Capping at 1.5
+        // cuts the fragment count ~27% and is indistinguishable at this size.
+        dpr={[1, 1.5]}
         onCreated={() => setIsReady(true)}
       >
-        <WaveSprayPoints colorStart={colorStart} colorEnd={colorEnd} />
+        <WaveSprayPoints
+          colorStart={colorStart}
+          colorEnd={colorEnd}
+          snap={prefersReducedMotion}
+        />
       </Canvas>
     </div>
   );

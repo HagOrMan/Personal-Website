@@ -1,7 +1,5 @@
 'use client';
 
-import { preconnect } from 'react-dom';
-
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -34,19 +32,12 @@ export function VideoModalShell({
 }: VideoModalShellProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
 
-  // Warms the connection to the video host (DNS + TLS only - no bytes)
-  // as soon as this shell mounts, regardless of `open`. This alone doesn't
-  // fetch any video data (so it costs nothing for visitors who never open
-  // the modal), but it removes the connection-setup latency that's part of
-  // every cold first fetch. Actual byte prefetching only happens on
-  // deliberate hover/focus/touch intent - see primeVideoPlayback calls at
-  // each trigger button.
-  try {
-    preconnect(new URL(videos[0].src).origin);
-  } catch {
-    // videos[0].src isn't an absolute URL (e.g. NEXT_PUBLIC_R2_BASE_URL
-    // unset locally) - nothing to preconnect to.
-  }
+  // No preconnect here. This used to warm the video host's DNS + TLS on
+  // mount, regardless of `open` - which meant every visitor who never opened
+  // a video still paid for a connection nothing was ever sent over, and
+  // Lighthouse flagged it as an unused preconnect. It now fires from the
+  // `primeVideo` callbacks on the trigger buttons instead (home page and
+  // about-me), on deliberate hover/focus, alongside warming this chunk.
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>

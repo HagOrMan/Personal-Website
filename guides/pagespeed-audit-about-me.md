@@ -437,6 +437,186 @@ are 40 of the 100 points, and all three respond to the same handful of changes.
 
 ---
 
+## Changes applied
+
+> **Correction to #1 above.** That section was written against `6bdfb8b` and says none of
+> the home-page audit's fixes were in the tree. They landed in `2ce56b2` (`browserslist`,
+> `useIsOnScreen`, the `useMediaQuery` deps fix, `dynamic()` for `OceanScene` and
+> `VideoModalShell`, and the `primeVideo` intent pattern). So **#9 needed nothing** and
+> Tier 3's first bullet was already done. #6 was still fully live on this page, though:
+> `VideoModalShell` kept its mount-time `preconnect`, and `/about-me` imported it
+> statically and mounted it unconditionally, so the home page had simply stopped being the
+> one that paid for it.
+
+### The render loop now stops · `Wavespray.tsx`
+
+Tier 1.1 and 1.2, same shape as `OceanScene`. `useIsOnScreen` + `usePrefersReducedMotion`
+drive a `frameloop` on the `<Canvas>`:
+
+```tsx
+const frameloop = !onScreen ? 'never' : prefersReducedMotion ? 'demand' : 'always';
+```
+
+`'never'` covers both "scrolled past" and "backgrounded tab" — this decoration sits beside
+the `<h1>`, so it leaves the viewport within one screen of scrolling and spends most of a
+real visit gated off. Under `'demand'` the reduced-motion path gets one frame, so
+`WaveSprayPoints` takes a `snap` prop that collapses every easing factor to 1 (otherwise
+that single frame lands a few percent of the way to its targets), and the theme effect
+calls `invalidate()` — the targets live in refs, so without it a theme switch would strand
+the wave on the old palette with no frame ever scheduled to apply it.
+
+Alongside it, `dpr={[1, 1.5]}` and a particle cut: `CORE_COUNT` 800 → 500,
+`SPRAY_COUNT` 750 → 650.
+
+> **Revised after looking at it next to the deployed version.** The fix plan's
+> "halve both" was wrong, and so was this section's first pass at it (400/375).
+> The two counts saturate at different rates: the core is a dense band tracing one
+> sine curve and is already solid well under 400, but the spray is a haze whose
+> perceived density is roughly linear in count, spread over a larger area and
+> thinned again by the lifecycle fade. Cutting both by the same factor put the
+> spray visibly below its intended effect while the core looked identical — so the
+> core absorbs most of the reduction now.
+>
+> This costs less than it sounds. `dpr={[1, 1.5]}` is worth a flat 26% of the
+> fragment count *at any particle count*, because `gl_PointSize` scales with
+> `uPixelRatio` too, so sprite area shrinks along with the backing store. Against
+> the audited ~1.1 M fragments/frame: 1,150 particles at DPR 1.5 is ~591 K (54%),
+> and even a full restore to 1,550 would be ~797 K (73%). The particle count was
+> never the load-bearing fix here — the `frameloop` gating is, and it's untouched.
+
+**One thing the fix plan doesn't mention, and it matters.** The vertex shader multiplies
+`gl_PointSize` by `uPixelRatio`, and that uniform was fed from raw
+`window.devicePixelRatio`. Capping the canvas at 1.5 without rewiring the uniform would
+have sized every sprite for a 1.75× backing store that no longer exists — ~17% too large
+against the smaller buffer, quietly eating part of the win it was meant to deliver. It now
+reads the renderer's own ratio:
+
+```tsx
+const pixelRatio = useThree((state) => state.viewport.dpr);
+```
+
+**And one gap in the `'demand'` path that's worth knowing about.** R3F's `setFrameloop`
+(`events-*.esm.js:1044`) restarts the clock and sets state, but never schedules a frame. So
+`'never'` → `'demand'` — a reduced-motion visitor scrolling the header back into view —
+resumes a loop that then renders nothing until something else invalidates. Harmless in
+practice, because a static scene's last composited frame is still the correct one, but it
+depends on the browser holding that frame rather than on anything guaranteeing it. A short
+effect closes it:
+
+```tsx
+useEffect(() => {
+  if (frameloop === 'demand') invalidate();
+}, [frameloop, invalidate]);
+```
+
+Both `invalidate` calls here are the store-scoped `useThree((s) => s.invalidate)` rather
+than the module-level import `OceanScene` uses — the module-level one invalidates every
+root on the page, which is a no-op difference today (one canvas per page) and the right
+default anyway. **`OceanScene` has the same gap**; it wasn't touched, since this run's scope
+was `/about-me`.
+
+### Code splitting · `WaveSprayLazy.tsx`, `AboutMeClient.tsx`
+
+Tier 1.3, all three components.
+
+`about-me/page.tsx` is a server component, so `dynamic(..., { ssr: false })` for `WaveSpray`
+lives in a new one-line client wrapper, `WaveSprayLazy.tsx`. No `loading` fallback: the
+decoration's slot is a fixed `size-24`/`md:size-28`, so there's nothing to shift, and
+`WaveSpray` already fades itself in on `onCreated`.
+
+In `AboutMeClient`, both video shells are now `dynamic(..., { ssr: false })`:
+
+- **`VideoStickyShell`** — behind `isDesktop &&`, so a phone was downloading and parsing
+  ~1,200 lines of a component that device can never render.
+- **`VideoModalShell`** — also moved behind a `modalMounted` flag, so it isn't in the tree
+  at all until the first open rather than mounting with `open={false}`. The flag latches
+  true so the exit animation still has a component to play out on.
+
+`primeVideo` (chunk warm + `preconnect`) hangs off `onPointerEnter`/`onFocus` of the poster
+button and every "Watch" chip. The chips prime unconditionally rather than only when
+`!isDesktop` — priming is idempotent, and `isDesktop` is false until the media query
+resolves, so gating it would only miss the earliest hovers.
+
+### The headline no longer ships invisible · `PageHeader.tsx`
+
+Tier 2.1, site-wide (13 pages). `hidden` drops its opacity leg:
+
+```tsx
+hidden: { y: 12 },   // was { opacity: 0, y: 12 }
+```
+
+Motion serialises `initial` into the SSR HTML, so the old variant shipped every sub-page's
+`<h1>` and description as transparent text that only appeared after Motion hydrated and
+worked through `delayChildren` + `staggerChildren` + `duration`. The slide-up entrance is
+unchanged; only the visibility gate is gone.
+
+### The poster's srcset bucket · `next.config.ts`
+
+Tier 2.2, the first option. One line:
+
+```ts
+images: { imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 448] },
+```
+
+392 device px now lands on 448 instead of skipping 384 by 8 pixels and taking 640. Fixes
+the class of problem rather than this instance, at the cost of one extra `srcset` entry
+site-wide.
+
+### The unused preconnect · `VideoModalShell.tsx`
+
+Tier 2.3. The render-body `preconnect` is deleted, along with the comment above it that
+described a `primeVideoPlayback` call site which never existed. `primeVideo` on the trigger
+buttons — home page and about-me — is the real thing that comment was describing.
+
+### Not done
+
+- **#8 legacy polyfills.** As the report says: Next hard-`require`s them into its own client
+  entry and there is no supported way out. Skipped.
+- **CLS.** It's 0.
+- **#9 `useMediaQuery`.** Already fixed in `2ce56b2`.
+- **#7 render-blocking CSS.** Untouched, same call as the home page — lowest leverage in
+  the report.
+- **Verifying the sticky chunk isn't requested at 412 px.** Not measured. The `isDesktop &&`
+  guard plus `dynamic()` makes it structurally impossible, but that's an argument, not a
+  waterfall.
+- **Source poster recompression.** Commands below; not run here.
+- **The other five `WaveSpray` consumers.** `/contact`, `/experience`, `/projects`,
+  `/resume` and `NotFoundContent` all still import it statically, so those routes keep
+  three/R3F/drei on their critical path. They *do* get the frameloop gating, the DPR cap and
+  the particle cut for free, since those live in the component. Swapping each to
+  `WaveSprayLazy` is a one-line import change per file — deliberately left out of scope here,
+  which was `/about-me`.
+
+### Source poster recompression (run locally)
+
+`public/posters/about-me.jpg` is **177 KB**, the largest of the six and the only one on the
+critical path. Next optimises at request time, so this is about repo size and cold-
+optimisation cost rather than visitor bytes — the `imageSizes` change above is what moved
+the bytes a visitor actually downloads.
+
+Don't shrink these below ~1080 wide. The mobile modal renders the poster overlay at
+`sizes='100vw'` (`VideoExperience.tsx:176`), so a 430 px phone at DPR 3 asks for ~1290 —
+the 224 px button is not the largest consumer.
+
+```bash
+# Check what you're starting from
+ffprobe -v error -select_streams v:0 -show_entries stream=width,height \
+  -of csv=p=0 public/posters/about-me.jpg
+
+# Cap at 1080px wide, keep aspect (-2 keeps the height even), strip metadata.
+# -q:v is 2-31, lower is better; 4 is high quality, try 5-6 if you want smaller.
+for f in public/posters/*.jpg; do
+  ffmpeg -i "$f" -vf "scale='min(1080,iw)':-2" \
+    -q:v 4 -map_metadata -1 "${f%.jpg}.opt.jpg"
+done
+
+# Compare, eyeball the .opt.jpg files, then swap them in
+ls -la public/posters/
+for f in public/posters/*.opt.jpg; do mv "$f" "${f%.opt.jpg}.jpg"; done
+```
+
+---
+
 ## Appendix: what is *not* wrong
 
 Worth stating plainly, because these are the things people reach for first:

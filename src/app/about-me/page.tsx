@@ -1,5 +1,5 @@
 import AboutMeClient from '@/components/about-me/AboutMeClient';
-import { WaveSpray } from '@/components/animated-fun/Wavespray';
+import { WaveSprayLazy } from '@/components/animated-fun/WaveSprayLazy';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { PORTFOLIO_VIDEOS } from '@/constant/videos';
@@ -14,7 +14,7 @@ export default function AboutMe() {
         description='Get to know me through the page below - or hear it straight from me on video.'
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
-            <WaveSpray
+            <WaveSprayLazy
               colorStart='--tw-color-breeze-300'
               colorEnd='--tw-color-lush-300'
             />
