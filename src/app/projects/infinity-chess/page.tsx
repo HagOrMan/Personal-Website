@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/layout/PageHeader';
+import { ProjectPageInProgress } from '@/components/projects/ProjectPageInProgress';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
@@ -16,6 +17,7 @@ export default function InfinityChess() {
         title='Infinity Chess'
         description='A Chess variant with pieces able to go in one wall and come out the other.'
       />
+      <ProjectPageInProgress />
     </main>
   );
 }

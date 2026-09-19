@@ -42,3 +42,10 @@ yarn-error.log*
 next-env.d.ts
 
 .vscode
+
+# photo wall (see scripts/process-photos.mjs)
+# Source photos and the generated derivatives both stay out of git - the
+# derivatives live in R2, and only photos-out/photos.json is copied into
+# src/data/photos.json and committed.
+/photos-src/
+/photos-out/

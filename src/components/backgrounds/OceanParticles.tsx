@@ -9,6 +9,7 @@ import {
   invalidate,
   ThreeEvent,
   useFrame,
+  useThree,
 } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -37,6 +38,46 @@ const defaultAlphaBoost = 1.5;
 const defaultWaveSpeed = 0.75;
 const defaultWaveElevation = 0.6;
 const defaultWaveFrequency = 1.5;
+
+/**
+ * The largest step the wave clock will take in a single frame, in seconds.
+ *
+ * R3F hands useFrame the wall-clock time since the last frame, and with
+ * frameloop 'never' there may not have been one for minutes. Feeding that
+ * straight into the clock teleports the whole wave field to a new phase the
+ * instant the loop starts again - which is what a theme switch does while the
+ * hero is scrolled out of view: swapping the blending mode re-renders the R3F
+ * tree, which takes one frame, and that frame carries the entire time spent
+ * away.
+ *
+ * A tenth of a second is well past a real frame (that's 10fps) so nothing
+ * healthy is ever clamped, and it means the ocean resumes where it left off
+ * rather than somewhere unrelated. A genuinely slow device runs its waves
+ * slightly slow instead of skipping, which is the right way round.
+ */
+const MAX_FRAME_DELTA = 0.1;
+
+/**
+ * Where the wave clock wraps back to zero, in shader time units.
+ *
+ * uTimeOffset is a 32-bit float that the vertex shader feeds straight into
+ * sin(). Left to climb forever it eventually reaches magnitudes where the gap
+ * between representable floats is a visible fraction of a radian, and the
+ * three wave terms - which use it at 1.0x, 0.8x and 2.0x - quantise by
+ * different amounts. Neighbouring particles then land on stepped phases
+ * instead of a smooth curve: the field tears into bands, parts of a swell
+ * appear to jump to the bottom of the next one, and the two multiplied sines
+ * flatten each other out so the whole ocean reads smaller. Exactly the
+ * "chopped, zoomed out" state, and it never recovers on its own because
+ * nothing ever brings the number back down.
+ *
+ * 10π is the smallest wrap that's seamless for all three: it's 5 periods of
+ * the 1.0x term, 4 of the 0.8x, and 10 of the 2.0x, so every one of them is
+ * mid-cycle at exactly the same place before and after. At ~35s per wrap the
+ * clock never leaves single digits of magnitude, where float precision is
+ * far finer than anything visible.
+ */
+const WAVE_TIME_PERIOD = Math.PI * 10;
 
 // Particle grid density, expressed as planeGeometry segment counts. Desktop
 // keeps the original 256x128 (33,153 points). Phones get a quarter of the
@@ -221,6 +262,37 @@ const WaveParticles = ({ snap }: WaveParticlesProps) => {
   const targetElevation = useRef(defaultWaveElevation);
   const targetFrequency = useRef(defaultWaveFrequency);
 
+  /**
+   * A mirror of where the lerp below has actually got to, kept because the
+   * material it lives on doesn't survive a theme switch.
+   *
+   * Everything the easing builds up - the current elevation, speed, colours,
+   * alpha - is stored as uniforms *on the material instance*, and the
+   * material is keyed on blendingMode (see the note on it further down), so
+   * every light/dark toggle throws that instance away and builds a fresh one
+   * back at the shaderMaterial() defaults.
+   *
+   * Those defaults are the dark-mode settings, near enough. In dark mode the
+   * reset barely shows. In light mode it drops elevation 0.9 -> 0.6 and
+   * alpha boost 4.0 -> 1.5, which is exactly the "waves went small and thin"
+   * state - and getting back out of it takes a hundred-odd frames of lerp,
+   * which only happens if frames are running. Toggle the theme while the
+   * hero is scrolled away and frameloop is 'never', so none are.
+   *
+   * Mirroring the values here and writing them back onto the replacement
+   * makes the swap lossless: the new material picks up exactly where the old
+   * one left off, the easing continues toward whatever the new theme's
+   * targets are, and there's no defaults to be stranded on.
+   */
+  const liveRef = useRef({
+    speed: defaultWaveSpeed,
+    elevation: defaultWaveElevation,
+    frequency: defaultWaveFrequency,
+    alphaBoost: defaultAlphaBoost,
+    colorStart: new THREE.Color(defaultLushColour),
+    colorEnd: new THREE.Color(defaultBreezeColour),
+  });
+
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (materialRef.current) {
       // Set the center of the ripple to the clicked 3D point
@@ -296,8 +368,23 @@ const WaveParticles = ({ snap }: WaveParticlesProps) => {
         0.05,
       );
 
-      // Increment offset by (time_passed * current_speed)
-      timeOffsetRef.current += delta * mat.uWaveSpeed;
+      // Increment offset by (time_passed * current_speed), with the step
+      // capped so a frame that arrives after a long gap can't fling the
+      // waves to an unrelated phase — see MAX_FRAME_DELTA.
+      timeOffsetRef.current += Math.min(delta, MAX_FRAME_DELTA) * mat.uWaveSpeed;
+
+      // Then fold it back into range, which keeps uTimeOffset small enough
+      // that the shader's sin() calls stay precise — see WAVE_TIME_PERIOD.
+      // The wrap is invisible because every wave term completes a whole
+      // number of cycles across it.
+      if (timeOffsetRef.current >= WAVE_TIME_PERIOD) {
+        timeOffsetRef.current -= WAVE_TIME_PERIOD;
+        // uLastClickTime is measured on this same clock, and the shader reads
+        // the difference. Shifting it by the same amount keeps a ripple that
+        // happens to be mid-flight from being cut short — or, worse, from
+        // going negative and reading as a click that hasn't happened yet.
+        mat.uLastClickTime -= WAVE_TIME_PERIOD;
+      }
 
       // Update the shader uniform
       mat.uTimeOffset = timeOffsetRef.current;
@@ -322,12 +409,62 @@ const WaveParticles = ({ snap }: WaveParticlesProps) => {
       // Smooth lerp for alpha thickness
       // This allows the particles to "thicken up" smoothly when switching to light mode
       mat.uAlphaBoost = ease(mat.uAlphaBoost, targetAlphaBoost.current, 0.05);
+
+      // Last thing each frame: record where the easing got to, so the next
+      // material to be built can start from here rather than from the
+      // defaults. See liveRef.
+      const live = liveRef.current;
+      live.speed = mat.uWaveSpeed;
+      live.elevation = mat.uWaveElevation;
+      live.frequency = mat.uWaveFrequency;
+      live.alphaBoost = mat.uAlphaBoost;
+      live.colorStart.copy(mat.uColorStart);
+      live.colorEnd.copy(mat.uColorEnd);
     }
   });
 
-  // Calculate pixel ratio for sharp rendering on all screens
-  const pixelRatio =
-    typeof window !== 'undefined' ? window.devicePixelRatio : 1;
+  /**
+   * Hands the mirrored values to whichever material instance is current.
+   *
+   * Keyed on blendingMode because that's what replaces the material: React
+   * mounts the new one during the same commit that changes the key, so by the
+   * time this runs, materialRef points at the replacement and it's sitting on
+   * its constructor defaults. On first mount this writes the defaults back
+   * over themselves, which is a no-op worth having for the simpler code.
+   *
+   * The invalidate() matters under frameloop 'demand' (reduced motion), where
+   * nothing would otherwise ask for the frame that shows this.
+   */
+  useEffect(() => {
+    const mat = materialRef.current;
+    if (!mat) return;
+
+    const live = liveRef.current;
+    mat.uWaveSpeed = live.speed;
+    mat.uWaveElevation = live.elevation;
+    mat.uWaveFrequency = live.frequency;
+    mat.uAlphaBoost = live.alphaBoost;
+    mat.uColorStart.copy(live.colorStart);
+    mat.uColorEnd.copy(live.colorEnd);
+
+    invalidate();
+  }, [blendingMode]);
+
+  // The ratio the renderer is *actually* drawing at, not the screen's.
+  //
+  // These have to be the same number. gl_PointSize is `6.0 * uPixelRatio`, so
+  // this scales the width of every point sprite, while the canvas resolution
+  // is set by the Canvas's `dpr` — which is clamped to 2. Reading
+  // window.devicePixelRatio here meant a DPR-3 phone (an iPhone Pro, plenty
+  // of Androids) drew a 2x buffer with points sized for 3x: ~2.25x the
+  // fragments per particle, every one of them additively blended with
+  // depthWrite off. That's the scene's most overdrawn pass, paid at over
+  // twice its intended cost, on exactly the devices with the least fill rate
+  // to spare.
+  //
+  // viewport.dpr is R3F's own clamped value, so the two can't drift apart
+  // again, and it re-renders if it ever changes (a drag to another monitor).
+  const pixelRatio = useThree((state) => state.viewport.dpr);
 
   return (
     <>
@@ -368,6 +505,48 @@ const WaveParticles = ({ snap }: WaveParticlesProps) => {
   );
 };
 
+/**
+ * Keeps the ocean recoverable when the browser takes its WebGL context away.
+ *
+ * A lost context isn't exotic on a page like this one. Contexts are a limited
+ * driver-level resource, and a browser will drop one under GPU memory
+ * pressure, when the GPU process restarts, or when something recreates the
+ * rendering surface underneath it - switching into DevTools device emulation
+ * does exactly that.
+ *
+ * What makes it *permanent* is the default behaviour of the event: unless
+ * something calls preventDefault() on `webglcontextlost`, the browser never
+ * fires `webglcontextrestored`, and the canvas keeps showing whatever frame
+ * it died on. That's the failure this fixes - not the loss itself, which is
+ * the browser's call, but the part where nothing ever comes back and no
+ * amount of scrolling, resizing or theme switching clears it.
+ *
+ * three.js already knows how to rebuild its GL state once a context returns;
+ * it just never got the chance. The only thing it needs on top is a frame to
+ * draw - `frameloop` here can be 'never' (scrolled past) or 'demand' (reduced
+ * motion), and in neither case would anything think to ask.
+ */
+function WebGLContextGuard() {
+  const gl = useThree((state) => state.gl);
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const onLost = (event: Event) => event.preventDefault();
+    const onRestored = () => invalidate();
+
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+    };
+  }, [gl]);
+
+  return null;
+}
+
 // The Main Scene Component
 export const OceanScene = () => {
   // State to track when the scene is ready to be shown. Fixes issue where particles took milliseconds to load and appeared abruptly on screen, looks much smoother
@@ -390,6 +569,18 @@ export const OceanScene = () => {
       ? 'demand'
       : 'always';
 
+  // Ask for a frame the moment the scene is eligible for one again.
+  //
+  // Coming back from 'never' is the only transition where nothing else would:
+  // whatever happened while the loop was stopped - a theme switch, most
+  // likely - left the scene needing to be redrawn, and 'never' means no frame
+  // was ever taken to show it. Under 'always' this is a no-op, and under
+  // 'demand' it's the one request that gets reduced-motion users their
+  // updated frame.
+  useEffect(() => {
+    if (onScreen) invalidate();
+  }, [onScreen]);
+
   return (
     <div
       ref={containerRef}
@@ -403,9 +594,16 @@ export const OceanScene = () => {
         className='touch-pan-y select-none'
         camera={{ position: [0, 2, 4], fov: 60 }}
         gl={{ alpha: true }} // allows empty background
+        // Stated rather than inherited, and stated because something else
+        // depends on it: WaveParticles sizes its points off this exact value
+        // (see the note by pixelRatio there). It's also what SparkleField and
+        // Sunrise already pass, so all three canvases agree.
+        dpr={[1, 2]}
         frameloop={frameloop}
         onCreated={() => setIsReady(true)}
       >
+        <WebGLContextGuard />
+
         {/* OrbitControls lets you rotate the view with mouse */}
         <Suspense fallback={null}>
           <OrbitControls

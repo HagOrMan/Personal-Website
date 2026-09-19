@@ -122,7 +122,7 @@ const toColor = ([r, g, b]: Rgb) => new THREE.Color(r / 255, g / 255, b / 255);
 // Sun sits low and to the left. Water lighting + sky disc share this idea:
 // SUN_DIR is the direction *toward* the sun from the water.
 // TWEAK: change x/z to move the light's compass direction; keep y small
-// (0.05–0.25) to preserve the low-sun grazing light. If you move this,
+// (0.05-0.25) to preserve the low-sun grazing light. If you move this,
 // also move uSunPos (sky) and shineOrigin (water) to match.
 const SUN_DIR = new THREE.Vector3(-0.62, 0.12, -0.78).normalize();
 
