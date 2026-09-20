@@ -43,9 +43,6 @@ const VideoModalShell = dynamic(
   { ssr: false },
 );
 
-const socialLinkClasses =
-  'group cursor-newtab bg-nebula-500/5 border-nebula-600/10 text-nebula-950 hover:bg-nebula-500/10 hover:border-nebula-600/20 dark:bg-nebula-400/10 dark:border-nebula-300/20 dark:text-nebula-50 dark:hover:bg-nebula-400/20 dark:hover:border-nebula-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors';
-
 type AboutMeSection = {
   id: string;
   title: string;
