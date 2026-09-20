@@ -59,10 +59,17 @@ export const PageHeader = ({
     },
   };
 
+  // No opacity leg, deliberately. Motion serialises a component's `initial`
+  // state into the SSR HTML, so `opacity: 0` here shipped every sub-page's
+  // <h1> and description as invisible text that only appeared once Motion had
+  // hydrated and worked through delayChildren + staggerChildren + duration.
+  // On a throttled phone that put the largest text on the page at opacity 0
+  // through first paint and left the top third of the page still resolving
+  // past 2s - which is what Speed Index measures. The y-slide gives the same
+  // entrance without gating whether the words are readable.
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 12 },
+    hidden: { y: 12 },
     visible: {
-      opacity: 1,
       y: 0,
       transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
     },

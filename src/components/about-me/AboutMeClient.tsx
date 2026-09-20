@@ -1,6 +1,8 @@
 'use client';
 
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useCallback, useState } from 'react';
+import { preconnect } from 'react-dom';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -10,14 +12,39 @@ import { GitHubGlyph } from '@/components/icons/GitHubGlyph';
 import { LinkedInGlyph } from '@/components/icons/LinkedInGlyph';
 import { actionVariants } from '@/components/ui/actionVariants';
 import { Chip } from '@/components/ui/Chip';
-import { VideoModalShell } from '@/components/video/VideoModalShell';
-import { VideoStickyShell } from '@/components/video/VideoStickyShell';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import { VideoId } from '@/constant/transcripts';
 import { ACCENT_VARS } from '@/lib/projects/accents';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 import { PortfolioVideo } from '@/types/videos/PortfolioVideo';
+
+// Both shells pull in the whole VideoExperience tree - the player, control
+// bar, end card, table of contents, transcript panel and a Radix Dialog -
+// and both used to ship in the initial bundle on every visit.
+//
+// The sticky one is the worse offender: it's behind `isDesktop &&`, which is
+// false on a phone, so a mobile visitor downloaded and parsed a component
+// that device can never render. The modal used to mount unconditionally with
+// `open={false}`; it now waits for `modalMounted` (first open), with
+// `primeVideo` warming this chunk on hover/focus so the tap that opens it
+// isn't waiting on a download.
+const VideoStickyShell = dynamic(
+  () =>
+    import('@/components/video/VideoStickyShell').then(
+      (m) => m.VideoStickyShell,
+    ),
+  { ssr: false },
+);
+
+const VideoModalShell = dynamic(
+  () =>
+    import('@/components/video/VideoModalShell').then((m) => m.VideoModalShell),
+  { ssr: false },
+);
+
+const socialLinkClasses =
+  'group cursor-newtab bg-nebula-500/5 border-nebula-600/10 text-nebula-950 hover:bg-nebula-500/10 hover:border-nebula-600/20 dark:bg-nebula-400/10 dark:border-nebula-300/20 dark:text-nebula-50 dark:hover:bg-nebula-400/20 dark:hover:border-nebula-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors';
 
 type AboutMeSection = {
   id: string;
@@ -88,9 +115,29 @@ export default function AboutMeClient({
   // Mobile: the modal is its own separate instance, opened on demand.
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
   const [mobileStartId, setMobileStartId] = useState(videos[0].id);
+  // Once true it stays true, so the modal's exit animation still has a
+  // component to play out on after it closes.
+  const [modalMounted, setModalMounted] = useState(false);
+
+  // Warm the modal's chunk and the media origin's DNS/TLS on deliberate
+  // intent. Both are cheap to repeat - the bundler caches the import promise
+  // and React dedupes the preconnect - so this can hang off every trigger.
+  // The preconnect used to fire from inside VideoModalShell on mount, which
+  // meant every visitor who never tapped a video still opened a socket to a
+  // host they'd never send a byte over; Lighthouse flagged it as unused.
+  const primeVideo = useCallback(() => {
+    void import('@/components/video/VideoModalShell');
+    try {
+      preconnect(new URL(videos[0].src).origin);
+    } catch {
+      // src isn't an absolute URL (NEXT_PUBLIC_R2_BASE_URL unset locally) -
+      // nothing to warm.
+    }
+  }, [videos]);
 
   const openMobilePreview = (videoId: VideoId) => {
     setMobileStartId(videoId);
+    setModalMounted(true);
     setMobileModalOpen(true);
   };
 
@@ -105,6 +152,8 @@ export default function AboutMeClient({
         <button
           type='button'
           onClick={() => openMobilePreview(videos[0].id)}
+          onPointerEnter={primeVideo}
+          onFocus={primeVideo}
           className='group focus-visible:ring-ring relative mb-12 flex aspect-[9/16] w-full max-w-[220px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-black focus-visible:ring-2 focus-visible:outline-hidden'
         >
           <Image
@@ -161,6 +210,12 @@ export default function AboutMeClient({
                       if (isDesktop) watchOnDesktop(section.videoId!);
                       else openMobilePreview(section.videoId!);
                     }}
+                    // Desktop never opens the modal from here, but priming is
+                    // idempotent and `isDesktop` is false until the media
+                    // query resolves - so gating this on it would just miss
+                    // the earliest hovers for no gain.
+                    onPointerEnter={primeVideo}
+                    onFocus={primeVideo}
                   >
                     <Play className='size-3' fill='currentColor' />
                     Watch
@@ -182,9 +237,7 @@ export default function AboutMeClient({
                 than the button. Lush because it's --primary. */}
             <div
               className='flex flex-wrap items-center gap-2'
-              style={
-                { '--row-accent': ACCENT_VARS.lush.text } as CSSProperties
-              }
+              style={{ '--row-accent': ACCENT_VARS.lush.text } as CSSProperties}
             >
               <Link
                 href={GitHubLink}
@@ -237,12 +290,14 @@ export default function AboutMeClient({
         )}
       </div>
 
-      <VideoModalShell
-        videos={videos}
-        open={mobileModalOpen}
-        onOpenChange={setMobileModalOpen}
-        initialVideoId={mobileStartId}
-      />
+      {modalMounted && (
+        <VideoModalShell
+          videos={videos}
+          open={mobileModalOpen}
+          onOpenChange={setMobileModalOpen}
+          initialVideoId={mobileStartId}
+        />
+      )}
     </>
   );
 }
