@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { WaveSpray } from '@/components/animated-fun/Wavespray';
+import { WaveSprayLazy } from '@/components/animated-fun/WaveSprayLazy';
 import { PageHeader } from '@/components/layout/PageHeader';
 import ProjectsClient from '@/components/projects/ProjectsClient';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -21,7 +21,7 @@ export default function Projects() {
         description="Here are all the projects I've worked on and am proud to share!"
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
-            <WaveSpray />
+            <WaveSprayLazy />
           </div>
         }
         fadeDecoration={true}

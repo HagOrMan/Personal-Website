@@ -1,4 +1,4 @@
-import { WaveSpray } from '@/components/animated-fun/Wavespray';
+import { WaveSprayLazy } from '@/components/animated-fun/WaveSprayLazy';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 export default function Resume() {
@@ -9,7 +9,7 @@ export default function Resume() {
         description='Want to view my resume? Request access here!'
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
-            <WaveSpray
+            <WaveSprayLazy
               colorStart='--tw-color-breeze-800'
               colorEnd='--tw-color-nebula-400'
             />
