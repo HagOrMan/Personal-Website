@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Guides
+
+Project documentation lives in [`guides/`](./guides):
+
+- [**Style guide**](./guides/style-guide.md) — the design rules this site
+  follows (radius, actions, colour tokens, layout measure, icons, motion) and
+  the traps that have already cost time. Read before adding or restyling a
+  component.
+- [Project metadata](./guides/project-metadata.md) — generating a
+  `src/constant/projects.ts` entry from a project's own repo.
+- [Auth](./guides/auth.md) — the blog's GitHub sign-in and locked posts.
+- PageSpeed audits: [site](./guides/pagespeed-audit.md),
+  [about-me](./guides/pagespeed-audit-about-me.md),
+  [blog](./guides/pagespeed-audit-blog.md).
+
+`CLAUDE.md` carries an architecture overview and the subset of style rules most
+often broken by accident.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
