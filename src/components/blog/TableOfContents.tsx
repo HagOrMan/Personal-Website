@@ -150,7 +150,7 @@ export function TocRail({ headings, className }: TocProps) {
       aria-label='Table of contents'
       className={cn('sticky top-24 self-start', className)}
     >
-      <p className='text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase'>
+      <p className='text-muted-foreground tracking-label mb-3 text-xs font-semibold uppercase'>
         On this page
       </p>
       {/* The scroll container sits outside the bordered list: the active
@@ -322,7 +322,7 @@ export function TocCompact({ headings, className }: TocProps) {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side='right' aria-describedby={undefined}>
           <SheetHeader className='pb-0'>
-            <SheetTitle className='text-sm tracking-wider uppercase'>
+            <SheetTitle className='tracking-label text-sm uppercase'>
               On this page
             </SheetTitle>
           </SheetHeader>

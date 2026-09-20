@@ -43,7 +43,7 @@ export function ProjectVariantPicker({ value, onChange, className }: Props) {
           className,
         )}
       >
-        <span className='text-muted-foreground text-xs tracking-wider uppercase'>
+        <span className='text-muted-foreground tracking-label text-xs uppercase'>
           Variant
         </span>
         <span className='text-foreground'>{active.name}</span>

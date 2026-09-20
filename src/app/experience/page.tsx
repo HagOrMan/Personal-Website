@@ -5,7 +5,7 @@ import { sortedExperiences } from '@/data/experiences';
 
 export default function Experience() {
   return (
-    <main className='bg-background page-shell'>
+    <main className='bg-background page-shell page-measure'>
       <PageHeader
         title='Experience'
         description="I've had jobs. And volunteer experience. Read all about them here!"

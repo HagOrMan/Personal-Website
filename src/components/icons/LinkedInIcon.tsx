@@ -1,41 +1,68 @@
-'use client';
 import Image from 'next/image';
 
-import { useResolvedTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 
 type LinkedInIconProps = {
   className?: string;
-  colour?: 'white' | 'black' | 'main'; // main theme is the blue theme that has their standard colour blue
+  /** 'main' is LinkedIn's own blue bug, which is larger than the mono ones. */
+  colour?: 'white' | 'black' | 'main';
+  /** See the note in GithubIcon - answered in CSS now, not in JS. */
   useThemeForImgSource?: boolean;
 };
 
+/**
+ * The LinkedIn bug. The theme-driven variant is chosen by CSS off the `.dark`
+ * class on <html> rather than by `useResolvedTheme()` - see the note in
+ * GithubIcon, which this mirrors so the two stay in step where they sit side
+ * by side in the hero and the footer.
+ */
 const LinkedInIcon = ({
   className,
   colour,
   useThemeForImgSource,
 }: LinkedInIconProps) => {
-  const { resolvedTheme } = useResolvedTheme();
+  // 'main' is the blue bug, published at a smaller mark size than the mono
+  // ones, so it needs a larger box to end up optically equal.
+  const size = colour === 'main' ? 32 : 24;
+  const shared = cn('object-contain', className);
 
-  const imgSource = useThemeForImgSource
-    ? resolvedTheme === 'light'
-      ? '/png/InBug-Black.png'
-      : '/png/InBug-White.png'
-    : colour === 'black'
+  if (useThemeForImgSource) {
+    return (
+      <>
+        <Image
+          src='/png/InBug-Black.png'
+          alt='LinkedIn Icon'
+          width={24}
+          height={24}
+          className={cn(shared, 'dark:hidden')}
+        />
+        <Image
+          src='/png/InBug-White.png'
+          alt='LinkedIn Icon'
+          width={24}
+          height={24}
+          className={cn(shared, 'hidden dark:block')}
+        />
+      </>
+    );
+  }
+
+  const src =
+    colour === 'black'
       ? '/png/InBug-Black.png'
       : colour === 'white'
         ? '/png/InBug-White.png'
         : '/png/LI-In-Bug.png';
 
-  const darkModeStyle =
-    colour === undefined && !useThemeForImgSource ? 'dark:invert' : '';
   return (
     <Image
-      className={cn(darkModeStyle, 'object-contain', className)}
-      src={imgSource}
+      src={src}
       alt='LinkedIn Icon'
-      width={colour === 'main' ? 32 : 24} // Adjust width for main theme (since it's smaller than the others)
-      height={colour === 'main' ? 32 : 24} // ^
+      width={size}
+      height={size}
+      // Only the untinted default inverts, and it is the pre-existing
+      // behaviour: an explicit `colour` is a deliberate fixed choice.
+      className={cn(shared, colour === undefined && 'dark:invert')}
     />
   );
 };

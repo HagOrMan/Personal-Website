@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 
 import { LINK_META } from '@/components/projects/linkMeta';
 import { ProjectPreviewVideo } from '@/components/projects/ProjectPreviewVideo';
+import { actionVariants } from '@/components/ui/actionVariants';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ACCENT_VARS, getAccent } from '@/lib/projects/accents';
 import { projectDetailHref } from '@/lib/projects/paths';
@@ -68,11 +69,20 @@ export const ProjectSpotlightCard = ({
           setActive(false);
         }
       }}
-      style={{
-        backgroundColor: 'hsl(var(--card))',
-        borderColor,
-        boxShadow: active ? hoverShadow : restShadow,
-      }}
+      style={
+        {
+          backgroundColor: 'hsl(var(--card))',
+          borderColor,
+          boxShadow: active ? hoverShadow : restShadow,
+          // The accent, published to the footer below — the same variable the
+          // homepage ribbon sets on its text half, so the demo button is the
+          // same component in both places.
+          //
+          // `text` rather than `border`: it ends up as a label and a tint,
+          // which is what the text weight is tuned for. See globals.css.
+          '--row-accent': ACCENT_VARS[accent].text,
+        } as React.CSSProperties
+      }
       className={cn(
         'relative flex h-full w-full flex-col overflow-hidden rounded-xl border',
         'transition-shadow duration-300',
@@ -158,26 +168,22 @@ export const ProjectSpotlightCard = ({
             its widest child, which is what stops a squeeze from being taken
             out of the buttons themselves.
 
-            "Read more" sits last, in the corner. It's the only link that
-            keeps you on the site, so it reads as where the card ends rather
-            than as one more item in a row of outbound links. */}
-        <div className='mt-auto flex min-h-9 flex-wrap items-center justify-end gap-1 pt-2'>
+            Every control comes from actionVariants, at the same height and
+            radius as the homepage ribbon's row, so a project's links look the
+            same on both pages. Which kinds go icon-only is LINK_META's call,
+            not this file's.
+
+            "Read more" sits last, in the corner, and is the one without a
+            border. It's the only link that keeps you on the site, so it reads
+            as where the card ends rather than as one more item in a row of
+            outbound links. */}
+        <div className='mt-auto flex min-h-9 flex-wrap items-center justify-end gap-2 pt-2'>
           {demo && <DemoLink link={demo} project={project.name} />}
           {others.map((link) => (
-            <IconLink key={link.href} link={link} project={project.name} />
+            <SecondaryLink key={link.href} link={link} project={project.name} />
           ))}
           {detailHref && (
-            <DetailLink
-              href={detailHref}
-              project={project.name}
-              // Picks up the card's own accent while you're on the card —
-              // the same colour as its border, so the one link that leads
-              // deeper is also the one thing the card lights up. Inline
-              // rather than a hover class because an accent that varies per
-              // card can't live in a class name; the upside is that
-              // keyboard focus lights it up too.
-              accent={active ? borderColor : undefined}
-            />
+            <DetailLink href={detailHref} project={project.name} />
           )}
         </div>
       </div>
@@ -190,25 +196,21 @@ export const ProjectSpotlightCard = ({
  * the card. Rendered solely when there is a page worth the trip — see
  * `hasDetailPage` in constant/projects.ts.
  *
- * The arrow does the work the old stretched link couldn't: it says out loud
- * that there is more to read, and it says it in one place instead of leaving
- * the reader to discover the whole card was clickable.
+ * The arrow says out loud that there is more to read, in one place, rather
+ * than leaving the reader to discover that the whole card was clickable.
+ *
+ * Deliberately the quiet one: the accent belongs on the demo button, which is
+ * the action you're most likely to want.
  */
-function DetailLink({
-  href,
-  project,
-  accent,
-}: {
-  href: string;
-  project: string;
-  accent?: string;
-}) {
+function DetailLink({ href, project }: { href: string; project: string }) {
   return (
     <Link
       href={href}
       aria-label={`Read more about ${project}`}
-      style={{ color: accent, borderColor: accent }}
-      className='border-border bg-background hover:bg-accent focus-visible:ring-ring group/detail inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      className={cn(
+        actionVariants({ variant: 'ghost' }),
+        'group/detail cursor-pointer',
+      )}
     >
       Read more
       {/* Nudges forward on hover — the arrow already points at the page, this
@@ -221,6 +223,7 @@ function DetailLink({
   );
 }
 
+/** The card's one filled action, in the card's own accent. */
 function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
   const { label, Icon } = LINK_META.demo;
 
@@ -230,9 +233,7 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
       target='_blank'
       rel='noopener noreferrer'
       aria-label={`${project} — ${link.label ?? label} (opens in a new tab)`}
-      // No cursor utility on purpose — a `cursor-pointer` class outranks the
-      // base-layer a[target='_blank'] rule and takes the new-tab cursor away.
-      className='border-border bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      className={actionVariants({ variant: 'accent' })}
     >
       {link.label ?? label}
       <Icon className='size-3.5' aria-hidden />
@@ -240,19 +241,36 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
   );
 }
 
-function IconLink({ link, project }: { link: ProjectLink; project: string }) {
-  const { label, Icon } = LINK_META[link.kind];
+/**
+ * Everything that isn't the demo — the repo, a write-up, a download.
+ *
+ * `iconOnly` kinds (currently just the write-up) render as a square glyph.
+ * The aria-label carries the name either way, so dropping the visible text
+ * costs nothing to a screen reader — see LINK_META.
+ */
+function SecondaryLink({
+  link,
+  project,
+}: {
+  link: ProjectLink;
+  project: string;
+}) {
+  const { label, Icon, iconOnly } = LINK_META[link.kind];
+  const name = link.label ?? label;
 
   return (
     <a
       href={link.href}
       target='_blank'
       rel='noopener noreferrer'
-      aria-label={`${project} ${link.label ?? label} (opens in a new tab)`}
-      // Same as DemoLink: no cursor utility, so the new-tab cursor survives.
-      className='text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:ring-ring inline-flex size-8 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      aria-label={`${project} ${name} (opens in a new tab)`}
+      className={actionVariants({
+        variant: 'outline',
+        size: iconOnly ? 'icon' : 'default',
+      })}
     >
-      <Icon className='size-4' aria-hidden />
+      {!iconOnly && name}
+      <Icon className={iconOnly ? 'size-4' : 'size-3.5'} aria-hidden />
     </a>
   );
 }

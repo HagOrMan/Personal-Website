@@ -46,7 +46,7 @@ export function VideoEndCard({
               className='object-cover'
             />
           </span>
-          <span className='text-xs tracking-wide text-white/70 uppercase'>
+          <span className='tracking-label text-xs text-white/70 uppercase'>
             Up next
           </span>
           <span className='group-hover:text-lush-300 text-base font-semibold transition-colors'>

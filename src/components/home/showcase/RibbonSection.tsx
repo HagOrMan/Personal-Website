@@ -29,7 +29,9 @@ export function RibbonSection({
 }) {
   return (
     <section className='relative w-full overflow-x-clip py-16 md:py-24'>
-      <div className='mx-auto w-full max-w-5xl px-6 md:px-10'>
+      {/* The cap and the padding sit on the same element on purpose — see
+          page-measure in globals.css. */}
+      <div className='page-measure page-padding-x'>
         {/* The shimmer goes on an inline-block span rather than on the heading
             itself: background-clip: text still sizes its gradient to the
             element's box, so on a block-level h2 the sweep would be spread

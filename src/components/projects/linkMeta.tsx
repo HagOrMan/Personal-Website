@@ -26,10 +26,25 @@ export type LinkIcon = React.ComponentType<{
  */
 export const LINK_META: Record<
   ProjectLinkKind,
-  { label: string; Icon: LinkIcon }
+  {
+    label: string;
+    Icon: LinkIcon;
+    /**
+     * Render as a square glyph with no visible label. `label` is still
+     * required - the call site puts it in the aria-label, so the control
+     * keeps an accessible name.
+     *
+     * The third rung: the demo is the filled action, the repo a labelled
+     * outline, a write-up worth offering without spending a word on it. More
+     * than one icon-only link in a row and the row stops being readable.
+     * Set here rather than per call site so the /projects cards and the
+     * homepage ribbon can't disagree.
+     */
+    iconOnly?: boolean;
+  }
 > = {
   github: { label: 'on GitHub', Icon: GitHubGlyph },
   demo: { label: 'Try it', Icon: ExternalLink },
-  article: { label: 'write-up', Icon: FileText },
+  article: { label: 'write-up', Icon: FileText, iconOnly: true },
   download: { label: 'download', Icon: Download },
 };

@@ -115,6 +115,34 @@
 
   --radius-lg: var(--radius);
 
+  /**
+   * The blog's face, applied by app/blog/layout.tsx via `font-blog`. The blog
+   * is deliberately its own thing: Geist is a UI grotesque and reads as
+   * software, which is wrong for a page that is mostly prose.
+   *
+   * Changing this changes the blog's column width as well as its type.
+   * `.blog-prose` and the index are capped in `ch` - the width of the "0"
+   * glyph - so a narrower face silently narrows the measure.
+   *
+   * Liberation Sans is Arial's metric-compatible twin, for Linux.
+   */
+  --font-blog: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+
+  /* #region /**=========== Uppercase Tracking =========== */
+  /**
+   * Letter-spacing for uppercase text, which closes up into a block without
+   * it. Two roles - the test is whether the label is read or scanned:
+   *
+   *   eyebrow - display. Sits over a heading on open page and is part of what
+   *             the reader is reading.
+   *   label   - UI. Names a control or a panel ("Variant", "On this page").
+   *             Furniture, and usually in a tight box where display tracking
+   *             would push it onto a second line for no benefit.
+   */
+  --tracking-eyebrow: 0.16em;
+  --tracking-label: 0.08em;
+  /* #endregion /**======== Uppercase Tracking =========== */
+
   --animate-flicker: flicker 3s linear infinite;
   --animate-shimmer: shimmer 1.3s linear infinite;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
@@ -685,9 +713,16 @@
   }
 
   body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: Arial, Helvetica, sans-serif;
+    /* hsl() is required, not decorative: --foreground and --background hold
+       unwrapped HSL channels ("210 30% 12%") so the shadcn tokens can compose
+       alpha elsewhere. Used raw they aren't colours and the declaration is
+       dropped, leaving <body> painting the UA default. */
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+    /* Geist, loaded by next/font in app/layout.tsx, which puts
+       --font-geist-sans on this element. /blog overrides it - see
+       --font-blog. */
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   }
 
   /* #region /**=========== Page Layout Utilities =========== */
@@ -738,6 +773,24 @@
       padding-left: 4rem;
       padding-right: 4rem;
     }
+  }
+
+  /**
+   * The site's content measure: the homepage ribbon, the recommendations, the
+   * /experience timeline, /projects and the project detail pages.
+   *
+   * Apply it on the *same element* as the horizontal padding. Nested inside
+   * the padding instead, the content comes out 8rem wider than everywhere
+   * else.
+   *
+   * Outside it on purpose: .blog-prose keeps its 72ch reading measure, and
+   * /about-me and /gallery stay uncapped - the first needs the room for its
+   * text column and sticky video, the second is a photo wall.
+   */
+  .page-measure {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 80rem;
   }
 
   /* #endregion /**======== Page Layout Utilities =========== */

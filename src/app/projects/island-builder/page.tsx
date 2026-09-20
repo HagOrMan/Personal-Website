@@ -5,7 +5,7 @@ import { buildBreadcrumbJsonLd } from '@/lib/seo/jsonLd';
 
 export default function IslandBuilder() {
   return (
-    <main className='bg-background page-shell'>
+    <main className='bg-background page-shell page-measure'>
       <JsonLd
         data={buildBreadcrumbJsonLd([
           { name: 'Home', path: '/' },

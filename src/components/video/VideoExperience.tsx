@@ -347,7 +347,7 @@ export function VideoExperience({
             // losing their floor); fix the container width instead.
             className='border-border/70 flex min-h-0 min-w-[200px] flex-col gap-2 border-l pl-4'
           >
-            <h3 className='text-muted-foreground shrink-0 text-xs font-semibold tracking-wide uppercase'>
+            <h3 className='text-muted-foreground tracking-label shrink-0 text-xs font-semibold uppercase'>
               Up next
             </h3>
             <VideoTableOfContents
@@ -416,7 +416,7 @@ export function VideoExperience({
               // to fit a long list.
               className='border-border/70 flex min-h-0 min-w-0 flex-col gap-2 border-l pl-6'
             >
-              <h3 className='text-muted-foreground shrink-0 text-xs font-semibold tracking-wide uppercase'>
+              <h3 className='text-muted-foreground tracking-label shrink-0 text-xs font-semibold uppercase'>
                 Contents
               </h3>
               <VideoTableOfContents
@@ -428,7 +428,7 @@ export function VideoExperience({
               />
               {isShort && (
                 <div className='border-border/70 mt-2 flex shrink-0 flex-col gap-2 border-t pt-3'>
-                  <h3 className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
+                  <h3 className='text-muted-foreground tracking-label text-xs font-semibold uppercase'>
                     Playback
                   </h3>
                   {actionBar}
@@ -490,7 +490,7 @@ export function VideoExperience({
             inert={!state.tocOpen}
             aria-hidden={!state.tocOpen}
           >
-            <h3 className='text-muted-foreground mb-2 shrink-0 text-xs font-semibold tracking-wide uppercase'>
+            <h3 className='text-muted-foreground tracking-label mb-2 shrink-0 text-xs font-semibold uppercase'>
               Contents
             </h3>
             <VideoTableOfContents

@@ -8,11 +8,13 @@ import { ArrowRight } from 'lucide-react';
 
 import { LINK_META } from '@/components/projects/linkMeta';
 import { ProjectPreviewVideo } from '@/components/projects/ProjectPreviewVideo';
+import { actionVariants } from '@/components/ui/actionVariants';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { POSTER_SIZE } from '@/constant/projectAssets';
 import { homeProjects } from '@/lib/home/showcase';
 import { projectDetailHref } from '@/lib/projects/paths';
 import { formatProjectYear } from '@/lib/projects/year';
+import { cn } from '@/lib/utils';
 import type {
   ProjectLink,
   TProjectShowcase,
@@ -156,7 +158,10 @@ function ProjectRow({
           <Link
             href={detailHref}
             aria-label={`Read more about ${project.name}`}
-            className='text-muted-foreground hover:text-foreground group/detail inline-flex h-9 items-center gap-1.5 px-1 text-sm font-medium transition-colors'
+            className={cn(
+              actionVariants({ variant: 'ghost' }),
+              'group/detail',
+            )}
           >
             Read more
             <ArrowRight
@@ -185,31 +190,7 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
       target='_blank'
       rel='noopener noreferrer'
       aria-label={`${project} — ${link.label ?? label} (opens in a new tab)`}
-      // Everything reads --row-accent through arbitrary values rather than an
-      // inline style object, and that's what makes the hover possible at all:
-      // an inline backgroundColor outranks every class, so a `hover:bg-*`
-      // could never have replaced it.
-      //
-      // Border and label hold their colour; only the fill moves, 10% -> 28%
-      // of the accent. One number covers both themes because the accent has
-      // already flipped lightness between them — more of a dark accent on a
-      // light page reads as the button darkening, more of a light accent on a
-      // dark page reads as it lightening.
-      //
-      // 28% rather than a nudge because the old `brightness-110` was
-      // invisible in light mode by construction: a dark accent at 10% over a
-      // near-white page is nearly the page already, and brightening moved it
-      // closer still. Nearly tripling the tint is a step you can see without
-      // the button changing into a different thing under the cursor.
-      //
-      // Focus-visible matches hover so the button never reacts to a mouse in
-      // a way it won't react to a keyboard.
-      //
-      // No cursor utility: the base layer gives every a[target='_blank'] the
-      // new-tab cursor, and a `cursor-pointer` class here would outrank it
-      // (utilities beat base) and quietly take the icon away — which is the
-      // one affordance saying this leaves the site.
-      className='border-[var(--row-accent)] bg-[color-mix(in_srgb,var(--row-accent)_10%,transparent)] text-[var(--row-accent)] hover:bg-[color-mix(in_srgb,var(--row-accent)_28%,transparent)] focus-visible:bg-[color-mix(in_srgb,var(--row-accent)_28%,transparent)] focus-visible:ring-ring inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors duration-200 focus-visible:ring-2 focus-visible:outline-hidden'
+      className={actionVariants({ variant: 'accent' })}
     >
       {link.label ?? label}
       <Icon className='size-3.5' aria-hidden />
@@ -218,10 +199,9 @@ function DemoLink({ link, project }: { link: ProjectLink; project: string }) {
 }
 
 /**
- * Everything that isn't the demo. Labelled rather than the icon-only buttons
- * the /projects cards use: those sit in a footer under a bordered card that
- * gives them context, and out here a bare glyph on open background would be
- * a guess.
+ * Everything that isn't the demo. Same treatment as the /projects card
+ * footer, including which kinds go icon-only — both read LINK_META, so the
+ * two can't disagree about how a given link looks.
  */
 function SecondaryLink({
   link,
@@ -230,19 +210,22 @@ function SecondaryLink({
   link: ProjectLink;
   project: string;
 }) {
-  const { label, Icon } = LINK_META[link.kind];
+  const { label, Icon, iconOnly } = LINK_META[link.kind];
+  const name = link.label ?? label;
 
   return (
     <a
       href={link.href}
       target='_blank'
       rel='noopener noreferrer'
-      aria-label={`${project} ${link.label ?? label} (opens in a new tab)`}
-      // Same as DemoLink: no cursor utility, so the new-tab cursor survives.
-      className='border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 focus-visible:ring-ring inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-hidden'
+      aria-label={`${project} ${name} (opens in a new tab)`}
+      className={actionVariants({
+        variant: 'outline',
+        size: iconOnly ? 'icon' : 'default',
+      })}
     >
-      {link.label ?? label}
-      <Icon className='size-3.5' aria-hidden />
+      {!iconOnly && name}
+      <Icon className={iconOnly ? 'size-4' : 'size-3.5'} aria-hidden />
     </a>
   );
 }

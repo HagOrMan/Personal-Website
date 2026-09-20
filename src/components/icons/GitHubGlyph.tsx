@@ -17,8 +17,7 @@ import { cn } from '@/lib/utils';
  * follow it through hover and focus. A raster can't do that; one path and
  * `currentColor` can, and it costs no image request.
  *
- * Sized by the caller through `className` — there's no intrinsic size here, so
- * a bare instance would collapse.
+ * Sized by the caller through `className`, with a fallback size below.
  */
 export function GitHubGlyph({
   className,
@@ -30,6 +29,12 @@ export function GitHubGlyph({
       // below is copied byte for byte — squashing it into 0 0 24 24 would
       // distort it. The viewBox does the scaling instead.
       viewBox='0 0 98 96'
+      // Don't remove: an <svg> with a viewBox but no width/height resolves to
+      // 100%/100%, not to the viewBox, which is zero inside an auto-height
+      // flex button. A CSS size still overrides these, and xMidYMid meet
+      // keeps the 98×96 mark undistorted in a square box.
+      width={24}
+      height={24}
       fill='currentColor'
       // Decorative by default: it always sits inside a link that carries its
       // own aria-label. Spread last so a caller can say otherwise.

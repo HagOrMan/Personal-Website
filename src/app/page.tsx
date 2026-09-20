@@ -338,7 +338,7 @@ export default function Home() {
   }, [getScrollForProgress, prefersReducedMotion]);
 
   return (
-    <div className='bg-background min-h-screen w-full font-(family-name:--font-geist-sans)'>
+    <div className='bg-background min-h-screen w-full'>
       <HomeIconPopOverlay triggerId={lastClickId} />
       <main className='relative z-10 flex w-full flex-col'>
         {/* SCROLL TRACK: Scrolling this drives the animations.

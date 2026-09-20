@@ -122,7 +122,9 @@ export function Timeline({ experiences }: { experiences: Experience[] }) {
   return (
     <div
       className={cn(
-        'mx-auto w-full max-w-5xl',
+        // The measure lives on /experience's <main>, beside the page-shell
+        // padding — see page-measure in globals.css.
+        'w-full',
         // Insurance for the narrowest screens, where the logo's horizontal
         // swing is the one thing that travels sideways. `clip` rather than
         // `hidden` so this never becomes a scroll container.

@@ -187,11 +187,14 @@ export function AnimatedProjectGrid({
     <div
       ref={gridRef}
       // Two columns at most, not three. The cards carry screen recordings,
-      // and at three across a 80rem container each one was ~410px wide —
-      // small enough that UI in a demo was unreadable. Two gives ~628px, and
-      // dropping the sm breakpoint means phones and tablets get one
-      // full-width card rather than two cramped ones.
-      className='mx-auto grid w-full max-w-[80rem] grid-cols-1 gap-6 lg:grid-cols-2'
+      // and at three across each one was ~410px wide — small enough that UI
+      // in a demo was unreadable. Two gives ~560px, and dropping the sm
+      // breakpoint means phones and tablets get one full-width card rather
+      // than two cramped ones.
+      //
+      // No max-width here: the page's <main> carries `page-measure`, so the
+      // grid, the filter bar and the header share a left edge.
+      className='grid w-full grid-cols-1 gap-6 lg:grid-cols-2'
     >
       {entries.map(({ project, shown, index }) => (
         <PopCard

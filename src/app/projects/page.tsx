@@ -14,7 +14,7 @@ export default function Projects() {
   assertProjectRoutesExist(projects);
 
   return (
-    <main className='bg-background page-shell'>
+    <main className='bg-background page-shell page-measure'>
       <JsonLd data={buildProjectItemListJsonLd(projects)} />
       <PageHeader
         title='Projects'

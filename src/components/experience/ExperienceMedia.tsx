@@ -96,9 +96,13 @@ export function LogoMark({
  * renders narrower than this, and the browser then fetches one size
  * up from what it strictly needs - which is the harmless direction to be
  * wrong in, and cheaper than encoding the cap's arithmetic here as well.
+ *
+ * The lg figure follows page-measure: 80rem less the shell's 8rem of gutters
+ * is 72rem of content, halved is 36rem, less the 2.5rem rail inset leaves
+ * ~536px. Keep it in step if the measure changes.
  */
 const PHOTO_SIZES =
-  '(min-width: 1024px) 472px, (min-width: 768px) 304px, calc(100vw - 8.5rem)';
+  '(min-width: 1024px) 536px, (min-width: 768px) 304px, calc(100vw - 8.5rem)';
 
 /**
  * The entry's illustration, and the page's one bold gesture: it rises from

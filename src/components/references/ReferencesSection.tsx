@@ -33,7 +33,7 @@ export function ReferencesSection() {
     REFERENCES.length > 1 ? 'View all on LinkedIn' : 'View on LinkedIn';
 
   return (
-    <section className='mx-auto w-full max-w-5xl px-6 py-16 md:px-10 md:py-24'>
+    <section className='page-measure page-padding-x py-16 md:py-24'>
       <h2 className='mb-8 text-3xl font-bold'>
         From people I&apos;ve worked with
       </h2>

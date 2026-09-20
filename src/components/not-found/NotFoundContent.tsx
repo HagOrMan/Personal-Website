@@ -97,7 +97,7 @@ export const NotFoundContent = () => {
 
           <motion.p
             variants={itemVariants}
-            className='text-lush-800 dark:text-lush-300 text-xs font-semibold tracking-[0.2em] uppercase'
+            className='text-lush-800 dark:text-lush-300 tracking-eyebrow text-xs font-semibold uppercase'
           >
             404 — Page not found
           </motion.p>

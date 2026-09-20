@@ -23,8 +23,13 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * The wrapper exists to set the blog's typeface (see --font-blog in
+ * globals.css). Here rather than on each <main> so the index, every post and
+ * both loading states get it, and a new route under /blog can't forget it.
+ */
 export default function BlogLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <>{children}</>;
+  return <div className='font-blog'>{children}</div>;
 }

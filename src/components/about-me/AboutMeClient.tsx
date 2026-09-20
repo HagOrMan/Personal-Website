@@ -1,24 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { ArrowRight, Play } from 'lucide-react';
 
-import GitHubIcon from '@/components/icons/GithubIcon';
-import LinkedInIcon from '@/components/icons/LinkedInIcon';
+import { GitHubGlyph } from '@/components/icons/GitHubGlyph';
+import { LinkedInGlyph } from '@/components/icons/LinkedInGlyph';
+import { actionVariants } from '@/components/ui/actionVariants';
 import { Chip } from '@/components/ui/Chip';
 import { VideoModalShell } from '@/components/video/VideoModalShell';
 import { VideoStickyShell } from '@/components/video/VideoStickyShell';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import { VideoId } from '@/constant/transcripts';
+import { ACCENT_VARS } from '@/lib/projects/accents';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 import { PortfolioVideo } from '@/types/videos/PortfolioVideo';
-
-const socialLinkClasses =
-  'group cursor-newtab bg-nebula-500/5 border-nebula-600/10 text-nebula-950 hover:bg-nebula-500/10 hover:border-nebula-600/20 dark:bg-nebula-400/10 dark:border-nebula-300/20 dark:text-nebula-50 dark:hover:bg-nebula-400/20 dark:hover:border-nebula-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors';
 
 type AboutMeSection = {
   id: string;
@@ -179,45 +178,50 @@ export default function AboutMeClient({
             <p className='text-foreground/75 mb-4 text-lg leading-relaxed'>
               Want to see what I&apos;ve built, or just say hi?
             </p>
-            <div className='flex flex-wrap items-center gap-4'>
+            {/* The accent variant reads --row-accent, set on the row rather
+                than the button. Lush because it's --primary. */}
+            <div
+              className='flex flex-wrap items-center gap-2'
+              style={
+                { '--row-accent': ACCENT_VARS.lush.text } as CSSProperties
+              }
+            >
               <Link
                 href={GitHubLink}
                 target='_blank'
                 rel='noopener noreferrer'
-                className={socialLinkClasses}
+                aria-label='View my GitHub (opens in a new tab)'
+                className={actionVariants({ variant: 'outline' })}
               >
-                <GitHubIcon
-                  className='h-5 w-5 opacity-80 transition-opacity group-hover:opacity-100'
-                  useThemeForImgSource
-                />
-                <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
-                  View my projects
-                </span>
+                <GitHubGlyph className='size-3.5' />
+                View my GitHub
               </Link>
 
               <Link
                 href={LinkedInLink}
                 target='_blank'
                 rel='noopener noreferrer'
-                className={socialLinkClasses}
+                aria-label='Connect with me on LinkedIn (opens in a new tab)'
+                className={actionVariants({ variant: 'outline' })}
               >
-                <LinkedInIcon
-                  className='h-5 w-5 opacity-80 transition-opacity group-hover:opacity-100'
-                  useThemeForImgSource
-                />
-                <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
-                  Connect with me
-                </span>
+                <LinkedInGlyph className='size-3.5' />
+                Connect with me
               </Link>
 
+              {/* Last, and the only filled one: it ends the sentence the
+                  other two start. */}
               <Link
                 href='/contact'
-                className='group bg-lush-500/5 border-lush-600/10 text-lush-950 hover:bg-lush-500/10 hover:border-lush-600/20 dark:bg-lush-400/10 dark:border-lush-300/20 dark:text-lush-50 dark:hover:bg-lush-400/20 dark:hover:border-lush-300/40 flex items-center gap-3 rounded-full border px-5 py-2 transition-colors'
+                className={cn(
+                  actionVariants({ variant: 'accent' }),
+                  'group/contact',
+                )}
               >
-                <span className='text-sm font-medium opacity-80 group-hover:opacity-100'>
-                  Get in touch
-                </span>
-                <ArrowRight className='h-4 w-4 opacity-80 transition-transform group-hover:translate-x-0.5 group-hover:opacity-100' />
+                Get in touch
+                <ArrowRight
+                  aria-hidden
+                  className='size-3.5 transition-transform duration-200 group-hover/contact:translate-x-0.5'
+                />
               </Link>
             </div>
           </section>

@@ -30,18 +30,16 @@ export const ACCENT_VARS: Record<
 };
 
 /**
- * Returns an accent for the given index that:
- *  - never repeats horizontally inside a 3-card row, and
- *  - shifts its starting offset each row so we mostly avoid
- *    the same color stacking directly above/below.
+ * The site's accent for the thing at `index`, wherever accents rotate: the
+ * /projects grid and the homepage ribbon's rows.
  *
- * Sequence: lush, breeze, nebula, breeze, nebula, lush, nebula, lush, breeze, ...
+ * A flat rotation, leading with lush because lush is the primary (it's what
+ * --primary resolves to). At the two columns the grid caps at, consecutive
+ * indices always differ so no row repeats, and 2 and 3 are coprime so both
+ * columns cycle rather than stacking a colour.
  *
- * The index must be the card's position among the *visible* cards, so the
- * pattern survives filtering.
+ * The index must be the position among the *visible* items, so the pattern
+ * survives filtering.
  */
-export const getAccent = (index: number): AccentKey => {
-  const row = Math.floor(index / ACCENTS.length);
-  const col = index % ACCENTS.length;
-  return ACCENTS[(row + col) % ACCENTS.length];
-};
+export const getAccent = (index: number): AccentKey =>
+  ACCENTS[index % ACCENTS.length];

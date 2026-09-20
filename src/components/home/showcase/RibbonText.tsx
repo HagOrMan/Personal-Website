@@ -10,7 +10,7 @@ export function RibbonEyebrow({ children }: { children: ReactNode }) {
   return (
     <p
       style={{ color: 'var(--row-accent)' }}
-      className='text-xs font-semibold tracking-[0.18em] uppercase'
+      className='tracking-eyebrow text-xs font-semibold uppercase'
     >
       {children}
     </p>

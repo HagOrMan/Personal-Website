@@ -159,7 +159,7 @@ function DailyChart({ data }: { data: DailyPoint[] }) {
 function StatTile({ label, value }: { label: string; value: string | number }) {
   return (
     <div className='border-border bg-card rounded-lg border p-4'>
-      <div className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
+      <div className='text-muted-foreground tracking-label text-xs font-medium uppercase'>
         {label}
       </div>
       <div className='text-foreground mt-1 text-2xl font-bold tabular-nums'>

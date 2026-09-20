@@ -1,6 +1,6 @@
 import type { UseInViewOptions, Variants } from 'motion/react';
 
-import type { AccentKey } from '@/lib/projects/accents';
+import { getAccent } from '@/lib/projects/accents';
 
 /** Which half of the row the media takes. The text takes the other one. */
 export type RibbonSide = 'left' | 'right';
@@ -21,21 +21,10 @@ export function ribbonSide(index: number): RibbonSide {
 }
 
 /**
- * The site's colours in priority order — lush leads because it's the primary
- * (it's what --primary resolves to), breeze supports it, and nebula is the
- * rare one. Running them in that order means the ribbon's first row is the
- * site's own colour and nebula turns up once every three rows rather than
- * being handed a section of its own.
- *
- * Deliberately not `getAccent()` from lib/projects: that sequence is tuned so
- * a 3-up grid never repeats a colour along a row, which is a constraint a
- * single column of rows doesn't have, and it doesn't lead with lush.
+ * The ribbon's accent for a row — the site's rotation, shared with the
+ * /projects grid so the two can't drift apart.
  */
-const RIBBON_ACCENTS: AccentKey[] = ['lush', 'breeze', 'nebula'];
-
-export function ribbonAccent(index: number): AccentKey {
-  return RIBBON_ACCENTS[index % RIBBON_ACCENTS.length];
-}
+export const ribbonAccent = getAccent;
 
 /**
  * Rows reveal a little before their midpoint reaches the middle of the

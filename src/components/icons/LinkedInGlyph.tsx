@@ -11,13 +11,15 @@ import { cn } from '@/lib/utils';
  * focus. A raster bug can't do that; one path and `currentColor` can, and it
  * costs no image request.
  *
- * Sized by the caller through `className` - there's no intrinsic size here, so
- * a bare instance would collapse.
+ * Sized by the caller through `className`, with a fallback size below.
  */
 export function LinkedInGlyph({ className }: { className?: string }) {
   return (
     <svg
       viewBox='0 0 24 24'
+      // Don't remove - see the note in GitHubGlyph. A CSS size overrides.
+      width={24}
+      height={24}
       fill='currentColor'
       // Decorative in every use so far: it always sits beside a text label, or
       // inside a link that carries its own aria-label.
