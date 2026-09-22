@@ -73,6 +73,68 @@
 }
 
 /*
+ * The tile's click target, which opens the lightbox.
+ *
+ * Positioned out of flow so the figure's box - the thing the row maths above
+ * sizes - carries no in-flow content it could grow to. The figure's height
+ * comes from its aspect-ratio either way, so nothing moves.
+ *
+ * The <picture> needs the explicit block and size because it is `inline` by
+ * default, and an inline box is not a block container: left alone it breaks
+ * the chain the image's `height: 100%` resolves through, and the photo
+ * collapses.
+ */
+.trigger {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  appearance: none;
+  cursor: zoom-in;
+}
+
+.trigger picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trigger:focus-visible {
+  /* Inset, because the tile clips anything outside its 3px radius. */
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
+
+/*
+ * Deliberately quieter than the badge on /experience's ZoomImage: seventy
+ * tiles on a dense wall want an affordance you notice under the cursor, not
+ * seventy pieces of furniture.
+ */
+.trigger img {
+  transition: filter 250ms ease;
+}
+
+.trigger:hover img,
+.trigger:focus-visible img {
+  filter: brightness(1.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .trigger img {
+    transition:
+      filter 250ms ease,
+      transform 300ms ease;
+  }
+
+  .trigger:hover img,
+  .trigger:focus-visible img {
+    transform: scale(1.04);
+  }
+}
+
+/*
  * Without these, the final row stretches on its own to fill the full width and
  * ends up several times taller than every row above it. The spacers occupy
  * that space and collapse to zero height.

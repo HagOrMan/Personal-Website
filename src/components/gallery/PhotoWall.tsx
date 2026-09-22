@@ -1,31 +1,15 @@
 import photos from '@/data/photos.json';
 
+import {
+  fallbackExtFor,
+  type Photo,
+  srcSetFor,
+  toLightboxPhoto,
+  urlFor,
+} from './photoSources';
+import { PhotoTileTrigger, PhotoWallLightbox } from './PhotoWallLightbox';
+
 import styles from './PhotoWall.module.css';
-
-/*
- * Photos share the Cloudflare R2 bucket with the portfolio videos and are
- * served through its custom domain - never the r2.dev URL, which is rate
- * limited and unsupported for production (see .env.example).
- * They live under the `gallery/` prefix, so the base is the bucket domain
- * plus that prefix. See scripts/README.md for how they get there.
- *
- * Falls back to an empty base like constant/videos.ts does: a missing env var
- * should 404 the images rather than crash the page.
- */
-const CDN = `${process.env.NEXT_PUBLIC_R2_BASE_URL ?? ''}/gallery`;
-
-type Photo = {
-  id: string;
-  width: number;
-  height: number;
-  aspectRatio: number;
-  widths: number[];
-  formats: string[];
-  color: string;
-  blurDataURL: string;
-  takenAt: string | null;
-  alt: string;
-};
 
 /*
  * At the 270px desktop row height tiles render roughly 200-360px wide before
@@ -48,11 +32,18 @@ const slotWidth = (photo: Photo) => Math.round(photo.aspectRatio * 375);
 const sizesFor = (photo: Photo) =>
   `(max-width: 699px) 50vw, ${slotWidth(photo)}px`;
 
-const srcSet = (photo: Photo, ext: string) =>
-  photo.widths.map((w) => `${CDN}/${photo.id}-${w}.${ext} ${w}w`).join(', ');
-
-function Tile({ photo, priority }: { photo: Photo; priority: boolean }) {
-  const fallbackExt = photo.formats.includes('jpg') ? 'jpg' : 'webp';
+function Tile({
+  photo,
+  index,
+  total,
+  priority,
+}: {
+  photo: Photo;
+  index: number;
+  total: number;
+  priority: boolean;
+}) {
+  const fallbackExt = fallbackExtFor(photo);
   const sizes = sizesFor(photo);
 
   // The smallest generated width that still covers the slot, so the <img>
@@ -74,33 +65,38 @@ function Tile({ photo, priority }: { photo: Photo; priority: boolean }) {
         } as React.CSSProperties
       }
     >
-      <picture>
-        {photo.formats.includes('avif') && (
-          <source
-            type='image/avif'
-            srcSet={srcSet(photo, 'avif')}
+      {/* Inside the figure, never around it: the row maths lives on the
+          figure's own flex-grow and flex-basis, and a wrapper between the row
+          and the figure breaks it. See PhotoWall.module.css. */}
+      <PhotoTileTrigger index={index} total={total} className={styles.trigger}>
+        <picture>
+          {photo.formats.includes('avif') && (
+            <source
+              type='image/avif'
+              srcSet={srcSetFor(photo, 'avif')}
+              sizes={sizes}
+            />
+          )}
+          {photo.formats.includes('webp') && (
+            <source
+              type='image/webp'
+              srcSet={srcSetFor(photo, 'webp')}
+              sizes={sizes}
+            />
+          )}
+          <img
+            src={urlFor(photo, fallbackWidth, fallbackExt)}
+            srcSet={srcSetFor(photo, fallbackExt)}
             sizes={sizes}
+            alt={photo.alt}
+            width={photo.width}
+            height={photo.height}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            decoding='async'
           />
-        )}
-        {photo.formats.includes('webp') && (
-          <source
-            type='image/webp'
-            srcSet={srcSet(photo, 'webp')}
-            sizes={sizes}
-          />
-        )}
-        <img
-          src={`${CDN}/${photo.id}-${fallbackWidth}.${fallbackExt}`}
-          srcSet={srcSet(photo, fallbackExt)}
-          sizes={sizes}
-          alt={photo.alt}
-          width={photo.width}
-          height={photo.height}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'auto'}
-          decoding='async'
-        />
-      </picture>
+        </picture>
+      </PhotoTileTrigger>
     </figure>
   );
 }
@@ -108,31 +104,41 @@ function Tile({ photo, priority }: { photo: Photo; priority: boolean }) {
 /**
  * Justified photo wall, rendered entirely on the server.
  *
- * Deliberately not a client component and deliberately not next/image: the
- * files are already optimised at build time by scripts/process-photos.mjs and
- * served from R2 with immutable caching, so routing them through Vercel's
- * optimiser would add billed transformations for no benefit. If a lightbox is
- * added later, wrap the tiles in a small client component and leave the
- * manifest and image markup server-rendered.
+ * Deliberately not next/image: the files are already optimised at build time
+ * by scripts/process-photos.mjs and served from R2 with immutable caching, so
+ * routing them through Vercel's optimiser would add billed transformations
+ * for no benefit.
+ *
+ * Still deliberately a server component, too. PhotoWallLightbox wraps it and
+ * owns the viewer, but the manifest and every pixel of the tile markup are
+ * server-rendered - only each tile's click target crosses into the client.
  */
 export default function PhotoWall() {
   const list = photos as Photo[];
 
   return (
-    <div className={styles.wall}>
-      {list.map((photo, i) => (
-        // The first handful are above the fold on most screens. Eager-loading
-        // them keeps Largest Contentful Paint off the lazy-loading queue.
-        <Tile key={photo.id} photo={photo} priority={i < 6} />
-      ))}
-      {Array.from({ length: 6 }, (_, i) => (
-        <div
-          key={`spacer-${i}`}
-          className={styles.spacer}
-          style={{ '--ar': 1.3333 } as React.CSSProperties}
-          aria-hidden='true'
-        />
-      ))}
-    </div>
+    <PhotoWallLightbox photos={list.map(toLightboxPhoto)}>
+      <div className={styles.wall}>
+        {list.map((photo, i) => (
+          // The first handful are above the fold on most screens. Eager-loading
+          // them keeps Largest Contentful Paint off the lazy-loading queue.
+          <Tile
+            key={photo.id}
+            photo={photo}
+            index={i}
+            total={list.length}
+            priority={i < 6}
+          />
+        ))}
+        {Array.from({ length: 6 }, (_, i) => (
+          <div
+            key={`spacer-${i}`}
+            className={styles.spacer}
+            style={{ '--ar': 1.3333 } as React.CSSProperties}
+            aria-hidden='true'
+          />
+        ))}
+      </div>
+    </PhotoWallLightbox>
   );
 }
