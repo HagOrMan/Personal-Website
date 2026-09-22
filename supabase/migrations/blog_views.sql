@@ -4,9 +4,12 @@
 -- paste the whole file, and hit Run. See BLOG_SETUP.md for the full walkthrough.
 --
 -- Privacy notes:
---   * No raw IP or user agent is ever stored. `visitor_hash` is a one-way
---     sha256 that mixes in a per-day salt component, so it rotates every UTC
---     day and cannot be correlated across days or reversed back to a person.
+--   * No raw IP is ever stored. `visitor_hash` is a one-way sha256 that mixes
+--     in a per-day salt component, so it rotates every UTC day and cannot be
+--     correlated across days or reversed back to a person.
+--   * `user_agent` IS stored raw - it is what tells an automated crawl apart
+--     from a reader. Harmless on its own, but fingerprintable sitting next to
+--     `country`, so this table stays server-only (see the RLS/GRANT notes).
 --   * Because `visitor_hash` does NOT include the slug, the same visitor gets
 --     the SAME hash across every post they read on a given day. That is what
 --     lets the dashboard see "one person hopped between posts A, B and C
@@ -21,7 +24,9 @@ create table blog_views (
   was_locked boolean not null,       -- post was locked at time of view
   had_access boolean not null,       -- viewer saw content (unlocked/public) vs. saw password wall
   referrer text,                     -- sanitized: origin only, no paths/queries
-  country text                       -- from Vercel geo header if present
+  country text,                      -- from Vercel geo header if present
+  user_agent text,                   -- raw UA, truncated; null when unsent
+  is_bot boolean not null default false  -- UA matched BOT_UA_RE at record time
 );
 
 -- Fast per-post time-ordered reads for the dashboard tables/charts.
@@ -33,6 +38,10 @@ create index blog_views_dedup_idx on blog_views (slug, visitor_hash, viewed_at);
 -- (visitor_hash is per-visitor-per-day, so grouping by it groups a person's
 -- same-day journey across the whole blog).
 create index blog_views_visitor_idx on blog_views (visitor_hash, viewed_at);
+-- The dashboard reads human rows only, and one crawl can append hundreds in
+-- seconds; a partial index keeps those reads off the bot rows entirely.
+create index blog_views_human_time_idx on blog_views (viewed_at desc)
+  where not is_bot;
 
 alter table blog_views enable row level security;
 -- Deliberately create NO policies: with RLS on and zero policies, the anon and
@@ -47,13 +56,16 @@ alter table blog_views enable row level security;
 -- that can touch this table.
 grant select, insert on table public.blog_views to service_role;
 
--- Per-post daily rollup used by the dashboard.
+-- Per-post daily rollup used by the dashboard. Bot rows are excluded here and
+-- in blog_site_daily below, so these agree with /stats rather than quietly
+-- counting a crawl as 36 readers.
 create view blog_view_daily as
   select slug,
          date_trunc('day', viewed_at) as day,
          count(*) as total_views,
          count(*) filter (where is_unique_daily) as unique_views
   from blog_views
+  where not is_bot
   group by 1, 2;
 
 -- Site-wide daily rollup. `unique_visitors` counts DISTINCT visitor_hash, so a
@@ -66,6 +78,7 @@ create view blog_site_daily as
          count(*) as total_views,
          count(distinct visitor_hash) as unique_visitors
   from blog_views
+  where not is_bot
   group by 1;
 
 -- Read access to the rollup views for the secret key (handy for ad-hoc SQL;

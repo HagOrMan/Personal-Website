@@ -14,10 +14,52 @@ import 'server-only';
 
 const TABLE = 'blog_views';
 
-// Common crawler/preview/CLI user agents. Kept as a single source of truth so
-// recording and any future filtering stay in sync. Case-insensitive.
-const BOT_UA_RE =
-  /bot|crawler|spider|crawling|preview|slurp|facebookexternalhit|embedly|curl|wget|python-requests|headless/i;
+// Automated clients, matched case-insensitively against the UA.
+//
+// Plenty of them never say "bot": the user-triggered AI fetchers, Meta's
+// crawler, and every bare HTTP library arrive under a name the obvious tokens
+// miss. A match only sets `is_bot` - the row is still written, so the next
+// crawl can be identified from its own user agent instead of inferred from
+// timing after the fact.
+const BOT_UA_RE = new RegExp(
+  [
+    // Self-identifying crawlers.
+    'bot',
+    'crawler',
+    'spider',
+    'crawling',
+    'preview',
+    'slurp',
+    // Named agents carrying no "bot" token.
+    'facebookexternalhit',
+    'meta-externalagent',
+    'embedly',
+    'chatgpt',
+    'perplexity',
+    'claude-user',
+    // Scripted clients and HTTP libraries.
+    'curl',
+    'wget',
+    'headless',
+    'scrapy',
+    'libwww-perl',
+    'python-requests',
+    'aiohttp',
+    'httpx',
+    'urllib',
+    'go-http-client',
+    'node-fetch',
+    'axios',
+    'okhttp',
+    'guzzle',
+    'java/',
+  ].join('|'),
+  'i',
+);
+
+// A real UA sits well under this. The cap exists so a client sending a
+// megabyte of junk in the header cannot bloat the table one row at a time.
+const MAX_UA_LENGTH = 512;
 
 // PostgREST caps a single select at its `max_rows` setting (1000 by default).
 // For a personal blog that is plenty of headroom for the dashboard windows
@@ -101,8 +143,10 @@ function sanitizeReferrer(
 /**
  * Records a single blog view. Fire-and-forget: schedule it with after() from
  * the page so it runs post-response and never blocks or breaks rendering.
- * Skipped for the owner and for obvious bots. Everything is wrapped so an
- * analytics failure can only ever log, never throw into the caller.
+ * Skipped for the owner; automated clients are recorded and flagged `is_bot`
+ * rather than dropped, so the dashboard can exclude them while the evidence
+ * survives. Everything is wrapped so an analytics failure can only ever log,
+ * never throw into the caller.
  */
 export async function recordView({
   slug,
@@ -115,8 +159,6 @@ export async function recordView({
     if (isOwner) return;
 
     const userAgent = headers.get('user-agent') ?? '';
-    if (BOT_UA_RE.test(userAgent)) return;
-
     const visitorHash = computeVisitorHash(clientIp(headers), userAgent);
     if (!visitorHash) return;
 
@@ -142,6 +184,8 @@ export async function recordView({
       had_access: hadAccess,
       referrer: sanitizeReferrer(headers.get('referer'), headers),
       country: headers.get('x-vercel-ip-country'),
+      user_agent: userAgent.slice(0, MAX_UA_LENGTH) || null,
+      is_bot: BOT_UA_RE.test(userAgent),
     });
     if (error) throw error;
   } catch (err) {
@@ -267,11 +311,16 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
   const client = analyticsClient();
   const windowDays = Math.max(days, SPARKLINE_DAYS, 30);
 
+  // is_bot is filtered server-side, ahead of the row cap. A single crawl
+  // writes hundreds of rows in seconds, so filtering in JS afterwards would
+  // let one run spend the entire MAX_ROWS window and push real traffic out
+  // of the dashboard.
   const { data, error } = await client
     .from(TABLE)
     .select(
       'slug, viewed_at, is_unique_daily, was_locked, had_access, visitor_hash, referrer, country',
     )
+    .eq('is_bot', false)
     .gte('viewed_at', daysAgoIso(windowDays))
     .order('viewed_at', { ascending: false })
     .limit(MAX_ROWS);
@@ -385,6 +434,7 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
     .select(
       'slug, viewed_at, country, referrer, had_access, was_locked, visitor_hash',
     )
+    .eq('is_bot', false)
     .order('viewed_at', { ascending: false })
     .limit(50);
   if (recentError) throw recentError;
@@ -409,5 +459,155 @@ export async function getDashboardData(days: number): Promise<DashboardData> {
     siteDaily,
     crossPost,
     recent,
+  };
+}
+
+// --------------------------------------------------------------------------
+// Bot traffic (the /stats?view=bots panel). Everything getDashboardData
+// filters out, grouped into the runs it actually arrived in.
+// --------------------------------------------------------------------------
+
+interface BotRow {
+  slug: string;
+  viewed_at: string;
+  visitor_hash: string;
+  country: string | null;
+  user_agent: string | null;
+  was_locked: boolean;
+  had_access: boolean;
+}
+
+/**
+ * Splits one visitor's views into separate runs. A visitor_hash covers a whole
+ * UTC day, so a crawler returning from the same IP and UA three times in an
+ * evening would otherwise read as one run spanning hours. Observed runs finish
+ * in seconds and sit minutes-to-hours apart, so this gap separates them
+ * cleanly with room to spare.
+ */
+const BOT_RUN_GAP_MS = 5 * 60_000;
+
+export interface BotRun {
+  visitorHash: string;
+  startedAt: string;
+  endedAt: string;
+  /** Wall-clock span. The headline tell that this was not a reader. */
+  durationMs: number;
+  country: string | null;
+  /** Null for rows recorded before user-agent capture existed. */
+  userAgent: string | null;
+  posts: number;
+  views: number;
+  lockedHits: number;
+  /** Locked posts this run got actual content for. Non-zero is a leak. */
+  lockedReads: number;
+}
+
+export interface BotAgent {
+  userAgent: string | null;
+  views: number;
+  runs: number;
+}
+
+export interface BotData {
+  days: number;
+  totals: { views: number; runs: number; lockedReads: number };
+  runs: BotRun[];
+  agents: BotAgent[];
+}
+
+const MAX_BOT_RUNS = 100;
+
+function toBotRun(visitorHash: string, visits: BotRow[]): BotRun {
+  const startedAt = visits[0]!.viewed_at;
+  const endedAt = visits[visits.length - 1]!.viewed_at;
+
+  return {
+    visitorHash,
+    startedAt,
+    endedAt,
+    durationMs:
+      new Date(endedAt).getTime() - new Date(startedAt).getTime(),
+    country: visits.find((v) => v.country)?.country ?? null,
+    userAgent: visits.find((v) => v.user_agent)?.user_agent ?? null,
+    posts: new Set(visits.map((v) => v.slug)).size,
+    views: visits.length,
+    lockedHits: visits.filter((v) => v.was_locked).length,
+    lockedReads: visits.filter((v) => v.was_locked && v.had_access).length,
+  };
+}
+
+/** Flagged traffic for the selected range, grouped into runs and by agent. */
+export async function getBotData(days: number): Promise<BotData> {
+  const client = analyticsClient();
+
+  const { data, error } = await client
+    .from(TABLE)
+    .select(
+      'slug, viewed_at, visitor_hash, country, user_agent, was_locked, had_access',
+    )
+    .eq('is_bot', true)
+    .gte('viewed_at', daysAgoIso(days))
+    .order('viewed_at', { ascending: false })
+    .limit(MAX_ROWS);
+  if (error) throw error;
+
+  const rows = (data ?? []) as BotRow[];
+
+  const byVisitor = new Map<string, BotRow[]>();
+  for (const r of rows) {
+    (
+      byVisitor.get(r.visitor_hash) ??
+      byVisitor.set(r.visitor_hash, []).get(r.visitor_hash)!
+    ).push(r);
+  }
+
+  const runs: BotRun[] = [];
+  for (const [hash, visits] of byVisitor) {
+    // Ascending, so consecutive gaps split the day into runs in one pass.
+    const ordered = [...visits].sort((a, b) =>
+      a.viewed_at.localeCompare(b.viewed_at),
+    );
+
+    let current: BotRow[] = [];
+    for (const r of ordered) {
+      const prev = current[current.length - 1];
+      const gap = prev
+        ? new Date(r.viewed_at).getTime() - new Date(prev.viewed_at).getTime()
+        : 0;
+
+      if (gap > BOT_RUN_GAP_MS) {
+        runs.push(toBotRun(hash, current));
+        current = [];
+      }
+      current.push(r);
+    }
+    if (current.length > 0) runs.push(toBotRun(hash, current));
+  }
+
+  runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+
+  const byAgent = new Map<string, { views: number; runs: number }>();
+  for (const run of runs) {
+    // '' stands in for "not recorded" so null can still key the map.
+    const key = run.userAgent ?? '';
+    const entry = byAgent.get(key) ?? { views: 0, runs: 0 };
+    entry.views += run.views;
+    entry.runs += 1;
+    byAgent.set(key, entry);
+  }
+
+  const agents: BotAgent[] = [...byAgent.entries()]
+    .map(([userAgent, stats]) => ({ userAgent: userAgent || null, ...stats }))
+    .sort((a, b) => b.views - a.views);
+
+  return {
+    days,
+    totals: {
+      views: rows.length,
+      runs: runs.length,
+      lockedReads: runs.reduce((sum, r) => sum + r.lockedReads, 0),
+    },
+    runs: runs.slice(0, MAX_BOT_RUNS),
+    agents,
   };
 }

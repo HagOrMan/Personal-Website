@@ -12,9 +12,12 @@ import {
 import { Chip } from '@/components/ui/Chip';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
+  type BotAgent,
+  type BotRun,
   type CrossPostSession,
   type DailyPoint,
   type DashboardData,
+  getBotData,
   getDashboardData,
   type PerPostStat,
   type RecentView,
@@ -33,10 +36,34 @@ export const metadata: Metadata = {
 // Reading cookies (via the owner check) opts this into dynamic rendering.
 const ALLOWED_RANGES = [7, 30, 90, 365] as const;
 type Range = (typeof ALLOWED_RANGES)[number];
+const DEFAULT_RANGE: Range = 30;
 
 function parseRange(raw: string | undefined): Range {
   const n = Number(raw);
-  return (ALLOWED_RANGES as readonly number[]).includes(n) ? (n as Range) : 30;
+  return (ALLOWED_RANGES as readonly number[]).includes(n)
+    ? (n as Range)
+    : DEFAULT_RANGE;
+}
+
+const VIEWS = ['readers', 'bots'] as const;
+type View = (typeof VIEWS)[number];
+const DEFAULT_VIEW: View = 'readers';
+const VIEW_LABELS: Record<View, string> = { readers: 'Readers', bots: 'Bots' };
+
+function parseView(raw: string | undefined): View {
+  return (VIEWS as readonly string[]).includes(raw ?? '')
+    ? (raw as View)
+    : DEFAULT_VIEW;
+}
+
+/** Defaults stay out of the query string, so bare /stats is canonical. */
+function statsHref(days: Range, view: View): string {
+  const params = new URLSearchParams();
+  if (days !== DEFAULT_RANGE) params.set('days', String(days));
+  if (view !== DEFAULT_VIEW) params.set('view', view);
+
+  const query = params.toString();
+  return query ? `/stats?${query}` : '/stats';
 }
 
 // --- formatting helpers ----------------------------------------------------
@@ -59,6 +86,20 @@ function fmtDateTime(iso: string): string {
     minute: '2-digit',
     timeZone: 'UTC',
   });
+}
+
+/** Sub-second resolution matters here: a whole crawl fits inside one second. */
+function fmtDuration(ms: number): string {
+  if (ms < 1000) return `${ms} ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(1)} s`;
+
+  const minutes = Math.floor(ms / 60_000);
+  return `${minutes}m ${Math.round((ms % 60_000) / 1000)}s`;
+}
+
+function fmtRate(views: number, ms: number): string {
+  if (ms <= 0) return '—';
+  return `${(views / (ms / 1000)).toFixed(1)}/s`;
 }
 
 // Country is rendered as the bare ISO code rather than a flag emoji: Windows
@@ -136,8 +177,11 @@ function DailyChart({ data }: { data: DailyPoint[] }) {
             className='fill-primary/30'
             rx={1}
           >
+            {/* One interpolated string, not mixed text and value nodes: a
+                <title> takes a single child, and the readable JSX form builds
+                a 6-element array that React warns on at every render. */}
             <title>
-              {d.day}: {d.totalViews} views, {d.uniqueVisitors} unique visitors
+              {`${d.day}: ${d.totalViews} views, ${d.uniqueVisitors} unique visitors`}
             </title>
           </rect>
         );
@@ -169,20 +213,31 @@ function StatTile({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function RangePicker({ days }: { days: Range }) {
+/** Shared by both segmented controls in the header so they can't drift. */
+function segmentClass(active: boolean): string {
+  return active
+    ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm font-medium'
+    : 'border-border text-muted-foreground hover:text-foreground rounded-md border px-3 py-1 text-sm';
+}
+
+function RangePicker({ days, view }: { days: Range; view: View }) {
   return (
     <div className='flex flex-wrap gap-2'>
       {ALLOWED_RANGES.map((r) => (
-        <a
-          key={r}
-          href={`/stats?days=${r}`}
-          className={
-            r === days
-              ? 'bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm font-medium'
-              : 'border-border text-muted-foreground hover:text-foreground rounded-md border px-3 py-1 text-sm'
-          }
-        >
+        <a key={r} href={statsHref(r, view)} className={segmentClass(r === days)}>
           {r === 365 ? '1y' : `${r}d`}
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function ViewPicker({ days, view }: { days: Range; view: View }) {
+  return (
+    <div className='flex flex-wrap gap-2'>
+      {VIEWS.map((v) => (
+        <a key={v} href={statsHref(days, v)} className={segmentClass(v === view)}>
+          {VIEW_LABELS[v]}
         </a>
       ))}
     </div>
@@ -456,6 +511,183 @@ function RecentActivity({
   );
 }
 
+// --- bots ------------------------------------------------------------------
+
+function AgentCell({ userAgent }: { userAgent: string | null }) {
+  if (!userAgent) {
+    return (
+      <span className='text-muted-foreground/60 text-xs italic'>
+        not recorded
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className='text-muted-foreground block max-w-[22rem] truncate font-mono text-xs'
+      title={userAgent}
+    >
+      {userAgent}
+    </span>
+  );
+}
+
+/**
+ * Locked posts a run touched. `lockedReads` should always be zero — a crawler
+ * holding no unlock cookie gets the password wall — so a non-zero value is a
+ * leak and is called out rather than counted quietly alongside the walls.
+ */
+function BotLockedCell({ run }: { run: BotRun }) {
+  if (run.lockedReads > 0) {
+    return (
+      <span className='text-destructive font-medium'>
+        {run.lockedReads} read
+      </span>
+    );
+  }
+
+  if (run.lockedHits > 0) {
+    return <span className='text-muted-foreground'>{run.lockedHits} wall</span>;
+  }
+
+  return <span className='text-muted-foreground'>—</span>;
+}
+
+function BotRunsTable({ runs }: { runs: BotRun[] }) {
+  if (runs.length === 0) {
+    return (
+      <p className='text-muted-foreground text-sm'>
+        No flagged traffic in this range.
+      </p>
+    );
+  }
+
+  return (
+    <div className='border-border overflow-x-auto rounded-lg border'>
+      <table className='w-full min-w-[860px] text-sm'>
+        <thead className='text-muted-foreground border-border border-b text-left text-xs uppercase'>
+          <tr>
+            <th className='p-3 font-medium'>Started</th>
+            <th className='p-3 font-medium'>Visitor</th>
+            <th className='p-3 text-right font-medium'>Posts</th>
+            <th className='p-3 text-right font-medium'>Views</th>
+            <th className='p-3 text-right font-medium'>Took</th>
+            <th className='p-3 text-right font-medium'>Rate</th>
+            <th className='p-3 text-right font-medium'>Locked</th>
+            <th className='p-3 font-medium'>Agent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {runs.map((r) => (
+            <tr
+              key={`${r.visitorHash}-${r.startedAt}`}
+              className='border-border/60 border-b last:border-0'
+            >
+              <td className='text-muted-foreground p-3 whitespace-nowrap tabular-nums'>
+                {fmtDateTime(r.startedAt)}
+              </td>
+              <td className='p-3 whitespace-nowrap'>
+                <span className='text-muted-foreground font-mono text-xs'>
+                  {shortHash(r.visitorHash)}
+                </span>
+                {r.country && (
+                  <span className='text-muted-foreground/70 ml-2 text-xs'>
+                    {r.country}
+                  </span>
+                )}
+              </td>
+              <td className='p-3 text-right tabular-nums'>{r.posts}</td>
+              <td className='p-3 text-right tabular-nums'>{r.views}</td>
+              <td className='text-muted-foreground p-3 text-right whitespace-nowrap tabular-nums'>
+                {fmtDuration(r.durationMs)}
+              </td>
+              <td className='p-3 text-right whitespace-nowrap tabular-nums'>
+                {fmtRate(r.views, r.durationMs)}
+              </td>
+              <td className='p-3 text-right'>
+                <BotLockedCell run={r} />
+              </td>
+              <td className='p-3'>
+                <AgentCell userAgent={r.userAgent} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function BotAgentsSection({ agents }: { agents: BotAgent[] }) {
+  if (agents.length === 0) return null;
+
+  return (
+    <section className='flex flex-col gap-3'>
+      <div>
+        <h2 className='text-foreground text-lg font-semibold'>By agent</h2>
+        <p className='text-muted-foreground text-sm'>
+          What is actually calling. Rows recorded before user-agent capture
+          existed have nothing to show here — those can only be read off their
+          timing.
+        </p>
+      </div>
+      <div className='border-border overflow-x-auto rounded-lg border'>
+        <table className='w-full min-w-[560px] text-sm'>
+          <thead className='text-muted-foreground border-border border-b text-left text-xs uppercase'>
+            <tr>
+              <th className='p-3 font-medium'>Agent</th>
+              <th className='p-3 text-right font-medium'>Runs</th>
+              <th className='p-3 text-right font-medium'>Views</th>
+            </tr>
+          </thead>
+          <tbody>
+            {agents.map((a) => (
+              <tr
+                key={a.userAgent ?? 'unrecorded'}
+                className='border-border/60 border-b last:border-0'
+              >
+                <td className='p-3'>
+                  <AgentCell userAgent={a.userAgent} />
+                </td>
+                <td className='p-3 text-right tabular-nums'>{a.runs}</td>
+                <td className='p-3 text-right tabular-nums'>{a.views}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+async function BotsPanel({ days }: { days: Range }) {
+  const data = await getBotData(days);
+
+  return (
+    <>
+      <section className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
+        <StatTile label='Bot views' value={data.totals.views} />
+        <StatTile label='Runs' value={data.totals.runs} />
+        <StatTile label='Locked leaks' value={data.totals.lockedReads} />
+      </section>
+
+      <section className='flex flex-col gap-3'>
+        <div>
+          <h2 className='text-foreground text-lg font-semibold'>Runs</h2>
+          <p className='text-muted-foreground text-sm'>
+            Flagged traffic grouped into runs, newest first. A run breaks when
+            the same visitor goes quiet for five minutes. Rate is the tell — a
+            reader does not open a post every tenth of a second.
+          </p>
+        </div>
+        <BotRunsTable runs={data.runs} />
+      </section>
+
+      <BotAgentsSection agents={data.agents} />
+    </>
+  );
+}
+
 // --- loading ---------------------------------------------------------------
 
 function TableSkeleton({ rows = 6 }: { rows?: number }) {
@@ -485,6 +717,23 @@ function DashboardSkeleton() {
       <section className='flex flex-col gap-3'>
         <Skeleton className='h-6 w-48' />
         <TableSkeleton rows={4} />
+      </section>
+    </>
+  );
+}
+
+/** Same job for the bots panel: three tiles and one table, not four and two. */
+function BotsSkeleton() {
+  return (
+    <>
+      <section className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className='h-[86px] w-full' />
+        ))}
+      </section>
+      <section className='flex flex-col gap-3'>
+        <Skeleton className='h-6 w-24' />
+        <TableSkeleton />
       </section>
     </>
   );
@@ -571,13 +820,14 @@ async function Dashboard({ days }: { days: Range }) {
 export default async function StatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; view?: string }>;
 }) {
   // Owner-only. 404 (not a login redirect) so the page never advertises itself.
   if (!(await isSupabaseOwner())) notFound();
 
-  const { days: daysParam } = await searchParams;
+  const { days: daysParam, view: viewParam } = await searchParams;
   const days = parseRange(daysParam);
+  const view = parseView(viewParam);
 
   return (
     <main className='bg-background page-shell'>
@@ -588,16 +838,28 @@ export default async function StatsPage({
               Blog analytics
             </h1>
             <p className='text-muted-foreground text-sm'>
-              First-party views, owner visits excluded. Last {days} days.
+              {view === 'bots'
+                ? `Automated traffic, excluded from the reader numbers. Last ${days} days.`
+                : `First-party views, owner and bot visits excluded. Last ${days} days.`}
             </p>
           </div>
-          <RangePicker days={days} />
+          <div className='flex flex-wrap items-center gap-4'>
+            <ViewPicker days={days} view={view} />
+            <RangePicker days={days} view={view} />
+          </div>
         </header>
 
-        {/* Keyed on the range so switching it re-suspends: the header and
-            picker stay interactive while the new window loads. */}
-        <Suspense key={days} fallback={<DashboardSkeleton />}>
-          <Dashboard days={days} />
+        {/* Keyed on both so switching either re-suspends: the header and
+            pickers stay interactive while the new window loads. */}
+        <Suspense
+          key={`${view}-${days}`}
+          fallback={view === 'bots' ? <BotsSkeleton /> : <DashboardSkeleton />}
+        >
+          {view === 'bots' ? (
+            <BotsPanel days={days} />
+          ) : (
+            <Dashboard days={days} />
+          )}
         </Suspense>
       </div>
     </main>
