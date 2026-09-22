@@ -345,6 +345,24 @@
   a[target='_blank'] {
     cursor: var(--cursor-newtab);
   }
+
+  /**
+   * Positioned only to satisfy Motion. `useScroll({ target })` on the
+   * homepage and /experience measures against the document, and in dev it
+   * warns whenever that container is `position: static`. The check is aimed
+   * at custom scroll containers - for the document it changes nothing Motion
+   * computes, because <html> can never be an offsetParent (the chain stops
+   * at <body>), so this quiets the warning without moving a number.
+   *
+   * The trap: it makes <html> the containing block for any absolutely
+   * positioned element with no positioned ancestor, and that box is the whole
+   * document rather than the viewport. Such an element with `inset-0` or
+   * `bottom-0` would stretch to the foot of the page - give it a positioned
+   * parent rather than removing this.
+   */
+  html {
+    position: relative;
+  }
 }
 
 @utility animated-underline {
