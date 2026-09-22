@@ -21,10 +21,6 @@ import { useMediaQuery, usePrefersReducedMotion } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
 import { PortfolioVideo } from '@/types/videos/PortfolioVideo';
 
-// Mobile modal's slide-in contents drawer - fixed px width (not a vw
-// fraction) so the toggle tab's animated `left` tracks it exactly.
-const TOC_DRAWER_WIDTH = 220;
-
 export type VideoExperienceProps = {
   videos: PortfolioVideo[];
   variant: 'modal' | 'sticky';
@@ -395,10 +391,12 @@ export function VideoExperience({
           className='scrollbar-hover flex max-h-[85vh] w-full flex-col overflow-y-auto [scrollbar-gutter:stable]'
         >
           <div
-            className={cn(
-              'grid gap-8',
-              isShort ? 'grid-cols-[20rem_16rem]' : 'grid-cols-[20rem_14rem]',
-            )}
+            // 18rem fits every current Contents title on one line (and the
+            // relocated action bar when isShort). The fixed tracks + gap-8
+            // leave only ~3rem under the panel's max-w-3xl - widen past that
+            // and this row overflows the scroll column sideways instead of
+            // the panel growing.
+            className='grid grid-cols-[20rem_18rem] gap-8'
           >
             <div className='flex flex-col gap-4'>
               {title}
@@ -472,21 +470,26 @@ export function VideoExperience({
         {frame}
 
         <motion.div
-          className='absolute inset-y-0 left-0 z-40 overflow-hidden'
+          // Shrink-to-fit, so the drawer is as wide as its longest title;
+          // the max-w cap keeps the toggle tab (w-6, riding on this edge)
+          // inside the overflow-hidden box, and titles wrap past the cap.
+          // Slides by transform rather than animating width so the panel
+          // keeps its final width throughout and titles never reflow
+          // mid-slide.
+          className='absolute inset-y-0 left-0 z-40 max-w-[calc(100%-1.5rem)]'
           initial={false}
-          animate={{ width: state.tocOpen ? TOC_DRAWER_WIDTH : 0 }}
+          animate={{ x: state.tocOpen ? 0 : '-100%' }}
           transition={{
             duration: prefersReducedMotion ? 0 : 0.3,
             ease: [0.22, 1, 0.36, 1],
           }}
         >
           <div
-            // flex-col + min-h-0/flex-1 on the list below: without this the
-            // drawer was a plain block, so a long video list just overflowed
-            // the h-full box - and since the motion.div wrapper around this
-            // clips with overflow-hidden (for the width slide-in animation),
-            // that overflow was invisible rather than scrollable.
-            className='bg-background/95 flex h-full w-[220px] max-w-[80vw] shrink-0 flex-col rounded-r-2xl border-r p-4 shadow-xl backdrop-blur-sm'
+            // flex-col + min-h-0/flex-1 on the list below let a long video
+            // list scroll inside the drawer - as a plain block it would
+            // overflow the h-full box and be clipped, unreachable, by the
+            // overflow-hidden container around the frame.
+            className='bg-background/95 flex h-full flex-col rounded-r-2xl border-r p-4 backdrop-blur-sm'
             inert={!state.tocOpen}
             aria-hidden={!state.tocOpen}
           >
@@ -504,27 +507,21 @@ export function VideoExperience({
               className='scrollbar-hover min-h-0 flex-1 overflow-y-auto'
             />
           </div>
-        </motion.div>
 
-        <motion.button
-          type='button'
-          onClick={actions.toggleToc}
-          aria-label={state.tocOpen ? 'Hide contents' : 'Show contents'}
-          aria-expanded={state.tocOpen}
-          initial={false}
-          animate={{ left: state.tocOpen ? TOC_DRAWER_WIDTH : 0 }}
-          transition={{
-            duration: prefersReducedMotion ? 0 : 0.3,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className='focus-visible:ring-ring bg-background absolute top-1/2 z-40 flex h-14 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-lg border border-l-0 shadow transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
-        >
-          {state.tocOpen ? (
-            <ChevronLeft className='size-4' />
-          ) : (
-            <ChevronRight className='size-4' />
-          )}
-        </motion.button>
+          <button
+            type='button'
+            onClick={actions.toggleToc}
+            aria-label={state.tocOpen ? 'Hide contents' : 'Show contents'}
+            aria-expanded={state.tocOpen}
+            className='focus-visible:ring-ring bg-background absolute top-1/2 left-full flex h-14 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-r-lg border border-l-0 shadow transition-transform focus-visible:ring-2 focus-visible:outline-hidden active:scale-95'
+          >
+            {state.tocOpen ? (
+              <ChevronLeft className='size-4' />
+            ) : (
+              <ChevronRight className='size-4' />
+            )}
+          </button>
+        </motion.div>
       </div>
 
       {controls}

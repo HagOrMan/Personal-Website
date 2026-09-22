@@ -8,7 +8,7 @@ type VideoTableOfContentsProps = {
   videos: PortfolioVideo[];
   currentId: VideoId;
   onSelect: (id: VideoId) => void;
-  /** 'list' = roomier (modal), 'playlist' = compact (sticky panel). */
+  /** 'list' = roomier, long titles wrap (modal); 'playlist' = compact, long titles truncate (sticky panel). */
   density?: 'list' | 'playlist';
   className?: string;
 };
@@ -49,8 +49,10 @@ export function VideoTableOfContents({
               </span>
               <span
                 className={cn(
-                  'flex-1 truncate',
-                  density === 'list' ? 'text-sm' : 'text-xs',
+                  'flex-1',
+                  density === 'list'
+                    ? 'min-w-0 text-sm break-words'
+                    : 'truncate text-xs',
                 )}
               >
                 {video.title}
