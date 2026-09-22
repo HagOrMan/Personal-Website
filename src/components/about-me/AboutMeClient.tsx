@@ -176,14 +176,13 @@ export default function AboutMeClient({
 
       <div
         className={cn(
-          // The text column caps itself at max-w-2xl below, so give it
-          // exactly that much track width instead of 1fr - otherwise the
-          // second column (fixed at 320px) ends up hugging the right edge
-          // of a much wider viewport with a dead gap in between. The
-          // second column keeps the leftover space so the video can be
-          // centered within it instead.
+          // Text ~2/5, video lane ~3/5 - the player is the focal point on
+          // desktop. The split is exact because VideoStickyShell is a size
+          // container, which contributes no min-content to its track; the
+          // text keeps its own max-w-2xl cap for line length, which only
+          // binds on very wide viewports.
           isDesktop &&
-            'grid grid-cols-[minmax(0,42rem)_1fr] items-start gap-14',
+            'grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-14',
         )}
       >
         <div className='flex max-w-2xl flex-col gap-14'>

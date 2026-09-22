@@ -95,12 +95,13 @@ export function VideoExperience({
   const showPosterOverlay =
     !state.isPlaying && !state.ended && state.currentTime < 0.15;
 
-  // The desktop modal's scroll container doesn't reveal newly-opened content
-  // on its own - without this, opening the transcript while the modal is
-  // already scrolled to fit the viewport just adds height below the fold
-  // instead of bringing the panel into view. Delayed briefly so we scroll to
-  // the transcript's fully-expanded position rather than where the
-  // Collapsible's open animation starts (see --animate-collapsible-down).
+  // The desktop scroll containers (the modal's content column, the sticky
+  // card) don't reveal newly-opened content on their own - both size their
+  // video to fill the viewport with the transcript closed, so without this,
+  // opening it just adds height below the fold instead of bringing the
+  // panel into view. Delayed briefly so we scroll to the transcript's
+  // fully-expanded position rather than where the Collapsible's open
+  // animation starts (see --animate-collapsible-down).
   useEffect(() => {
     if (!isDesktop || !state.transcriptOpen) return;
     const delay = prefersReducedMotion ? 0 : 220;
@@ -128,12 +129,29 @@ export function VideoExperience({
   // out of the left column (see the isDesktop return below), so the
   // left column only has to fit the title + seek bar - roughly 130px of
   // chrome instead of 240px, letting the video claim the rest.
-  const frameMaxHeightClass =
+  //
+  // The sticky player is the focal point of desktop about-me, so it gets an
+  // explicit height instead - as tall as fits - and its width follows from
+  // the 9:16 ratio (it sits in an `auto` grid column that sizes to it). Two
+  // ceilings, whichever is tighter:
+  // - 100vh - 20rem: the card's title, controls, gaps and padding (~13rem),
+  //   the sticky top offset, and some room below, so the card fits the
+  //   window with the transcript closed.
+  // - (100cqw - 18rem) * 16/9: the widest the frame can be while the card
+  //   still fits its lane (VideoStickyShell is the size container) with
+  //   "Up next" at its 200px floor. 18rem = that floor + the grid gap +
+  //   the card's padding/border + its reserved scrollbar gutter + slack.
+  // The 370px floor has to stay under the second term at the narrowest
+  // lane (~504px wide at a 1024px viewport, giving ~384px), or the card
+  // overflows its lane there.
+  const frameSizeClass =
     variant === 'modal' && isDesktop
       ? isShort
         ? 'max-h-[clamp(400px,calc(100vh_-_130px),640px)] self-center'
         : 'max-h-[clamp(400px,calc(100vh_-_240px),640px)] self-center'
-      : 'max-h-full';
+      : variant === 'sticky'
+        ? 'h-[clamp(370px,min(calc(100vh_-_20rem),calc((100cqw_-_18rem)_*_16_/_9)),720px)]'
+        : 'max-h-full';
 
   const frame = (
     <div
@@ -145,11 +163,11 @@ export function VideoExperience({
       // modal, the frame is a flex item of a flex-col column whose default
       // align-items: stretch would force width back to the column's full
       // 320px regardless of the height clamp above - self-center (bundled
-      // into frameMaxHeightClass for the desktop-modal case) opts out of
+      // into frameSizeClass for the desktop-modal case) opts out of
       // that stretch so width can shrink along with the clamped height.
       className={cn(
         'group relative aspect-[9/16] max-w-full cursor-pointer overflow-hidden rounded-2xl bg-black',
-        frameMaxHeightClass,
+        frameSizeClass,
       )}
       onClick={actions.togglePlay}
     >
@@ -170,7 +188,7 @@ export function VideoExperience({
           alt=''
           fill
           priority={currentIndex === 0}
-          sizes='(min-width: 1024px) 360px, 100vw'
+          sizes='(min-width: 1024px) 405px, 100vw'
           className='pointer-events-none object-cover'
         />
       )}
@@ -303,19 +321,25 @@ export function VideoExperience({
           // border/50 (rather than the full-strength border color) keeps
           // this readable as a card edge without the harsh outline it had
           // in light mode, where --border sits far lighter than --card.
-          // The lg:max-h/overflow pair is a fallback only, for viewports too
-          // short to fit even the video + controls + transcript stack - the
-          // row below is what normally keeps everything in view (see its
-          // own comment). Without some fallback here, the card is
+          // The frame is sized so the card fits the window with the
+          // transcript closed (see frameSizeClass); the lg:max-h/overflow
+          // pair catches everything else - an open transcript, or a window
+          // too short for even the frame's floor. Without it, the card is
           // position:sticky rather than a scroll container, so any overflow
           // would be unreachable until the page scrolls far enough for the
           // card to un-stick near the bottom of the left column.
-          'bg-card border-border/50 scrollbar-hover flex w-full flex-col gap-4 overflow-y-auto rounded-2xl border p-4 sm:p-5 lg:max-h-[calc(100vh-5rem)]',
+          //
+          // w-fit: the card hugs frame + "Up next" rather than filling its
+          // lane, so the frame's width is what sets the card's. That's also
+          // why the scrollbar gutter is reserved: otherwise the card widens
+          // (and re-centers) by the scrollbar's width whenever it starts
+          // scrolling, e.g. on opening the transcript.
+          'bg-card border-border/50 scrollbar-hover flex w-fit max-w-full flex-col gap-4 overflow-y-auto rounded-2xl border p-4 [scrollbar-gutter:stable] sm:p-5 lg:max-h-[calc(100vh-5rem)]',
           className,
         )}
       >
         {title}
-        <div className='grid grid-cols-[13rem_1fr] gap-4'>
+        <div className='grid grid-cols-[auto_minmax(200px,18rem)] gap-4'>
           {frame}
           <div
             // Grid instead of flex here: with align-items:stretch (the grid
@@ -330,18 +354,16 @@ export function VideoExperience({
             // reliably count as - that's what was making this list render
             // at zero height).
             //
-            // min-w-[200px] (rather than min-w-0) is deliberate: it's a
-            // hard floor so titles always get real room instead of
-            // truncating down to a sliver whenever the card is squeezed.
-            // Both this and the frame's 13rem are non-shrinking, so the
-            // card's own min-content width is fixed at 13rem + 200px + the
-            // gap - VideoStickyShell's max-w has to be at least that wide
-            // (plus its own padding/border) or this row overflows the
-            // card. Don't "fix" an overflow here by making these shrink
-            // (minmax(0, ...)) - that just reintroduces uncontrolled
-            // shrinking (the video collapsing toward nothing, titles
-            // losing their floor); fix the container width instead.
-            className='border-border/70 flex min-h-0 min-w-[200px] flex-col gap-2 border-l pl-4'
+            // The track's 200px minimum is a hard floor so titles always get
+            // real room instead of wrapping a word per line when the lane is
+            // narrow; 18rem fits every current title on one line. The frame
+            // track doesn't shrink either (its width comes from its height),
+            // so the card's min-content is frame + 200px + the gap - the
+            // frame's cqw ceiling is what keeps that inside the lane. Don't
+            // "fix" an overflow here by letting these shrink (minmax(0,
+            // ...)) - that just reintroduces uncontrolled shrinking (titles
+            // losing their floor); fix the frame's ceiling instead.
+            className='border-border/70 flex min-h-0 min-w-0 flex-col gap-2 border-l pl-4'
           >
             <h3 className='text-muted-foreground tracking-label shrink-0 text-xs font-semibold uppercase'>
               Up next
@@ -356,7 +378,12 @@ export function VideoExperience({
           </div>
         </div>
         {controls}
-        {transcript}
+        {/* w-0 min-w-full for the same reason as the desktop modal's
+            transcript wrapper below: without it, the transcript's longest
+            line feeds into the card's w-fit width and widens the card. */}
+        <div ref={transcriptRef} className='w-0 min-w-full'>
+          {transcript}
+        </div>
       </div>
     );
   }

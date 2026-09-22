@@ -8,7 +8,7 @@ type VideoTableOfContentsProps = {
   videos: PortfolioVideo[];
   currentId: VideoId;
   onSelect: (id: VideoId) => void;
-  /** 'list' = roomier, long titles wrap (modal); 'playlist' = compact, long titles truncate (sticky panel). */
+  /** 'list' = roomier padding (modal), 'playlist' = tighter padding (sticky panel). Long titles wrap in both. */
   density?: 'list' | 'playlist';
   className?: string;
 };
@@ -30,7 +30,6 @@ export function VideoTableOfContents({
               type='button'
               onClick={() => onSelect(video.id)}
               aria-current={isCurrent ? 'true' : undefined}
-              title={video.title}
               className={cn(
                 'focus-visible:ring-ring flex w-full cursor-pointer items-center gap-3 rounded-lg text-left transition-colors focus-visible:ring-2 focus-visible:outline-hidden',
                 density === 'list' ? 'p-3' : 'px-2.5 py-2',
@@ -39,30 +38,13 @@ export function VideoTableOfContents({
                   : 'text-foreground/75 hover:bg-accent hover:text-foreground',
               )}
             >
-              <span
-                className={cn(
-                  'text-muted-foreground shrink-0 tabular-nums',
-                  density === 'list' ? 'text-sm' : 'text-xs',
-                )}
-              >
+              <span className='text-muted-foreground shrink-0 text-sm tabular-nums'>
                 {index + 1}
               </span>
-              <span
-                className={cn(
-                  'flex-1',
-                  density === 'list'
-                    ? 'min-w-0 text-sm break-words'
-                    : 'truncate text-xs',
-                )}
-              >
+              <span className='min-w-0 flex-1 text-sm break-words'>
                 {video.title}
               </span>
-              <span
-                className={cn(
-                  'text-muted-foreground shrink-0 tabular-nums',
-                  density === 'list' ? 'text-xs' : 'text-[0.7rem]',
-                )}
-              >
+              <span className='text-muted-foreground shrink-0 text-xs tabular-nums'>
                 {video.durationLabel}
               </span>
             </button>
