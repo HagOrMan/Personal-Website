@@ -423,10 +423,10 @@ export default function Home() {
                   className='text-foreground/80 text-lg leading-relaxed'
                 >
                   <p>
-                    I genuinely care about building robust, maintainable systems
-                    that never surprise you. I love experimenting with new
-                    technology and will always say &ldquo;yes&rdquo; to the
-                    craziest ideas.
+                    Welcome to the ocean of my mind, a portfolio site filled
+                    with my experiences and things that drift through my
+                    thoughts. I love experimenting with new technology and will
+                    always say &ldquo;yes&rdquo; to the craziest ideas.
                   </p>
 
                   {/* --- Social Prompts --- */}

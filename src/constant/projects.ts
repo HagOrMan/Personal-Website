@@ -239,7 +239,7 @@ const PROJECT_LIST: TProjectShowcase[] = [
     skills: 'Python, Pygame, trajectory & collision math',
     tools: ['Python', 'Pygame'],
     description:
-      'Throw pokeballs to catch pokemon with fully custom animations, then browse your collection in a pokedex where you can level up your monpokes!',
+      'Throw monpokeballs to catch creatures with fully custom animations, then browse your collection in a monpokedex where you can level up your monpokes!',
     year: '2021-2022',
     tags: ['personal', 'no-ai'],
     featured: true,

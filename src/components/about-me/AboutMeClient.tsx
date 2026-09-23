@@ -56,7 +56,7 @@ const SECTIONS: AboutMeSection[] = [
   {
     id: 'intro',
     title: 'A Bit About Me',
-    body: "I'm Kyle, a Software and Biomedical Engineering student at McMaster University. I love challenges and being involved in my community, like my current position building solutions to help the engineering student body in the McMaster Engineering Society.",
+    body: "I'm Kyle, a Software and Biomedical Engineering student at McMaster University. I love challenges and being involved in my community, like 70% of my undergraduate career where I've been building solutions to help the engineering student body in the McMaster Engineering Society.",
     videoId: 'about-me',
   },
   {
@@ -68,19 +68,19 @@ const SECTIONS: AboutMeSection[] = [
   {
     id: 'security-master',
     title: 'Defining Moment At Scotiabank',
-    body: "During my co-op at Scotiabank, I took ownership of a security master (the source of truth the trading floor relies on to know what a given stock actually is) and brought it from an early prototype to something the firm ran on in production. I loved digging into the tricky edge cases nobody had looked at yet, and somewhere along the way I'd gone deep enough on stock symbology that people started coming to me with their questions. It's the kind of work I really enjoy: taking something rough and making it into a thing people can trust.",
+    body: "During my co-op at Scotiabank, I took ownership of a security master (the source of truth the trading floor relies on to know what a given stock actually is) and brought it from an early prototype to something vital in production. I loved digging into the tricky edge cases nobody had looked at yet, and by the end I'd somehow gone deep enough on stock symbology that people were coming to me with questions. It's the kind of work I really enjoy: taking something rough and making it into a thing people can trust.",
     videoId: 'security-master',
   },
   {
     id: 'infratech-experience',
     title: 'Managing an Engineering Society Tech Team',
-    body: "I've spent almost four years with the McMaster Engineering Society, and I've stayed because I love helping the community around me. It's the same instinct that got me into coding in the first place: taking something annoying off people's plates. Just at a bigger scale now. I help lead around 20 developers across a few teams building tools for the student body, like a platform to make booking events and rooms far easier. My favourite part, though, is the people: holding weekly hours to talk through code and careers, and getting to put in a word for someone chasing a role they really wanted. I got a lot of great mentorship starting out, so being on the other side of that now means a lot.",
+    body: "I've spent almost four years with the McMaster Engineering Society, and I've stayed because I love helping the community around me. It's the same reason I got into coding in the first place: taking something annoying and making it good. Now, it's just at a bigger scale. I help lead around 20 developers across a few teams building tools for the student body, like a platform to make booking events and study rooms far easier. That said, my favourite part is the people: holding weekly hours to talk through code and careers, and getting to put in a referral for a team member that kickstarted their career. I got a lot of great mentorship starting out, so being on the other side of that now means a lot.",
     videoId: 'infratech-experience',
   },
   {
     id: 'hobbies-and-interests',
     title: 'What I Enjoy Outside of Coding',
-    body: "Outside of coding, I've been learning Mandarin for a few years now. 我会说一点中文，不太好, which is a humble way of saying I'm still working on it. I play classical guitar (more on that below!), I'm a big reader, and when I'm not doing either of those I'm usually out on a soccer pitch, halfway up a trail, or picking up whichever racquet sport a friend wants to play that week.",
+    body: "Outside of coding, I've been learning Mandarin for a few years now. 我会说一点中文，不太好, which is a humble way of saying I'm still working on it. I play classical guitar (more on that below!), I'm a big reader, and when I'm not doing either of those I'm usually out on a soccer field, halfway up a trail, or picking up whichever racquet sport a friend wants to play that week.",
     videoId: 'hobbies-and-interests',
   },
   {

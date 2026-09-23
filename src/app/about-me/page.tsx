@@ -11,7 +11,7 @@ export default function AboutMe() {
       <JsonLd data={buildProfilePageJsonLd()} />
       <PageHeader
         title='About Me'
-        description='Get to know me through the page below - or hear it straight from me on video.'
+        description='Get to know me through the page below, or hear it straight from me on video :)'
         decoration={
           <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
             <WaveSprayLazy

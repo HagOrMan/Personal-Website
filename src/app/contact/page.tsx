@@ -13,7 +13,7 @@ export default function Contact() {
       <div className='relative'>
         <PageHeader
           title='Contact'
-          description="Want to work together or just want to say hi? Send me a message below and I'll get back to you."
+          description='Want to work together or just want to say hi? Send me a message below. Please no more "we will help you with your SEO" emails :sob:'
           decoration={
             <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
               <WaveSprayLazy
