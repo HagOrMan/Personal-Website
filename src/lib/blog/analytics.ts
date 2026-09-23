@@ -536,23 +536,12 @@ function toBotRun(visitorHash: string, visits: BotRow[]): BotRun {
   };
 }
 
-/** Flagged traffic for the selected range, grouped into runs and by agent. */
-export async function getBotData(days: number): Promise<BotData> {
-  const client = analyticsClient();
-
-  const { data, error } = await client
-    .from(TABLE)
-    .select(
-      'slug, viewed_at, visitor_hash, country, user_agent, was_locked, had_access',
-    )
-    .eq('is_bot', true)
-    .gte('viewed_at', daysAgoIso(days))
-    .order('viewed_at', { ascending: false })
-    .limit(MAX_ROWS);
-  if (error) throw error;
-
-  const rows = (data ?? []) as BotRow[];
-
+/**
+ * Groups rows by visitor, then splits each visitor's day into runs on
+ * BOT_RUN_GAP_MS. Shared by the dashboard and the behavioural sweep so the
+ * two can never disagree about what counts as one run.
+ */
+function toRuns(rows: BotRow[]): BotRun[] {
   const byVisitor = new Map<string, BotRow[]>();
   for (const r of rows) {
     (
@@ -584,7 +573,26 @@ export async function getBotData(days: number): Promise<BotData> {
     if (current.length > 0) runs.push(toBotRun(hash, current));
   }
 
-  runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  return runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
+/** Flagged traffic for the selected range, grouped into runs and by agent. */
+export async function getBotData(days: number): Promise<BotData> {
+  const client = analyticsClient();
+
+  const { data, error } = await client
+    .from(TABLE)
+    .select(
+      'slug, viewed_at, visitor_hash, country, user_agent, was_locked, had_access',
+    )
+    .eq('is_bot', true)
+    .gte('viewed_at', daysAgoIso(days))
+    .order('viewed_at', { ascending: false })
+    .limit(MAX_ROWS);
+  if (error) throw error;
+
+  const rows = (data ?? []) as BotRow[];
+  const runs = toRuns(rows);
 
   const byAgent = new Map<string, { views: number; runs: number }>();
   for (const run of runs) {
@@ -610,4 +618,78 @@ export async function getBotData(days: number): Promise<BotData> {
     runs: runs.slice(0, MAX_BOT_RUNS),
     agents,
   };
+}
+
+// --------------------------------------------------------------------------
+// Behavioural sweep, run by the daily cron. The UA check in recordView only
+// catches clients that name themselves; this catches the ones that lie.
+// --------------------------------------------------------------------------
+
+/**
+ * A run this large, this fast, was not a person reading.
+ *
+ * Both numbers sit deliberately far from human behaviour rather than tuned
+ * close to the observed crawls: a false positive deletes a real reader from
+ * the stats permanently, and the crawls clear this bar by a wide margin
+ * anyway (36 posts in ~3s against a 20-in-60s threshold).
+ */
+const SWEEP_MIN_POSTS = 20;
+const SWEEP_MAX_SPAN_MS = 60_000;
+
+export interface BotSweepResult {
+  /** Runs newly caught. Empty means nothing to report. */
+  flagged: BotRun[];
+  rowsFlagged: number;
+}
+
+/**
+ * Finds unflagged visitors whose behaviour gives them away, marks their rows
+ * is_bot, and hands back what it caught so the caller can alert on it.
+ *
+ * Only ever considers rows that are still is_bot = false, so a run it has
+ * already caught can never be reported a second time. That - not a stored
+ * cursor - is what makes "since the last run" correct even when consecutive
+ * lookback windows overlap.
+ *
+ * Requires the column-level `update (is_bot)` grant; service_role holds
+ * select and insert only, by design.
+ */
+export async function sweepBehaviouralBots(
+  lookbackHours: number,
+): Promise<BotSweepResult> {
+  const client = analyticsClient();
+  const since = new Date(Date.now() - lookbackHours * 3_600_000).toISOString();
+
+  const { data, error } = await client
+    .from(TABLE)
+    .select(
+      'slug, viewed_at, visitor_hash, country, user_agent, was_locked, had_access',
+    )
+    .eq('is_bot', false)
+    .gte('viewed_at', since)
+    .order('viewed_at', { ascending: false })
+    .limit(MAX_ROWS);
+  if (error) throw error;
+
+  // Per run, not per visitor: grouping by visitor_hash alone would measure
+  // from a visitor's first view to their last, so two separate crawls in one
+  // day would span an hour and read as "too slow to be a crawl".
+  const flagged = toRuns((data ?? []) as BotRow[]).filter(
+    (run) => run.posts >= SWEEP_MIN_POSTS && run.durationMs < SWEEP_MAX_SPAN_MS,
+  );
+  if (flagged.length === 0) return { flagged: [], rowsFlagged: 0 };
+
+  // Flips every row belonging to the offending visitors, including any just
+  // outside the lookback. A visitor_hash covers one actor on one UTC day, so
+  // if one of their runs was a crawl the rest of that day is the same client.
+  const hashes = [...new Set(flagged.map((run) => run.visitorHash))];
+  const { data: updated, error: updateError } = await client
+    .from(TABLE)
+    .update({ is_bot: true })
+    .in('visitor_hash', hashes)
+    .eq('is_bot', false)
+    .select('id');
+  if (updateError) throw updateError;
+
+  return { flagged, rowsFlagged: (updated ?? []).length };
 }

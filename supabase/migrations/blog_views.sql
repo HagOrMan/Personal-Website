@@ -51,10 +51,15 @@ alter table blog_views enable row level security;
 -- RLS bypass is NOT the same as table privileges: service_role (the role the
 -- secret key authenticates as) still needs explicit GRANTs to read/write, or
 -- inserts fail with "permission denied for table blog_views" (SQLSTATE 42501).
--- Grant only what the analytics layer uses - a dedup SELECT and INSERT - and
--- grant nothing to anon/authenticated, so the secret key stays the only role
--- that can touch this table.
+-- Grant only what the analytics layer uses - a dedup SELECT, an INSERT, and
+-- is_bot alone for the cron's behavioural sweep - and grant nothing to
+-- anon/authenticated, so the secret key stays the only role that can touch
+-- this table.
 grant select, insert on table public.blog_views to service_role;
+-- Column-level on purpose: the sweep writes one boolean, so it gets one
+-- boolean. A blanket `grant update` would also hand the analytics key the
+-- ability to rewrite slugs, timestamps and visitor hashes.
+grant update (is_bot) on table public.blog_views to service_role;
 
 -- Per-post daily rollup used by the dashboard. Bot rows are excluded here and
 -- in blog_site_daily below, so these agree with /stats rather than quietly

@@ -5,6 +5,9 @@ import { requiredEnv } from '@/lib/env';
 import 'server-only';
 
 export const CONTACT_FROM = 'Contact <contact@kylehagerman.dev>';
+// Resend verifies senders at the domain level, so this only has to sit on the
+// verified domain - there is no mailbox behind it, and replies to it bounce.
+export const BOT_ALERT_FROM = 'BotAlert <bot-alert@kylehagerman.dev>';
 
 let client: Resend | null = null;
 
