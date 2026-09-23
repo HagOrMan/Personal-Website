@@ -35,9 +35,19 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': asset.contentType,
+      // s-maxage is deliberately absent from the locked branch. A shared-cache
+      // directive there would put a password-protected asset in Vercel's CDN,
+      // where every later request is served without ever reaching the
+      // hasAccess() check above. `private` is what keeps that check load-
+      // bearing, so don't unify these two strings.
+      //
+      // Public assets get s-maxage so a burst collapses to one origin fetch
+      // instead of one function invocation per request. 300s matches the
+      // content Data Cache, so an edited image goes stale on the same clock
+      // as the post that embeds it.
       'Cache-Control': post.meta.locked
         ? 'private, max-age=300'
-        : 'public, max-age=300',
+        : 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
     },
   });
 }

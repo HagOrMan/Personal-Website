@@ -55,7 +55,15 @@ function PostListItem({
         !forceBorder && 'last:border-none',
       )}
     >
-      <Link href={`/blog/${post.slug}`} className='group flex flex-col gap-1'>
+      {/* Every link on this page prefetches on viewport entry by default, so
+          scrolling the index once fires a request per post. /blog/[slug] is
+          dynamic and has a loading.tsx, so all that buys is a pre-warmed
+          skeleton - not worth one function invocation per post listed. */}
+      <Link
+        href={`/blog/${post.slug}`}
+        prefetch={false}
+        className='group flex flex-col gap-1'
+      >
         <span className='text-foreground group-hover:text-primary flex items-center gap-2 text-xl font-semibold'>
           {post.featured && (
             <Tooltip>

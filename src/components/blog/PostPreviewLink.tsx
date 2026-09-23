@@ -43,6 +43,13 @@ export type PostPreviewLinkProps = {
   preview?: PostPreview;
   /** Falls back to the preview's slug, for callers with nothing to wrap. */
   href?: string;
+  /**
+   * Passed straight to next/link. Callers rendering many of these at once
+   * should set false: the default prefetches every link that scrolls into
+   * view, one request each, and /blog/[slug] is dynamic so a prefetch only
+   * warms the loading.tsx skeleton.
+   */
+  prefetch?: boolean;
   children: ReactNode;
   className?: string;
 };
@@ -56,6 +63,7 @@ export type PostPreviewLinkProps = {
 export function PostPreviewLink({
   preview,
   href,
+  prefetch,
   children,
   className,
 }: PostPreviewLinkProps) {
@@ -63,7 +71,7 @@ export function PostPreviewLink({
 
   if (!preview || !target) {
     return target ? (
-      <Link href={target} className={className}>
+      <Link href={target} prefetch={prefetch} className={className}>
         {children}
       </Link>
     ) : (
@@ -76,7 +84,7 @@ export function PostPreviewLink({
   return (
     <HoverCard openDelay={OPEN_DELAY_MS} closeDelay={CLOSE_DELAY_MS}>
       <HoverCardTrigger asChild>
-        <Link href={target} className={className}>
+        <Link href={target} prefetch={prefetch} className={className}>
           {children}
         </Link>
       </HoverCardTrigger>
@@ -130,6 +138,10 @@ export function PostPreviewLink({
  * Takes the single resolved preview rather than a lookup map: the dashboard
  * renders dozens of these, and a map prop would serialize a full copy of the
  * post index into the payload once per link.
+ *
+ * Prefetch is off for the same reason: the journeys table alone maps every
+ * slug of every session on the page, so the default would fire a request per
+ * link as the dashboard scrolls.
  */
 export function SlugPreviewLink({
   slug,
@@ -146,6 +158,7 @@ export function SlugPreviewLink({
     <PostPreviewLink
       preview={preview}
       href={`/blog/${slug}`}
+      prefetch={false}
       className={className}
     >
       {children ?? slug}
