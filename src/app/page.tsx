@@ -8,7 +8,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { ChevronDown, Play } from 'lucide-react';
-import { animate, motion, useScroll, useTransform } from 'motion/react';
+import {
+  animate,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from 'motion/react';
 
 // import { ElectricShockBackground } from '@/components/backgrounds/ElectricShockBackground';
 import { HomeIconPopOverlay } from '@/components/home/HomeIconPopOverlay';
@@ -258,6 +264,25 @@ export default function Home() {
     [isDesktop ? 0 : 50, 0],
   );
 
+  // The "Get to know me" triggers sit inside wrappers faded by opacity alone,
+  // so they're clickable (and focusable) while still invisible. They only
+  // switch on once the thing they fade in with is fully opaque: the photo on
+  // desktop (photoOpacity), the bio block below lg (descriptionOpacity).
+  // Keep these in step with those ranges.
+  const videoTriggerRevealedAt = isDesktop ? 0.6 : 0.5;
+  const [videoTriggerReady, setVideoTriggerReady] = useState(false);
+  const syncVideoTrigger = useCallback(
+    (progress: number) => {
+      setVideoTriggerReady(progress >= videoTriggerRevealedAt);
+    },
+    [videoTriggerRevealedAt],
+  );
+  useMotionValueEvent(scrollYProgress, 'change', syncVideoTrigger);
+  // The change event won't fire when only the breakpoint flips.
+  useEffect(() => {
+    syncVideoTrigger(scrollYProgress.get());
+  }, [scrollYProgress, syncVideoTrigger]);
+
   // Fade out the arrow at the end as the user scrolls
   const scrollArrowOpacity = useTransform(
     scrollYProgress,
@@ -446,6 +471,7 @@ export default function Home() {
                       onClick={openVideo}
                       onPointerEnter={primeVideo}
                       onFocus={primeVideo}
+                      disabled={!videoTriggerReady}
                       className={cn(heroVideoTriggerClasses, 'lg:hidden')}
                     >
                       <Play className='h-4 w-4' fill='currentColor' />
@@ -515,9 +541,12 @@ export default function Home() {
                   onClick={openVideo}
                   onPointerEnter={primeVideo}
                   onFocus={primeVideo}
+                  disabled={!videoTriggerReady}
                   className={cn(
                     heroVideoTriggerClasses,
                     'dark:bg-lush-400 dark:text-lush-950 dark:hover:bg-lush-300 pointer-events-auto absolute top-full left-1/2 mt-4 hidden w-max -translate-x-1/2 hover:brightness-105 lg:flex dark:hover:shadow-[0_6px_24px_-2px_rgb(var(--tw-color-lush-400)/0.55)] dark:hover:brightness-100',
+                    // Lets clicks fall through to the ocean behind it.
+                    !videoTriggerReady && 'pointer-events-none',
                   )}
                 >
                   <Play className='h-4 w-4' fill='currentColor' />
