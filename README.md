@@ -147,8 +147,6 @@ Project documentation lives in [`guides/`](./guides):
 - [WEBSITES.md](./WEBSITES.md) — which external services the site uses
   (domain, DNS, hosting, OAuth, storage) and where each one is configured.
 
-`CLAUDE.md` carries an architecture overview and the subset of style rules most
-often broken by accident.
 
 ## Using this as a template
 
