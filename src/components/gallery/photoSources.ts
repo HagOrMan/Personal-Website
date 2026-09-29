@@ -1,3 +1,5 @@
+import { mediaUrl } from '@/lib/media';
+
 /*
  * Where the gallery's files live and how their srcsets are built.
  *
@@ -10,11 +12,8 @@
  * limited and unsupported for production (see .env.example).
  * They live under the `gallery/` prefix, so the base is the bucket domain
  * plus that prefix. See scripts/README.md for how they get there.
- *
- * Falls back to an empty base like constant/videos.ts does: a missing env var
- * should 404 the images rather than crash the page.
  */
-export const CDN = `${process.env.NEXT_PUBLIC_R2_BASE_URL ?? ''}/gallery`;
+export const CDN = mediaUrl('gallery');
 
 /** One entry of src/data/photos.json, as scripts/process-photos.mjs writes it. */
 export type Photo = {

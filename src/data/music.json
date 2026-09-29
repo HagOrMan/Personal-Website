@@ -1,0 +1,137 @@
+{
+  "a-brown-ballad": {
+    "hash": "284e29a1af",
+    "audio": "music/a-brown-ballad/284e29a1af/audio.mp3",
+    "pdf": "music/a-brown-ballad/284e29a1af/score.pdf",
+    "og": "music/a-brown-ballad/284e29a1af/og.png",
+    "pages": ["music/a-brown-ballad/284e29a1af/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 75
+  },
+  "a-trumpets-promise-strings-aleotoric-composition": {
+    "hash": "ec924135f8",
+    "audio": "music/a-trumpets-promise-strings-aleotoric-composition/ec924135f8/audio.mp3",
+    "pdf": "music/a-trumpets-promise-strings-aleotoric-composition/ec924135f8/score.pdf",
+    "og": "music/a-trumpets-promise-strings-aleotoric-composition/ec924135f8/og.png",
+    "pages": [
+      "music/a-trumpets-promise-strings-aleotoric-composition/ec924135f8/page-01.svg"
+    ],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 18
+  },
+  "aboard-the-pirate-ship": {
+    "hash": "09e9f3b8ee",
+    "audio": "music/aboard-the-pirate-ship/09e9f3b8ee/audio.mp3",
+    "pdf": "music/aboard-the-pirate-ship/09e9f3b8ee/score.pdf",
+    "og": "music/aboard-the-pirate-ship/09e9f3b8ee/og.png",
+    "pages": ["music/aboard-the-pirate-ship/09e9f3b8ee/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 42
+  },
+  "arr-of-qingyun-peak-themes": {
+    "hash": "b220fb149d",
+    "audio": "music/arr-of-qingyun-peak-themes/b220fb149d/audio.mp3",
+    "pdf": "music/arr-of-qingyun-peak-themes/b220fb149d/score.pdf",
+    "og": "music/arr-of-qingyun-peak-themes/b220fb149d/og.png",
+    "pages": [
+      "music/arr-of-qingyun-peak-themes/b220fb149d/page-01.svg",
+      "music/arr-of-qingyun-peak-themes/b220fb149d/page-02.svg",
+      "music/arr-of-qingyun-peak-themes/b220fb149d/page-03.svg"
+    ],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 145
+  },
+  "bass-etude-no1-bass-riff": {
+    "hash": "b8c683dc9c",
+    "audio": "music/bass-etude-no1-bass-riff/b8c683dc9c/audio.mp3",
+    "pdf": "music/bass-etude-no1-bass-riff/b8c683dc9c/score.pdf",
+    "og": "music/bass-etude-no1-bass-riff/b8c683dc9c/og.png",
+    "pages": ["music/bass-etude-no1-bass-riff/b8c683dc9c/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 62
+  },
+  "bass-riff-for-flute": {
+    "hash": "d999999ad5",
+    "audio": "music/bass-riff-for-flute/d999999ad5/audio.mp3",
+    "pdf": "music/bass-riff-for-flute/d999999ad5/score.pdf",
+    "og": "music/bass-riff-for-flute/d999999ad5/og.png",
+    "pages": ["music/bass-riff-for-flute/d999999ad5/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 62
+  },
+  "cello-miniature-a-happy-day": {
+    "hash": "912b0f33e1",
+    "audio": "music/cello-miniature-a-happy-day/912b0f33e1/audio.mp3",
+    "pdf": "music/cello-miniature-a-happy-day/912b0f33e1/score.pdf",
+    "og": "music/cello-miniature-a-happy-day/912b0f33e1/og.png",
+    "pages": ["music/cello-miniature-a-happy-day/912b0f33e1/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 19
+  },
+  "cello-miniature-no2-resonant": {
+    "hash": "1cd92eb85c",
+    "audio": "music/cello-miniature-no2-resonant/1cd92eb85c/audio.mp3",
+    "pdf": "music/cello-miniature-no2-resonant/1cd92eb85c/score.pdf",
+    "og": "music/cello-miniature-no2-resonant/1cd92eb85c/og.png",
+    "pages": ["music/cello-miniature-no2-resonant/1cd92eb85c/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 38
+  },
+  "fragment-for-solo-cello": {
+    "hash": "a045dd010e",
+    "audio": "music/fragment-for-solo-cello/a045dd010e/audio.mp3",
+    "pdf": "music/fragment-for-solo-cello/a045dd010e/score.pdf",
+    "og": "music/fragment-for-solo-cello/a045dd010e/og.png",
+    "pages": ["music/fragment-for-solo-cello/a045dd010e/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 30
+  },
+  "nice": {
+    "hash": "8852120da4",
+    "audio": "music/nice/8852120da4/audio.mp3",
+    "pdf": "music/nice/8852120da4/score.pdf",
+    "og": "music/nice/8852120da4/og.png",
+    "pages": [
+      "music/nice/8852120da4/page-01.svg",
+      "music/nice/8852120da4/page-02.svg",
+      "music/nice/8852120da4/page-03.svg"
+    ],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 197
+  },
+  "santiago-the-alchemist": {
+    "hash": "33a06f9da6",
+    "audio": "music/santiago-the-alchemist/33a06f9da6/audio.mp3",
+    "pdf": "music/santiago-the-alchemist/33a06f9da6/score.pdf",
+    "og": "music/santiago-the-alchemist/33a06f9da6/og.png",
+    "pages": [
+      "music/santiago-the-alchemist/33a06f9da6/page-01.svg",
+      "music/santiago-the-alchemist/33a06f9da6/page-02.svg",
+      "music/santiago-the-alchemist/33a06f9da6/page-03.svg",
+      "music/santiago-the-alchemist/33a06f9da6/page-04.svg"
+    ],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 58
+  },
+  "skipping": {
+    "hash": "c4288d8289",
+    "audio": "music/skipping/c4288d8289/audio.mp3",
+    "pdf": "music/skipping/c4288d8289/score.pdf",
+    "og": "music/skipping/c4288d8289/og.png",
+    "pages": ["music/skipping/c4288d8289/page-01.svg"],
+    "pageWidth": 10200,
+    "pageHeight": 13200,
+    "durationSeconds": 35
+  }
+}

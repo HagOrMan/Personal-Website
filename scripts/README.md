@@ -32,7 +32,7 @@ pnpm install
 - `heic-convert` decodes HEIC. See below for why it is needed.
 
 **2. HEIC decoding (optional, but faster).** sharp's prebuilt libvips has
-libheif compiled in for AVIF but *not* the HEVC decoder, which is patent
+libheif compiled in for AVIF but _not_ the HEVC decoder, which is patent
 encumbered - so it will parse an iPhone HEIC's dimensions quite happily and
 then fail on the actual pixels. `heic-convert` handles this in pure JS with
 nothing installed, which is what makes `pnpm install` sufficient.
@@ -142,8 +142,9 @@ safe to delete.
 The dashboard uploader does not set `cache-control`, so without this the CDN
 falls back to a short default TTL and repeat visitors re-download the wall.
 
-In the Cloudflare dashboard, on the zone serving your custom domain: **Caching
-> Cache Rules > Create rule**.
+In the Cloudflare dashboard, on the zone serving your custom domain: \*\*Caching
+
+> Cache Rules > Create rule\*\*.
 
 - If **URI Path starts with** `/gallery/`
 - Then **Eligible for cache**, **Edge TTL: 1 year**, **Browser TTL: 1 year**
@@ -162,3 +163,167 @@ its URL.
 - No layout shift on load; every tile carries `aspect-ratio` and intrinsic
   `width`/`height`.
 
+---
+
+# Music pipeline
+
+Turns MuseScore scores into everything `/music` serves and records the R2 keys
+in `src/data/music.json` (committed). You upload the files yourself. Runs
+locally, never in CI or at build time.
+
+```
+music-src/{slug}.mscz  ->  process-music.mjs  ->  music-out/music/{slug}/{hash}/  ->  R2, music/
+                                                        |
+                                                        +-> src/data/music.json (committed)
+```
+
+Per piece: `audio.mp3`, `score.pdf`, `page-01.svg`, `page-02.svg`, ... and
+`og.png` (page 1, used for the share card and the index thumbnail).
+
+## One-time setup
+
+1. **MuseScore.** MuseScore 4 with **Muse Sounds** installed is strongly
+   recommended: the recording is the part visitors will judge the most, and
+   Muse Sounds is a big step up from the basic soundfont. MuseScore 3 also
+   works. The script checks the default install folders; if yours is somewhere
+   else, set `MSCORE` to the executable (for example
+   `C:\Program Files\MuseScore 4\bin\MuseScore4.exe`).
+2. **ffmpeg** (includes ffprobe) on PATH: `winget install Gyan.FFmpeg`.
+3. **A Cache Rule for `/music/`**, set up like the gallery one in
+   [Caching](#caching) above. The dashboard uploader doesn't set
+   `cache-control`, and every file under `music/` is safe to cache for a year
+   (see [Why the folder has a hash in it](#why-the-folder-has-a-hash-in-it)).
+   Music goes in the same bucket as the videos and gallery.
+
+## Before exporting a piece
+
+Add the copyright notice **in the score itself**: File > Score Properties >
+Copyright, e.g. `© 2025 Kyle Hagerman. All rights reserved.` It's then
+engraved into the footer of every SVG page and the PDF. A notice overlaid by
+the website can be deleted in devtools; one drawn into the page can't.
+
+Also check the title and composer fields while you're there. They print on
+page 1, which is what the share card shows.
+
+## Adding or updating a piece
+
+1. Save the score as `music-src/{slug}.mscz`. The slug is the URL
+   (`/music/{slug}`), so use lowercase words joined by hyphens.
+
+   > can use the following command to convert file names from my naming convention to slugs
+
+   ```bash
+   for f in *.mscz; do
+    n=$(echo "${f%.mscz}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[._ ]+/-/g; s/-+/-/g; s/^-|-$//g')
+    [ "$f" != "$n.mscz" ] && mv -- "$f" "$f.tmp" && mv -- "$f.tmp" "$n.mscz"
+   done
+   ```
+
+   > This finds the dates from each score
+
+   ```bash
+   for f in *.mscz; do
+    y=$(unzip -p "$f" '*.mscx' 2>/dev/null | grep -o '<metaTag name="copyright">[^<]*' | grep -oE '(19|20)[0-9]{2}' | head -1)
+    echo "$f: ${y:-not found}"
+    done
+   ```
+
+   > And this finds the instruments
+
+   ```bash
+    for f in *.mscz; do
+    i=$(unzip -p "$f" '*.mscx' 2>/dev/null | grep -o '<trackName>[^<]*' | sed 's/<trackName>//' | awk '!seen[$0]++' | paste -sd',' | sed 's/,/, /g')
+    echo "$f: ${i:-not found}"
+    done
+   ```
+
+2. Add an entry with the same `slug` to `src/constant/music.ts` (title, year,
+   instrumentation, writeup, ...). The script reads the title and year from
+   there for the MP3 tags.
+3. Run:
+
+   ```bash
+   pnpm music
+   ```
+
+   It exports every piece whose `.mscz` changed since the last run into
+   `music-out/music/{slug}/{hash}/` and updates `src/data/music.json`.
+   Unchanged pieces are skipped. To do only some pieces, run
+   `pnpm music --only=slug-one,slug-two`.
+
+4. **Check the audio** (next section).
+5. **Upload** the folders the script lists at the end. The simplest way is
+   to drag `music-out/music` into the bucket root in the Cloudflare dashboard,
+   so objects land at `music/{slug}/{hash}/...`, which is exactly what the
+   manifest points at. Re-uploading pieces that are already there is harmless.
+6. Commit `src/data/music.json`. **Upload first**: the manifest points at
+   those keys, so a deploy before the upload serves pages whose audio, score
+   and share image all 404.
+
+Until a piece has an entry in `music.json`, its page shows the writeup with
+"The score and recording are on their way", and it's left out of the sitemap.
+
+## Check the audio
+
+Listen to every new `music-out/music/{slug}/{hash}/audio.mp3` before you
+commit.
+
+- **Is it Muse Sounds?** It hasn't been verified yet whether MuseScore 4's command-line
+  export uses Muse Sounds or falls back to the basic soundfont.
+  If the MP3 sounds noticeably worse than playback inside MuseScore, that's
+  what happened. The fix is to export the WAV from the MuseScore app (File >
+  Export) and give it to ffmpeg yourself; ask and the script can be changed to
+  take a hand-exported WAV.
+- **Loudness.** Every piece is normalised to the same loudness (-18 LUFS) with
+  one gain change for the whole file, so dynamics are kept. If a piece can't
+  reach that level without clipping, ffmpeg compresses it instead, and the
+  script prints a warning naming the piece.
+
+## Why the folder has a hash in it
+
+Everything under `music/` is cached for a year as `immutable`. If a
+re-exported file kept its old URL, browsers and Cloudflare would keep
+serving the old one. So each export goes under the hash of its `.mscz`, and
+changing the score changes the URL.
+
+The hash only covers the score. If the **same** score should render
+differently (you updated Muse Sounds, or changed a setting in the script), run
+`pnpm music --force --only=slug` to get fresh keys. If you changed a
+setting for every piece, bump `REV` instead.
+
+Old folders stay in R2 after a re-export. They don't cost much, and you can
+delete them from the dashboard whenever you like.
+
+## What never gets published
+
+`music-out/` only ever contains `.mp3`, `.svg`, `.png` and `.pdf`, so it's
+safe to upload the whole folder. **Never** put `.mscz`,
+MusicXML (`.mxl`/`.musicxml`) or MIDI files on R2 or in `public/`. Those are
+the editable formats, and they would make it easy to take a score and pass it
+off as someone else's. A PDF or SVG is a picture of the score, not the score
+itself. `music-src/` and `music-out/` are gitignored.
+
+No right-click blocking, `user-select: none`, overlays or PDF passwords either.
+All of them can be bypassed in seconds, and they get in the way of screen
+readers.
+
+Legal note: copyright applies automatically when you write a piece.
+Registering it (a legal step, not a technical one) is what unlocks statutory
+damages if it's ever infringed.
+
+## Checking an upload
+
+The Cache Rule from setup handles caching. Nothing else needs setting: with no
+`Content-Disposition` header, browsers open a PDF in their viewer instead of
+downloading it, which is what the "Score PDF" link wants.
+
+After the first upload, check that the dashboard set the right content types:
+
+```bash
+curl -I https://<your-domain>/music/<slug>/<hash>/page-01.svg   # image/svg+xml
+curl -I https://<your-domain>/music/<slug>/<hash>/audio.mp3     # audio/mpeg
+curl -I https://<your-domain>/music/<slug>/<hash>/score.pdf     # application/pdf
+```
+
+An SVG served as anything other than `image/svg+xml` won't render in an
+`<img>`.

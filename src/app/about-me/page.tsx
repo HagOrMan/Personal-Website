@@ -3,6 +3,7 @@ import { WaveSprayLazy } from '@/components/animated-fun/WaveSprayLazy';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { PORTFOLIO_VIDEOS } from '@/constant/videos';
+import { compositions } from '@/lib/music';
 import { buildProfilePageJsonLd } from '@/lib/seo/jsonLd';
 
 export default function AboutMe() {
@@ -23,7 +24,12 @@ export default function AboutMe() {
         fadeDecoration={true}
       />
 
-      <AboutMeClient videos={PORTFOLIO_VIDEOS} />
+      <AboutMeClient
+        videos={PORTFOLIO_VIDEOS}
+        featuredCompositions={compositions.filter(
+          (composition) => composition.featured,
+        )}
+      />
     </main>
   );
 }

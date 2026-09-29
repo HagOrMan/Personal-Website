@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "photos": "node scripts/process-photos.mjs photos-src photos-out"
+    "photos": "node scripts/process-photos.mjs photos-src photos-out",
+    "music": "node scripts/process-music.mjs"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.11",

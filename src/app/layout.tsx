@@ -76,8 +76,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode;
+  /** app/@modal - route-driven dialogs, currently /music/[slug]. */
+  modal: React.ReactNode;
 }>) {
   return (
     <html lang='en-CA' suppressHydrationWarning>
@@ -95,6 +98,7 @@ export default function RootLayout({
           <ThemeProviderCustom>
             {/* This custom theme provider will help resolve the theme to light or dark, since system is an option too but we want to know for sure which one it actually is */}
             <PageLayout>{children}</PageLayout>
+            {modal}
           </ThemeProviderCustom>
         </ThemeProvider>
         <Analytics />

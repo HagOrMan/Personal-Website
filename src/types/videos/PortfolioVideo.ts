@@ -10,7 +10,7 @@ export type PortfolioVideo = {
   durationSeconds: number;
   /** Local path under /public, e.g. "/posters/about-me.jpg". */
   poster: string;
-  /** Full playback URL, built from NEXT_PUBLIC_R2_BASE_URL - never hardcoded. */
+  /** Full playback URL, built with mediaUrl() - never hardcoded. */
   src: string;
   /** Full transcript text, rendered as-is (paragraph breaks via blank lines). */
   transcript: string;

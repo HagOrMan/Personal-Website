@@ -1,6 +1,13 @@
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import type { PostMeta } from '@/lib/blog/github';
+import { mediaUrl } from '@/lib/media';
+import {
+  compositionHref,
+  isoDuration,
+  writeupExcerpt,
+} from '@/lib/musicFormat';
 import { projectDetailHref } from '@/lib/projects/paths';
+import type { Composition } from '@/types/music';
 import type { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
 import { absoluteUrl, SITE, SITE_URL } from '../seo';
@@ -92,6 +99,49 @@ export function buildProjectItemListJsonLd(projects: TProjectShowcase[]) {
         url: detail ? absoluteUrl(detail) : external?.href,
       };
     }),
+  };
+}
+
+export function buildMusicCompositionJsonLd(composition: Composition) {
+  const url = absoluteUrl(compositionHref(composition));
+  const { assets } = composition;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'MusicComposition',
+    name: composition.title,
+    composer: { '@id': PERSON_ID },
+    dateCreated: String(composition.year),
+    description: writeupExcerpt(composition.writeup),
+    image: absoluteUrl(`${compositionHref(composition)}/opengraph-image`),
+    url,
+    // MusicComposition has no duration of its own - length belongs to a
+    // recording of it.
+    recordedAs: assets
+      ? {
+          '@type': 'MusicRecording',
+          name: composition.title,
+          byArtist: { '@id': PERSON_ID },
+          duration: isoDuration(assets.durationSeconds),
+          audio: {
+            '@type': 'AudioObject',
+            contentUrl: mediaUrl(assets.audio),
+            encodingFormat: 'audio/mpeg',
+          },
+        }
+      : undefined,
+  };
+}
+
+export function buildCompositionItemListJsonLd(compositions: Composition[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: compositions.map((composition, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: composition.title,
+      url: absoluteUrl(compositionHref(composition)),
+    })),
   };
 }
 

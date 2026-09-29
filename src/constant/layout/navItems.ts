@@ -70,6 +70,10 @@ export const navbarItems: NavbarItem[] = [
     title: 'Gallery',
     link: '/gallery',
   },
+  {
+    title: 'Music',
+    link: '/music',
+  },
   // {
   //   title: 'Resume',
   //   link: '/resume',

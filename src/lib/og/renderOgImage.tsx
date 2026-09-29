@@ -23,25 +23,36 @@ function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max - 1).trimEnd()}…` : value;
 }
 
+const PADDING = 80;
+
 export async function renderOgImage({
   title,
   subtitle,
   eyebrow,
+  aside,
 }: {
   title: string;
   subtitle?: string;
   eyebrow?: string;
+  /**
+   * An absolute image URL shown full-height against the right edge, with the
+   * text column narrowed to clear it. `width` is its width at the card's
+   * full height.
+   */
+  aside?: { src: string; width: number };
 }) {
   return new ImageResponse(
     (
       <div
         style={{
+          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           width: '100%',
           height: '100%',
-          padding: 80,
+          padding: PADDING,
+          paddingRight: aside ? aside.width + PADDING : PADDING,
           backgroundColor: COLORS.bg,
           backgroundImage: `linear-gradient(135deg, ${COLORS.nebula}33 0%, ${COLORS.bg} 45%, ${COLORS.bg} 60%, ${COLORS.breeze}26 100%)`,
           fontFamily: 'sans-serif',
@@ -112,6 +123,30 @@ export async function renderOgImage({
           <img src={LOGO_DATA_URI} width={44} height={44} alt='' />
           kylehagerman.dev
         </div>
+
+        {aside && (
+          // eslint-disable-next-line @next/next/no-img-element -- Satori
+          <img
+            src={aside.src}
+            width={aside.width}
+            height={OG_SIZE.height}
+            alt=''
+            style={{ position: 'absolute', top: 0, right: 0 }}
+          />
+        )}
+        {/* Fades the page's left edge into the background. */}
+        {aside && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: aside.width - 60,
+              width: 60,
+              height: OG_SIZE.height,
+              backgroundImage: `linear-gradient(to right, ${COLORS.bg}, ${COLORS.bg}00)`,
+            }}
+          />
+        )}
       </div>
     ),
     { ...OG_SIZE },

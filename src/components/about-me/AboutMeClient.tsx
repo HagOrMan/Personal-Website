@@ -10,6 +10,7 @@ import { ArrowRight, Play } from 'lucide-react';
 
 import { GitHubGlyph } from '@/components/icons/GitHubGlyph';
 import { LinkedInGlyph } from '@/components/icons/LinkedInGlyph';
+import { CompositionCard } from '@/components/music/CompositionCard';
 import { actionVariants } from '@/components/ui/actionVariants';
 import { Chip } from '@/components/ui/Chip';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
@@ -17,6 +18,7 @@ import { VideoId } from '@/constant/transcripts';
 import { ACCENT_VARS } from '@/lib/projects/accents';
 import { useMediaQuery } from '@/lib/screenUtils';
 import { cn } from '@/lib/utils';
+import type { Composition } from '@/types/music';
 import { PortfolioVideo } from '@/types/videos/PortfolioVideo';
 
 // Both shells pull in the whole VideoExperience tree - the player, control
@@ -93,8 +95,10 @@ const SECTIONS: AboutMeSection[] = [
 
 export default function AboutMeClient({
   videos,
+  featuredCompositions,
 }: {
   videos: PortfolioVideo[];
+  featuredCompositions: Composition[];
 }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
@@ -220,6 +224,52 @@ export default function AboutMeClient({
               )}
             </section>
           ))}
+
+          {/* Follows Classical Guitar, which is where composing comes up. */}
+          <section id='music' className='scroll-mt-20'>
+            <h2 className='text-foreground mb-3 text-2xl font-semibold'>
+              Music I&apos;ve Written
+            </h2>
+            <p className='text-foreground/75 mb-6 text-lg leading-relaxed'>
+              After many years of playing the classical guitar and coming up
+              with my own little tunes, I was inspired to begin writing them
+              down. Many of these came to life during high school, where I
+              learned and played the cello for 4 years.
+            </p>
+            {featuredCompositions.length > 0 && (
+              // A container query, not a viewport one: on desktop this column
+              // is narrower than the whole phone screen it fills on mobile.
+              <div className='@container mb-6'>
+                <ul
+                  role='list'
+                  className='grid grid-cols-1 gap-4 @md:grid-cols-2'
+                >
+                  {featuredCompositions.map((composition, index) => (
+                    <li key={composition.slug}>
+                      <CompositionCard
+                        composition={composition}
+                        index={index}
+                        headingAs='h3'
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <Link
+              href='/music'
+              className={cn(
+                actionVariants({ variant: 'outline' }),
+                'group/music',
+              )}
+            >
+              All my music
+              <ArrowRight
+                aria-hidden
+                className='size-3.5 transition-transform duration-200 group-hover/music:translate-x-0.5'
+              />
+            </Link>
+          </section>
 
           {/* No-video section - the design has to hold up without a clip too. */}
           <section id='connect' className='scroll-mt-20'>

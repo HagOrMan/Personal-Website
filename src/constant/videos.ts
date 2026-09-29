@@ -1,13 +1,12 @@
 import { TRANSCRIPTS, VideoId } from '@/constant/transcripts';
+import { mediaUrl } from '@/lib/media';
 import { PortfolioVideo } from '@/types/videos/PortfolioVideo';
 
 // Videos live in Cloudflare R2, served through a custom domain (never the
-// r2.dev URL - see CLAUDE.md media pipeline notes). Falls back to an empty
-// base so a missing env var 404s a <video> tag instead of crashing the app.
-const R2_BASE_URL = process.env.NEXT_PUBLIC_R2_BASE_URL ?? '';
+// r2.dev URL - see CLAUDE.md media pipeline notes).
 
 // Naming convention - shared by all three asset types per video, keyed off `id`:
-//   video:      {R2_BASE_URL}/about-me/{id}.mp4  (R2 bucket, never committed here)
+//   video:      R2 key about-me/{id}.mp4       (R2 bucket, never committed here)
 //   poster:     /public/posters/{id}.jpg        (repo, served as a static asset)
 //   transcript: TRANSCRIPTS[id] in transcripts.ts (kept out of this file - see there)
 //
@@ -15,7 +14,7 @@ const R2_BASE_URL = process.env.NEXT_PUBLIC_R2_BASE_URL ?? '';
 // transcripts.ts), not a bare string, so a typo'd id fails to compile
 // instead of silently producing a 404 poster/video at runtime.
 function videoSrc(id: VideoId): string {
-  return `${R2_BASE_URL}/about-me/${id}.mp4`;
+  return mediaUrl(`about-me/${id}.mp4`);
 }
 
 function posterSrc(id: VideoId): string {

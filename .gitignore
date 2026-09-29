@@ -49,3 +49,10 @@ next-env.d.ts
 # src/data/photos.json and committed.
 /photos-src/
 /photos-out/
+
+# compositions (see scripts/process-music.mjs)
+# Scores and every export stay out of git. The exports live in R2; only the
+# manifest, src/data/music.json, is committed. The .mscz sources in particular
+# must never be committed or served - they're the editable originals.
+/music-src/
+/music-out/

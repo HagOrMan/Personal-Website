@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 
 import { projects } from '@/constant/projects';
 import { listPosts } from '@/lib/blog/github';
+import { compositions } from '@/lib/music';
+import { compositionHref } from '@/lib/musicFormat';
 import { projectDetailHref } from '@/lib/projects/paths';
 import { absoluteUrl } from '@/lib/seo';
 
@@ -18,6 +20,8 @@ const STATIC_ROUTES: Array<{
   { path: '/contact', priority: 0.7, changeFrequency: 'yearly' },
   { path: '/resume', priority: 0.6, changeFrequency: 'yearly' },
   { path: '/gallery', priority: 0.6, changeFrequency: 'monthly' },
+  // Composition pages come from constant/music.ts - see MUSIC_ROUTES.
+  { path: '/music', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/privacy', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/terms', priority: 0.2, changeFrequency: 'yearly' },
   // Project detail pages come from constant/projects.ts — see PROJECT_ROUTES.
@@ -45,8 +49,28 @@ const PROJECT_ROUTES = projects.flatMap((project) => {
   ];
 });
 
+/**
+ * Only pieces that have been exported and uploaded: until then the page is a
+ * writeup and "on their way" - the same thin-content call as PROJECT_ROUTES.
+ */
+const MUSIC_ROUTES = compositions.flatMap((composition) =>
+  composition.assets
+    ? [
+        {
+          path: compositionHref(composition),
+          priority: composition.featured ? 0.6 : 0.5,
+          changeFrequency: 'yearly' as const,
+        },
+      ]
+    : [],
+);
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticEntries = [...STATIC_ROUTES, ...PROJECT_ROUTES].map(
+  const staticEntries = [
+    ...STATIC_ROUTES,
+    ...PROJECT_ROUTES,
+    ...MUSIC_ROUTES,
+  ].map(
     ({ path, ...rest }) => ({
       url: absoluteUrl(path),
       lastModified: new Date(),

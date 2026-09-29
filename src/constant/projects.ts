@@ -1,4 +1,5 @@
 import { PROJECT_MEDIA } from '@/constant/projectAssets';
+import { mediaUrl } from '@/lib/media';
 import { compareProjectYears } from '@/lib/projects/year';
 import { TProjectShowcase } from '@/types/projects/ProjectShowcase';
 
@@ -6,10 +7,8 @@ import { TProjectShowcase } from '@/types/projects/ProjectShowcase';
  * Preview loops live in Cloudflare R2 next to the about-me videos, never in
  * this repo — same rule as constant/videos.ts.
  */
-const R2_BASE_URL = process.env.NEXT_PUBLIC_R2_BASE_URL ?? '';
-
 export function previewVideoSrc(slug: string): string {
-  return `${R2_BASE_URL}/projects/${slug}.mp4`;
+  return mediaUrl(`projects/${slug}.mp4`);
 }
 
 /** Posters, unlike the loops, are committed static assets. */
