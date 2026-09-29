@@ -40,7 +40,10 @@ export function CompositionBody({ composition }: { composition: Composition }) {
               target='_blank'
               rel='noopener noreferrer'
               aria-label={`Open the score of ${composition.title} as a PDF (opens in a new tab)`}
-              className={actionVariants({ variant: 'outline' })}
+              className={actionVariants({
+                variant: 'outline',
+                className: 'max-sm:self-start',
+              })}
             >
               <FileText aria-hidden className='size-3.5' />
               Score PDF

@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { Chip } from '@/components/ui/Chip';
+import { linkOutClass } from '@/components/ui/linkOut';
 import { LinkedInRecommendationsLink } from '@/constant/socials';
 import { usePrefersReducedMotion } from '@/lib/screenUtils';
 import { TReference } from '@/types/references';
@@ -186,7 +187,7 @@ export function ReferenceModal({ reference, onClose }: ReferenceModalProps) {
                       href={LinkedInRecommendationsLink}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-breeze-900/80 hover:text-breeze-700 dark:text-breeze-300/75 dark:hover:text-breeze-300 cursor-newtab inline-flex items-center gap-2 text-sm motion-safe:transition-colors'
+                      className={linkOutClass('cursor-newtab')}
                     >
                       <LinkedInIcon className='h-4 w-4' useThemeForImgSource />
                       View on LinkedIn

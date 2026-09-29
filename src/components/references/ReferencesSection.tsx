@@ -5,6 +5,7 @@ import { useState } from 'react';
 import LinkedInIcon from '@/components/icons/LinkedInIcon';
 import { ReferenceCard } from '@/components/references/ReferenceCard';
 import { ReferenceModal } from '@/components/references/ReferenceModal';
+import { linkOutClass } from '@/components/ui/linkOut';
 import { REFERENCES } from '@/constant/references';
 import { LinkedInRecommendationsLink } from '@/constant/socials';
 import { TReference } from '@/types/references';
@@ -61,7 +62,7 @@ export function ReferencesSection() {
         href={LinkedInRecommendationsLink}
         target='_blank'
         rel='noopener noreferrer'
-        className='text-breeze-900/80 hover:text-breeze-700 dark:text-breeze-300/75 dark:hover:text-breeze-300 cursor-newtab mt-8 inline-flex items-center gap-2 text-sm motion-safe:transition-colors'
+        className={linkOutClass('cursor-newtab mt-8')}
       >
         <LinkedInIcon className='h-4 w-4' useThemeForImgSource />
         {linkLabel}

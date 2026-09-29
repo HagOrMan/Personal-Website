@@ -104,6 +104,12 @@ type size (text-sm), one radius.
 
 **Sizes** — `default` (labelled) and `icon` (square, one glyph, no label).
 
+**The one exception** is the quiet breeze text link that ends a section and
+points elsewhere ("See everything else", "All my music", the LinkedIn
+recommendations link). It has no box, so it isn't an action variant — use
+`linkOutClass()` (`src/components/ui/linkOut.ts`) and pass spacing,
+`cursor-newtab` and any `group/*` name at the call site.
+
 ### `--row-accent`
 
 The *surface* sets it; the button reads it. `RibbonRow` sets it on the text

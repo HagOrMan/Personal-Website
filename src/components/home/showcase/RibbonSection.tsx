@@ -3,6 +3,8 @@ import Link from 'next/link';
 
 import { ArrowRight } from 'lucide-react';
 
+import { linkOutClass } from '@/components/ui/linkOut';
+
 /**
  * The frame around one half of the ribbon: a heading, its rows, and the link
  * out to the page that has all of them.
@@ -48,7 +50,7 @@ export function RibbonSection({
             same place, so all three sections end the same way. */}
         <Link
           href={href}
-          className='text-breeze-900/80 hover:text-breeze-700 dark:text-breeze-300/75 dark:hover:text-breeze-300 group/all mt-12 inline-flex items-center gap-2 text-sm motion-safe:transition-colors md:mt-16'
+          className={linkOutClass('group/all mt-12 md:mt-16')}
         >
           {linkLabel}
           <ArrowRight

@@ -13,6 +13,7 @@ import { LinkedInGlyph } from '@/components/icons/LinkedInGlyph';
 import { CompositionCard } from '@/components/music/CompositionCard';
 import { actionVariants } from '@/components/ui/actionVariants';
 import { Chip } from '@/components/ui/Chip';
+import { linkOutClass } from '@/components/ui/linkOut';
 import { GitHubLink, LinkedInLink } from '@/constant/socials';
 import { VideoId } from '@/constant/transcripts';
 import { ACCENT_VARS } from '@/lib/projects/accents';
@@ -258,15 +259,12 @@ export default function AboutMeClient({
             )}
             <Link
               href='/music'
-              className={cn(
-                actionVariants({ variant: 'outline' }),
-                'group/music',
-              )}
+              className={linkOutClass('group/music')}
             >
               All my music
               <ArrowRight
                 aria-hidden
-                className='size-3.5 transition-transform duration-200 group-hover/music:translate-x-0.5'
+                className='size-4 transition-transform duration-200 group-hover/music:translate-x-0.5'
               />
             </Link>
           </section>

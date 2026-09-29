@@ -1,3 +1,4 @@
+import { WaveSprayLazy } from '@/components/animated-fun/WaveSprayLazy';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { CompositionCard } from '@/components/music/CompositionCard';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -11,6 +12,15 @@ export default function MusicPage() {
       <PageHeader
         title='Music'
         description='My original compositions and their stories from throughout my musical life.'
+        decoration={
+          <div className='size-24 overflow-hidden rounded-2xl md:size-28'>
+            <WaveSprayLazy
+              colorStart='--tw-color-breeze-600'
+              colorEnd='--tw-color-breeze-300'
+            />
+          </div>
+        }
+        fadeDecoration={true}
       />
 
       <ul
