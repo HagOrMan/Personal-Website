@@ -9,6 +9,7 @@
     "safari >= 16.4",
     "ios_saf >= 16.4"
   ],
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
