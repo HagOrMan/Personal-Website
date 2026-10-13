@@ -125,7 +125,7 @@ export const experiences: Experience[] = [
     start: '2024-09',
     end: '2025-08',
     summary:
-      'Worked on the Algorithmic Trading team, where I owned the Security Master - the source of truth the trading floor relies on to know what a given stock actually is.',
+      'Worked on the Algorithmic Trading team, where I owned the Security Master, the source of truth the trading floor relies on to know what a given stock actually is.',
     details: [
       'Took ownership of an MVP and built it into a production-grade Security Master that centralizes and enriches stock data from 8 external sources (e.g., Bloomberg) into SQL, driving adoption across 3 equity trading teams and directly informing algorithmic trading decisions.',
       'Replaced a compliance-flagged Python trade handler with an industry-standard Java FIX engine (QuickFIX/J), de-risking a real-time pipeline behind a multi-million dollar business line while sustaining 1M+ daily transactions feeding real-time and end-of-day reporting.',

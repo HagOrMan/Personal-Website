@@ -15,12 +15,15 @@ export const COMPOSITIONS: CompositionEntry[] = [
     order: 1,
     featured: true,
     writeup: `In my third high school strings class of playing the cello, our final performance task involved playing a piece. Key word: playing.
-    
+    (Disclaimer: dynamics are not what you hear. More later)
+
     In my infinite zeal, I wanted to take music that was going around in my head and bring it to life. I'd previously made a few pieces that never got transcribed onto sheet music, and I had also arranged a piece the year before with a few friends, so it wasn't a completely daunting task.
-    
+
     So, I set out to write! I started with the main idea, found in the first section and then called back before the ending. There are four ideas in the piece, which I will refer to as scenes. What ended up happening is I had these melodies I wanted to include, with no idea how to make them work together or if I should at all. My guitar teacher at the time suggested I create small melodies to flow between each scene, helping tie the piece together. So, this piece is a mix of scenes and transitions.
-    
-    The final scene is my favourite, where I experimented a lot with handing off melodies and mirroring/reflecting the sounds. I actually don't believe I had the full melody in mind, a lot of it was simply built piece by piece as I explored the story I wanted to tell. You'll find that the cello and viola hand off who is doing the triplets, or have one instrument's pitch go higher as the other goes lower. But my favourite part is easily the very end, as the instruments rotate triplets and eigth notes for an energetic finish.`,
+
+    The final scene is my favourite, where I experimented a lot with handing off melodies and mirroring/reflecting the sounds. I actually don't believe I had the full melody in mind, a lot of it was simply built piece by piece as I explored the story I wanted to tell. You'll find that the cello and viola hand off who is doing the triplets, or have one instrument's pitch go higher as the other goes lower. But my favourite part is easily the very end, as the instruments rotate triplets and eigth notes for an energetic finish.
+
+    On the dynamics, it sounded fine in Musescore 3 when it used synthesized instruments. Listening to it again with MuseSounds (Musescore's recordings of real instruments playing your songs), I felt some areas, particularly larger dynamic shifts for the sake of my creative vision, didn't sound the way I wanted. For the sake of being able to hear some sections, I increased many dynamics and changed some relative volumes between the cello and viola.`,
   },
   {
     slug: 'arr-of-qingyun-peak-themes',
