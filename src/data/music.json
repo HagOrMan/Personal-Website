@@ -4,7 +4,9 @@
     "audio": "music/a-brown-ballad/284e29a1af/audio.mp3",
     "pdf": "music/a-brown-ballad/284e29a1af/score.pdf",
     "og": "music/a-brown-ballad/284e29a1af/og.png",
-    "pages": ["music/a-brown-ballad/284e29a1af/page-01.svg"],
+    "pages": [
+      "music/a-brown-ballad/284e29a1af/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 75
@@ -26,7 +28,9 @@
     "audio": "music/aboard-the-pirate-ship/09e9f3b8ee/audio.mp3",
     "pdf": "music/aboard-the-pirate-ship/09e9f3b8ee/score.pdf",
     "og": "music/aboard-the-pirate-ship/09e9f3b8ee/og.png",
-    "pages": ["music/aboard-the-pirate-ship/09e9f3b8ee/page-01.svg"],
+    "pages": [
+      "music/aboard-the-pirate-ship/09e9f3b8ee/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 42
@@ -50,7 +54,9 @@
     "audio": "music/bass-etude-no1-bass-riff/b8c683dc9c/audio.mp3",
     "pdf": "music/bass-etude-no1-bass-riff/b8c683dc9c/score.pdf",
     "og": "music/bass-etude-no1-bass-riff/b8c683dc9c/og.png",
-    "pages": ["music/bass-etude-no1-bass-riff/b8c683dc9c/page-01.svg"],
+    "pages": [
+      "music/bass-etude-no1-bass-riff/b8c683dc9c/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 62
@@ -60,7 +66,9 @@
     "audio": "music/bass-riff-for-flute/d999999ad5/audio.mp3",
     "pdf": "music/bass-riff-for-flute/d999999ad5/score.pdf",
     "og": "music/bass-riff-for-flute/d999999ad5/og.png",
-    "pages": ["music/bass-riff-for-flute/d999999ad5/page-01.svg"],
+    "pages": [
+      "music/bass-riff-for-flute/d999999ad5/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 62
@@ -70,7 +78,9 @@
     "audio": "music/cello-miniature-a-happy-day/912b0f33e1/audio.mp3",
     "pdf": "music/cello-miniature-a-happy-day/912b0f33e1/score.pdf",
     "og": "music/cello-miniature-a-happy-day/912b0f33e1/og.png",
-    "pages": ["music/cello-miniature-a-happy-day/912b0f33e1/page-01.svg"],
+    "pages": [
+      "music/cello-miniature-a-happy-day/912b0f33e1/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 19
@@ -80,7 +90,9 @@
     "audio": "music/cello-miniature-no2-resonant/1cd92eb85c/audio.mp3",
     "pdf": "music/cello-miniature-no2-resonant/1cd92eb85c/score.pdf",
     "og": "music/cello-miniature-no2-resonant/1cd92eb85c/og.png",
-    "pages": ["music/cello-miniature-no2-resonant/1cd92eb85c/page-01.svg"],
+    "pages": [
+      "music/cello-miniature-no2-resonant/1cd92eb85c/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 38
@@ -90,20 +102,22 @@
     "audio": "music/fragment-for-solo-cello/a045dd010e/audio.mp3",
     "pdf": "music/fragment-for-solo-cello/a045dd010e/score.pdf",
     "og": "music/fragment-for-solo-cello/a045dd010e/og.png",
-    "pages": ["music/fragment-for-solo-cello/a045dd010e/page-01.svg"],
+    "pages": [
+      "music/fragment-for-solo-cello/a045dd010e/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 30
   },
   "nice": {
-    "hash": "8852120da4",
-    "audio": "music/nice/8852120da4/audio.mp3",
-    "pdf": "music/nice/8852120da4/score.pdf",
-    "og": "music/nice/8852120da4/og.png",
+    "hash": "53b59717b4",
+    "audio": "music/nice/53b59717b4/audio.mp3",
+    "pdf": "music/nice/53b59717b4/score.pdf",
+    "og": "music/nice/53b59717b4/og.png",
     "pages": [
-      "music/nice/8852120da4/page-01.svg",
-      "music/nice/8852120da4/page-02.svg",
-      "music/nice/8852120da4/page-03.svg"
+      "music/nice/53b59717b4/page-01.svg",
+      "music/nice/53b59717b4/page-02.svg",
+      "music/nice/53b59717b4/page-03.svg"
     ],
     "pageWidth": 10200,
     "pageHeight": 13200,
@@ -129,7 +143,9 @@
     "audio": "music/skipping/c4288d8289/audio.mp3",
     "pdf": "music/skipping/c4288d8289/score.pdf",
     "og": "music/skipping/c4288d8289/og.png",
-    "pages": ["music/skipping/c4288d8289/page-01.svg"],
+    "pages": [
+      "music/skipping/c4288d8289/page-01.svg"
+    ],
     "pageWidth": 10200,
     "pageHeight": 13200,
     "durationSeconds": 35
