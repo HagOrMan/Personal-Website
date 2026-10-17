@@ -1,6 +1,7 @@
 'use client';
 
 import { type ComponentProps, useEffect, useRef, useState } from 'react';
+
 import { Check, Copy } from 'lucide-react';
 
 import { actionVariants } from '@/components/ui/actionVariants';
