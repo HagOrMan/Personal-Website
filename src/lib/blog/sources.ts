@@ -28,8 +28,9 @@ export interface ContentSource {
   postsDir: string;
   /**
    * Directory holding per-post assets (keyed by canonical slug), relative to
-   * the repo root. Omit for sources that keep no assets - their relative
-   * non-markdown links are rewritten to GitHub instead of the asset proxy.
+   * the repo root. References resolving inside it are served through the
+   * asset proxy; for a public source, every other relative non-markdown
+   * reference links to the file on GitHub instead (see rewriteContentPaths).
    */
   assetsDir?: string;
   /**
@@ -68,11 +69,21 @@ const TUTORIALS: ContentSource = {
   repo: 'Tutorials',
   branch: 'main',
   // The tutorials live at the repo root, so everything that isn't a tutorial
-  // has to be named explicitly. helper-files/ and scripts/ hold the .bashrc
-  // and shell files the tutorials link to; they contain no markdown, so
-  // skipping them here saves a Contents API call each per revalidate.
+  // has to be named explicitly. assets/ holds per-tutorial images, and
+  // helper-files/ and scripts/ hold the .bashrc and shell files the tutorials
+  // link to; none contain posts, so skipping them here saves a Contents API
+  // call per directory per revalidate.
   postsDir: '',
-  exclude: ['README.md', 'Contributions.md', 'helper-files', 'scripts'],
+  // Only images live here. The helper files stay outside it on purpose, so
+  // their links keep pointing at GitHub rather than the asset proxy.
+  assetsDir: 'assets',
+  exclude: [
+    'README.md',
+    'Contributions.md',
+    'assets',
+    'helper-files',
+    'scripts',
+  ],
   trusted: false,
   folderPrefix: 'Tutorials',
   defaultTags: ['tutorial'],

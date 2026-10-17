@@ -24,7 +24,7 @@ import 'server-only';
 //                                index can group posts by it.
 //   <assetsDir>/[slug]/...     - per-post assets, a sibling of postsDir, keyed
 //                                by the canonical slug (not the subfolder
-//                                path). Sources with no assetsDir link their
+//                                path). A public source links its other
 //                                non-markdown files straight to GitHub
 //                                instead - see rewriteContentPaths.
 //

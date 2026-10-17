@@ -17,12 +17,13 @@ import {
 // Absolute URLs, root-relative paths, data URIs, and in-page anchors are
 // left untouched.
 //
-// Sources that keep no assets directory (the public tutorials repo) get a
-// different treatment for non-markdown references: rather than proxying them
-// through /blog-assets, they're pointed at the file on GitHub. Those files
-// are shell/bashrc snippets meant to be read and copied from the repo, and
-// the proxy would serve them as application/octet-stream (a download) since
-// they have no image/document MIME type.
+// For a public source (the tutorials repo), only references that resolve
+// inside its assetsDir go through /blog-assets. Every other non-markdown
+// reference points at the file on GitHub: those are shell/bashrc snippets
+// meant to be read and copied from the repo, and the proxy would serve them
+// as application/octet-stream (a download) since they have no image/document
+// MIME type. A private source has no GitHub page to point at, so all of its
+// non-markdown references go through the proxy.
 const MARKDOWN_REF_RE = /(!?)(\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g;
 
 export interface ContentContext {
@@ -77,7 +78,7 @@ function isPostReference(decodedPath: string): boolean {
   return /\.md$/i.test(fileName) || !hasFileExtension(fileName);
 }
 
-function toAssetUrl(url: string, slug: string): string {
+function toAssetUrl(url: string, slug: string, assetsDir: string): string {
   // assets/ is a sibling of posts/, not colocated with the markdown file,
   // so a correct relative reference needs at least one `../` to leave
   // posts/ (more if the post itself is nested, e.g. posts/Foo/bar.md needs
@@ -85,7 +86,9 @@ function toAssetUrl(url: string, slug: string): string {
   // leading assets/, and a redundant slug segment, then re-root under the
   // asset proxy.
   let relative = url.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '');
-  relative = relative.replace(/^assets\//, '');
+  if (relative.startsWith(`${assetsDir}/`)) {
+    relative = relative.slice(assetsDir.length + 1);
+  }
   if (relative.startsWith(`${slug}/`)) {
     relative = relative.slice(slug.length + 1);
   }
@@ -158,17 +161,34 @@ function toPostUrl(
   return `/blog/${slugify(fileName.replace(/\.md$/i, ''))}${hash}`;
 }
 
-/** Every non-markdown reference: an image, a PDF, a shell snippet. */
+/**
+ * Every non-markdown reference: an image, a PDF, a shell snippet.
+ *
+ * Proxied images are keyed by the *current* post's slug, so an asset must sit
+ * in assets/<this-post's-slug>/ - a reference into another post's folder (or a
+ * shared one) re-roots under this slug and 404s.
+ */
 function toFileUrl(
   ctx: ContentContext,
   rawPath: string,
   baseDir: string,
   hash: string,
 ): string {
-  if (ctx.source.assetsDir) return `${toAssetUrl(rawPath, ctx.slug)}${hash}`;
+  const { assetsDir } = ctx.source;
+  const repoPath = resolveRepoPath(rawPath, baseDir);
 
-  const external = blobUrl(ctx.source, resolveRepoPath(rawPath, baseDir));
-  return `${external ?? rawPath}${hash}`;
+  if (assetsDir && repoPath.startsWith(`${assetsDir}/`)) {
+    return `${toAssetUrl(rawPath, ctx.slug, assetsDir)}${hash}`;
+  }
+
+  const external = blobUrl(ctx.source, repoPath);
+  if (external) return `${external}${hash}`;
+
+  // Private source: no GitHub page to fall back to. This also keeps the
+  // blog's shorthand `![](cover.png)` - which resolves inside posts/, not
+  // assets/ - landing on the proxy.
+  if (assetsDir) return `${toAssetUrl(rawPath, ctx.slug, assetsDir)}${hash}`;
+  return `${rawPath}${hash}`;
 }
 
 export function rewriteContentPaths(
