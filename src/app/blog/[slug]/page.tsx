@@ -5,12 +5,14 @@ import { headers } from 'next/headers';
 import { notFound, permanentRedirect } from 'next/navigation';
 
 import rehypeExternalLinks from 'rehype-external-links';
+import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 
 import { BlogPostHeader } from '@/components/blog/BlogPostHeader';
+import { CodeBlock } from '@/components/blog/CodeBlock';
 import { PostMedia } from '@/components/blog/PostMedia';
 import { PostPasswordForm } from '@/components/blog/PostPasswordForm';
 import { PostPreviewLink } from '@/components/blog/PostPreviewLink';
@@ -50,12 +52,20 @@ type RehypePlugins = ComponentProps<typeof ReactMarkdown>['rehypePlugins'];
  * sanitizing because the default schema clobbers author-supplied `id`s with a
  * `user-content-` prefix. Slugging afterwards leaves heading ids untouched, so
  * in-page anchors like [notes](#extra-notes) still land.
+ *
+ * rehypeHighlight must also run after sanitizing: the default schema strips
+ * every class but `language-*`, which would take the `hljs-*` token spans with
+ * it. Only fenced blocks that name a language are highlighted - an unlabelled
+ * block stays plain rather than being guessed at.
  */
 function rehypePluginsFor(post: Post): RehypePlugins {
   return [
     rehypeRaw,
     ...(post.source.trusted ? [] : [rehypeSanitize]),
     rehypeSlug,
+    // .reg files are INI-shaped, and highlight.js has no grammar of its own
+    // for them.
+    [rehypeHighlight, { aliases: { ini: ['reg'] } }],
     [
       rehypeExternalLinks,
       { target: '_blank', rel: ['noopener', 'noreferrer'] },
@@ -244,6 +254,8 @@ export default async function BlogPostPage({
                 // An image reference can point at a PDF, a video, or any
                 // other file; an <img> can only ever render a real image.
                 img: PostMedia,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                pre: ({ node, ...props }) => <CodeBlock {...props} />,
                 // Links to other posts get a hover preview; everything else
                 // (external links, in-page anchors, asset links) renders
                 // exactly as before, keeping the target/rel that

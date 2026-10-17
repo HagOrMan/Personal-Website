@@ -947,6 +947,74 @@
     font-size: 0.875em;
   }
 
+  /* Syntax highlighting (rehype-highlight's hljs-* token classes), in the
+     site's own three palettes. 700s on the light muted background, 300s on
+     the dark one - the mid shades wash out against either. */
+  .blog-prose {
+    --code-keyword: rgb(var(--tw-color-nebula-700));
+    --code-string: rgb(var(--tw-color-lush-700));
+    --code-value: rgb(var(--tw-color-breeze-700));
+  }
+
+  .dark .blog-prose {
+    --code-keyword: rgb(var(--tw-color-nebula-300));
+    --code-string: rgb(var(--tw-color-lush-300));
+    --code-value: rgb(var(--tw-color-breeze-300));
+  }
+
+  .blog-prose
+    :is(
+      .hljs-keyword,
+      .hljs-selector-tag,
+      .hljs-section,
+      .hljs-type,
+      .hljs-doctag
+    ) {
+    color: var(--code-keyword);
+  }
+
+  .blog-prose
+    :is(
+      .hljs-string,
+      .hljs-regexp,
+      .hljs-symbol,
+      .hljs-addition,
+      .hljs-selector-class
+    ) {
+    color: var(--code-string);
+  }
+
+  .blog-prose
+    :is(
+      .hljs-number,
+      .hljs-literal,
+      .hljs-attr,
+      .hljs-attribute,
+      .hljs-variable,
+      .hljs-template-variable,
+      .hljs-built_in,
+      .hljs-title,
+      .hljs-name
+    ) {
+    color: var(--code-value);
+  }
+
+  .blog-prose :is(.hljs-comment, .hljs-quote, .hljs-meta) {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .blog-prose :is(.hljs-comment, .hljs-quote, .hljs-emphasis) {
+    font-style: italic;
+  }
+
+  .blog-prose .hljs-strong {
+    font-weight: 700;
+  }
+
+  .blog-prose .hljs-deletion {
+    color: hsl(var(--destructive));
+  }
+
   .blog-prose blockquote {
     border-left: 3px solid hsl(var(--border));
     padding-left: 1em;
